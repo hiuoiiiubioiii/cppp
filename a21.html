@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circular Linked List - Study Feed</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.2);
+            --danger: #f87171;
+            --success: #4ade80;
+            --node-bg: #334155;
+            --code-bg: #0b1120;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Feed Container */
+        .feed {
+            max-width: 800px;
+            width: 100%;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* Feed Cards */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .timestamp {
+            font-size: 0.85rem;
+            color: var(--accent);
+            font-weight: 600;
+            margin-bottom: 10px;
+            display: inline-block;
+            background: var(--accent-glow);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 20px;
+            color: white;
+            border-bottom: 2px solid var(--node-bg);
+            padding-bottom: 10px;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: white;
+        }
+
+        p {
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+        }
+
+        ul {
+            color: var(--text-muted);
+            margin-left: 20px;
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+        }
+
+        strong {
+            color: var(--text-main);
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            border: 1px solid #1e293b;
+            margin: 20px 0;
+        }
+
+        code {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            color: #e2e8f0;
+        }
+
+        .comment { color: #64748b; }
+        .keyword { color: #c678dd; }
+        .type { color: #e5c07b; }
+        .string { color: #98c379; }
+        .func { color: #61afef; }
+
+        /* Visualizations */
+        .visual-container {
+            background-color: var(--code-bg);
+            padding: 40px 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            min-height: 200px;
+            border: 1px dashed var(--node-bg);
+        }
+
+        .list-row {
+            display: flex;
+            align-items: center;
+            gap: 40px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .node {
+            display: flex;
+            border: 2px solid var(--accent);
+            border-radius: 6px;
+            background-color: var(--node-bg);
+            width: 100px;
+            height: 40px;
+            color: white;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .node .data {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-right: 2px solid var(--accent);
+        }
+
+        .node .next {
+            width: 30%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: var(--accent);
+        }
+
+        .node .addr {
+            position: absolute;
+            bottom: -25px;
+            width: 100%;
+            text-align: center;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .pointer {
+            position: absolute;
+            top: -30px;
+            background: var(--danger);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .pointer::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px 5px 0;
+            border-style: solid;
+            border-color: var(--danger) transparent transparent transparent;
+        }
+
+        .arrow {
+            width: 40px;
+            height: 2px;
+            background-color: var(--text-muted);
+            position: relative;
+        }
+
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -4px;
+            border-width: 5px 0 5px 10px;
+            border-style: solid;
+            border-color: transparent transparent transparent var(--text-muted);
+        }
+
+        .circular-svg {
+            position: absolute;
+            top: 60px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 260px;
+            height: 60px;
+            z-index: 1;
+        }
+
+        .circular-path {
+            fill: none;
+            stroke: var(--success);
+            stroke-width: 2;
+            stroke-dasharray: 5, 5;
+            animation: draw 2s linear infinite;
+        }
+
+        @keyframes draw {
+            to { stroke-dashoffset: -20; }
+        }
+
+        .alert-box {
+            background-color: rgba(248, 113, 113, 0.1);
+            border-left: 4px solid var(--danger);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+        
+        .alert-box h3 { color: var(--danger); margin-bottom: 5px; font-size: 1.2rem;}
+        .alert-box p { color: #fecaca; margin: 0; }
+
+    </style>
+</head>
+<body>
+
+    <div class="feed">
+        
+        <!-- Header Card -->
+        <div class="card" style="text-align: center;">
+            <h1>Implementation of Circular Linked List (CLL)</h1>
+            <p><strong>C Programming Data Structures</strong></p>
+            <p style="font-size: 0.9rem;">Scroll down to follow the instructor's breakdown, code, and whiteboard visuals.</p>
+        </div>
+
+        <!-- Card 1 -->
+        <div class="card">
+            <span class="timestamp">0:00 - 2:00</span>
+            <h2>1. Circular vs. Singly Linked List</h2>
+            <p>The fundamental difference lies in the <strong>last node</strong> of the list.</p>
+            <ul>
+                <li>In a <strong>Singly Linked List (SLL)</strong>, the <code>next</code> pointer of the last node stores <code>NULL</code> (or 0).</li>
+                <li>In a <strong>Circular Linked List (CLL)</strong>, the <code>next</code> pointer of the last node stores the <strong>address of the first node</strong>, creating a continuous loop.</li>
+            </ul>
+
+            <div class="visual-container">
+                <div class="list-row">
+                    <div class="node">
+                        <div class="data">1</div>
+                        <div class="next">150</div>
+                        <div class="addr">200</div>
+                    </div>
+                    <div class="arrow"></div>
+                    <div class="node">
+                        <div class="data">7</div>
+                        <div class="next">400</div>
+                        <div class="addr">150</div>
+                    </div>
+                    <div class="arrow"></div>
+                    <div class="node">
+                        <div class="data">2</div>
+                        <div class="next">200</div>
+                        <div class="addr">400</div>
+                    </div>
+                </div>
+                <!-- SVG drawing the curved circular pointer -->
+                <svg class="circular-svg">
+                    <!-- Draws a line from the last node (right) down, left, and up to the first node -->
+                    <path class="circular-path" d="M 240,0 L 240,40 L 20,40 L 20,0" marker-end="url(#arrowhead)"/>
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                          <polygon points="0 0, 10 3.5, 0 7" fill="#4ade80" />
+                        </marker>
+                    </defs>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Card 2 -->
+        <div class="card">
+            <span class="timestamp">2:00 - 5:00</span>
+            <h2>2. The Problem with the `Head` Pointer</h2>
+            <p>If we only maintain a <code>head</code> pointer (pointing to the first node), inserting a new node at the beginning is highly inefficient.</p>
+            <p><strong>Why? Let's trace the logic:</strong></p>
+            <ul>
+                <li>You create a new node. You point its <code>next</code> to the current <code>head</code>.</li>
+                <li>You update <code>head</code> to point to the new node.</li>
+                <li><strong>The Trap:</strong> The <em>last</em> node in the circle is still pointing to the <em>old</em> first node!</li>
+            </ul>
+            <p>To fix this using only <code>head</code>, you have to create a <code>temp</code> pointer and traverse the entire list <strong>(O(N) time complexity)</strong> just to reach the last node and update its pointer.</p>
+
+            <h3 style="color: var(--success); margin-top: 20px;">The Instructor's Solution: The `Tail` Pointer</h3>
+            <p>Instead of maintaining a <code>head</code> pointer, we only maintain a <strong><code>tail</code> pointer</strong> (pointing to the last node).</p>
+            <p>If we have <code>tail</code>, we implicitly have <code>head</code>! Why? Because <strong><code>tail->next</code> is ALWAYS the first node.</strong> This makes insertions at the beginning or end an <strong>O(1) operation</strong>.</p>
+            
+            <div class="visual-container">
+                <div class="list-row">
+                    <div class="node">
+                        <div class="data">First</div>
+                        <div class="next">●</div>
+                    </div>
+                    <div class="arrow"></div>
+                    <div class="node">
+                        <div class="data">Middle</div>
+                        <div class="next">●</div>
+                    </div>
+                    <div class="arrow"></div>
+                    <div class="node" style="border-color: var(--success);">
+                        <div class="pointer" style="background: var(--success);">tail</div>
+                        <div class="data">Last</div>
+                        <div class="next" style="color: var(--success);">200</div>
+                    </div>
+                </div>
+                <svg class="circular-svg">
+                    <path class="circular-path" d="M 240,0 L 240,40 L 20,40 L 20,0" marker-end="url(#arrowhead)"/>
+                    <text x="130" y="55" fill="var(--success)" font-size="12" text-anchor="middle">tail->next</text>
+                </svg>
+            </div>
+        </div>
+
+        <!-- Card 3 -->
+        <div class="card">
+            <span class="timestamp">5:00 - 13:45</span>
+            <h2>3. Code: Structure & Creation</h2>
+            <p>First, define the node structure. Notice we declare a global <code>tail</code> pointer instead of <code>head</code>.</p>
+            
+            <pre><code><span class="keyword">struct</span> <span class="type">node</span> {
+    <span class="type">int</span> data;
+    <span class="keyword">struct</span> <span class="type">node</span> *next;
+};
+<span class="keyword">struct</span> <span class="type">node</span> *tail = <span class="type">0</span>; <span class="comment">// Initialize empty list</span></code></pre>
+
+            <p>Now, let's write the function to create and populate the Circular Linked List.</p>
+
+            <pre><code><span class="type">void</span> <span class="func">createCLL</span>() {
+    <span class="keyword">struct</span> <span class="type">node</span> *newnode;
+    <span class="type">int</span> choice = <span class="type">1</span>;
+    
+    <span class="keyword">while</span> (choice == <span class="type">1</span>) { 
+        <span class="comment">// 1. Allocate dynamic memory</span>
+        newnode = (<span class="keyword">struct</span> <span class="type">node</span>*)<span class="func">malloc</span>(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> <span class="type">node</span>));
+        
+        <span class="func">printf</span>(<span class="string">"Enter data: "</span>);
+        <span class="func">scanf</span>(<span class="string">"%d"</span>, &newnode->data);
+        newnode->next = <span class="type">0</span>;
+        
+        <span class="comment">// --- INSERTION LOGIC ---</span>
+        <span class="keyword">if</span> (tail == <span class="type">0</span>) {
+            <span class="comment">// Case A: First node in the list</span>
+            tail = newnode;
+            tail->next = newnode; <span class="comment">// Points to itself!</span>
+        } <span class="keyword">else</span> {
+            <span class="comment">// Case B: List already has nodes</span>
+            newnode->next = tail->next; <span class="comment">// Link new node to the FIRST node</span>
+            tail->next = newnode;       <span class="comment">// Link LAST node to the new node</span>
+            tail = newnode;             <span class="comment">// Update tail to be the new node</span>
+        }
+        
+        <span class="func">printf</span>(<span class="string">"Continue? (1=yes, 0=no): "</span>);
+        <span class="func">scanf</span>(<span class="string">"%d"</span>, &choice);
+    }
+}</code></pre>
+
+            <div class="alert-box">
+                <h3>⚠️ Instructor Warning: Order of Operations</h3>
+                <p>Look at the <code>else</code> block above. You <strong>MUST</strong> write <code>newnode->next = tail->next;</code> BEFORE you write <code>tail->next = newnode;</code>.</p>
+                <p style="margin-top: 10px;">If you update <code>tail->next</code> first, you overwrite the only pointer holding the address of your first node. The circle will be broken, and you will lose the start of your list forever!</p>
+            </div>
+        </div>
+
+        <!-- Card 4 -->
+        <div class="card">
+            <span class="timestamp">13:45 - End</span>
+            <h2>4. Traversing and Displaying the List</h2>
+            <p>How do we print a circle without getting stuck in an infinite loop? In a Singly Linked List, we stopped when <code>temp != NULL</code>. A Circular Linked List <strong>never</strong> contains NULL.</p>
+            
+            <p><strong>The Wrong Way (While Loop):</strong><br>
+            If we set <code>temp = tail->next</code> (start at node 1) and use <code>while (temp != tail->next)</code>, the loop will <em>immediately fail</em> on the first check because <code>temp</code> already equals <code>tail->next</code>!</p>
+
+            <p><strong>The Right Way (Do-While Loop):</strong><br>
+            The instructor explains that a <code>do-while</code> loop is perfect here. It forces the code to print and move the pointer <em>at least once</em> before checking the condition.</p>
+
+            <pre><code><span class="type">void</span> <span class="func">displayCLL</span>() {
+    <span class="keyword">struct</span> <span class="type">node</span> *temp;
+    
+    <span class="keyword">if</span> (tail == <span class="type">0</span>) {
+        <span class="func">printf</span>(<span class="string">"List is empty"</span>);
+    } <span class="keyword">else</span> {
+        temp = tail->next; <span class="comment">// Start at the FIRST node</span>
+        
+        <span class="keyword">do</span> {
+            <span class="func">printf</span>(<span class="string">"%d "</span>, temp->data); <span class="comment">// Print current node</span>
+            temp = temp->next;         <span class="comment">// Move to next node</span>
+        } <span class="keyword">while</span> (temp != tail->next);  <span class="comment">// Stop when we hit the first node again</span>
+    }
+}</code></pre>
+            <p><strong>Visual Trace:</strong> <code>temp</code> starts at Node 1. The <code>do</code> block prints it and moves <code>temp</code> to Node 2. Now the <code>while</code> loop checks: Is Node 2 the same as Node 1? No. It keeps looping until <code>temp</code> wraps entirely around the circle and lands back on Node 1.</p>
+        </div>
+
+    </div>
+
+</body>
+</html>
