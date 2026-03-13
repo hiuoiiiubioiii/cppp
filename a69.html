@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splay Tree Deletion - Study Notes</title>
+    <!-- Google Fonts for typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <!-- Mermaid.js for Tree Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>mermaid.initialize({startOnLoad:true});</script>
+
+    <style>
+        /* Global Reset & Typography */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Vertical Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            width: 100%;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Card Styling */
+        .card {
+            background-color: #ffffff;
+            border-radius: 16px;
+            padding: 35px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-top: 5px solid #3b82f6;
+        }
+        .card.theory { border-top-color: #8b5cf6; }
+        .card.example { border-top-color: #10b981; }
+        .card.edge-case { border-top-color: #ef4444; }
+
+        /* Typography */
+        h1 { font-size: 2.2rem; margin-bottom: 10px; color: #111827; }
+        h2 { font-size: 1.5rem; margin-bottom: 15px; color: #1f2937; border-bottom: 2px solid #e5e7eb; padding-bottom: 8px;}
+        h3 { font-size: 1.2rem; margin: 20px 0 10px; color: #374151; }
+        p { margin-bottom: 15px; font-size: 1.05rem; }
+        ul { margin-left: 20px; margin-bottom: 15px; }
+        li { margin-bottom: 8px; font-size: 1.05rem; }
+
+        /* Highlights & Tags */
+        .highlight {
+            background-color: #fef08a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+        .tag {
+            display: inline-block;
+            background: #e0e7ff;
+            color: #4338ca;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+        }
+
+        /* Visualization Container */
+        .viz-container {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+            overflow-x: auto;
+        }
+        .viz-caption {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-top: 10px;
+            font-weight: 600;
+        }
+
+        /* Mermaid Graph specific adjustments */
+        .mermaid {
+            display: flex;
+            justify-content: center;
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+
+    <!-- Header Card -->
+    <div class="card">
+        <span class="tag">Lecture Breakdown</span>
+        <h1>Deletion in Splay Trees</h1>
+        <p>This vertical feed contains everything taught in the whiteboard lecture. Scroll down to follow the instructor's step-by-step <strong>Bottom-Up</strong> approach to deleting nodes from a Splay Tree, complete with visual tree states.</p>
+    </div>
+
+    <!-- Theory Card -->
+    <div class="card theory">
+        <span class="tag">Core Concepts</span>
+        <h2>The 2-Step Deletion Rule</h2>
+        <p>Because Splay Trees are a variant of Binary Search Trees (BST), we start with standard BST rules, but add one critical balancing step at the end.</p>
+        <ul>
+            <li><strong>Step 1: Delete.</strong> Perform a standard BST deletion on the target node.</li>
+            <li><strong>Step 2: Splay.</strong> After deletion, you <span class="highlight">MUST splay the Parent</span> of the node you just deleted. Keep splaying until that parent becomes the new Root of the tree.</li>
+        </ul>
+        <h3>Instructor's Golden Rules:</h3>
+        <p>👉 <em>What if the node isn't in the tree?</em> Splay the last accessed non-null node.<br>
+        👉 <em>What if you delete the Root?</em> The root has no parent, so <strong>no splaying is required!</strong></p>
+    </div>
+
+    <!-- Initial State Card -->
+    <div class="card">
+        <h2>Initial Tree Setup</h2>
+        <p>Before we start deleting, here is the exact tree the instructor drew on the whiteboard. The task is to delete: <strong>12, 14, 16, 20, 17</strong> in that order.</p>
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                14((14)) --- 13((13))
+                14 --- 16((16))
+                13 --- 7((7))
+                13 --- inv1[ ]:::invisible
+                7 --- inv2[ ]:::invisible
+                7 --- 10((10))
+                10 --- inv3[ ]:::invisible
+                10 --- 12((12))
+                16 --- 15((15))
+                16 --- 17((17))
+                
+                classDef invisible fill:none,stroke:none;
+            </div>
+            <div class="viz-caption">Starting Splay Tree</div>
+        </div>
+    </div>
+
+    <!-- Example 1 -->
+    <div class="card example">
+        <span class="tag">Example 1: Leaf Node</span>
+        <h2>Deleting 12</h2>
+        <p><strong>Step 1: Search & Delete</strong><br>We trace down the tree: 14 &rarr; 13 &rarr; 7 &rarr; 10 &rarr; 12. Because 12 is a leaf node (0 children), we simply delete it. The parent of 12 is <span class="highlight">10</span>.</p>
+        
+        <p><strong>Step 2: Splay the Parent (10)</strong><br>We must bring 10 to the root.</p>
+        <ul>
+            <li><strong>Zig-Zag Rotation:</strong> 10 is the right child of 7, and 7 is the left child of 13. We perform a Left rotation on 7, then a Right rotation on 13.</li>
+            <li><strong>Zig Rotation:</strong> 10 is now the left child of 14 (the root). We perform a Right rotation on 14 to make 10 the new root.</li>
+        </ul>
+
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                10((10)) --- 7((7))
+                10 --- 14((14))
+                14 --- 13((13))
+                14 --- 16((16))
+                16 --- 15((15))
+                16 --- 17((17))
+            </div>
+            <div class="viz-caption">Tree after deleting 12 and splaying 10 to the root.</div>
+        </div>
+    </div>
+
+    <!-- Example 2 -->
+    <div class="card example">
+        <span class="tag">Example 2: Node with 2 Children</span>
+        <h2>Deleting 14</h2>
+        <p><strong>Step 1: Search & Delete</strong><br>We find 14 (currently the right child of 10). Because 14 has two children (13 and 16), standard BST rules state we must replace it with its <strong>In-order Successor</strong> (the smallest element in its right subtree).</p>
+        <p>The right subtree starts at 16, and the smallest element there is 15. We replace 14 with 15, and delete the original leaf node 15.</p>
+
+        <p><strong>Step 2: Splay the Parent</strong><br>The original position of the node we wanted to delete (14) had the parent <span class="highlight">10</span>. We must splay 10. However, 10 is <em>already</em> the root! Therefore, no splaying rotations are needed.</p>
+
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                10((10)) --- 7((7))
+                10 --- 15((15))
+                15 --- 13((13))
+                15 --- 16((16))
+                16 --- inv1[ ]:::invisible
+                16 --- 17((17))
+
+                classDef invisible fill:none,stroke:none;
+            </div>
+            <div class="viz-caption">15 replaces 14. 10 is already the root, so no splay occurs.</div>
+        </div>
+    </div>
+
+    <!-- Example 3 -->
+    <div class="card example">
+        <span class="tag">Example 3: Node with 1 Child</span>
+        <h2>Deleting 16</h2>
+        <p><strong>Step 1: Search & Delete</strong><br>We find 16. It has only one child (17). By BST rules, we delete 16 and connect its only child (17) directly to 16's parent (15).</p>
+        
+        <p><strong>Step 2: Splay the Parent (15)</strong><br>The parent of the deleted node (16) was <span class="highlight">15</span>. We must bring 15 to the root.</p>
+        <ul>
+            <li><strong>Zag Rotation:</strong> 15 is the right child of the root (10). This requires a single Left Rotation on 10.</li>
+            <li>15 becomes the root, 10 drops down to become its left child, and 13 is handed over to be the right child of 10.</li>
+        </ul>
+
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                15((15)) --- 10((10))
+                15 --- 17((17))
+                10 --- 7((7))
+                10 --- 13((13))
+            </div>
+            <div class="viz-caption">Tree after deleting 16 and splaying 15 to the root.</div>
+        </div>
+    </div>
+
+    <!-- Example 4 -->
+    <div class="card edge-case">
+        <span class="tag">Edge Case: Not Found</span>
+        <h2>Attempting to Delete 20</h2>
+        <p><strong>Step 1: Search & Delete</strong><br>We search for 20: 20 > 15 (go right to 17), 20 > 17 (go right... NULL). 20 is not in the tree, so we delete nothing.</p>
+        
+        <p><strong>Step 2: Splay the Last Accessed Node</strong><br>The instructor's rule: if a node is not found, you must splay the <em>last non-null node</em> you touched. We touched <span class="highlight">17</span> last.</p>
+        <ul>
+            <li><strong>Zag Rotation:</strong> 17 is the right child of 15. We perform a Left Rotation on 15 to bring 17 to the root.</li>
+        </ul>
+
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                17((17)) --- 15((15))
+                17 --- inv1[ ]:::invisible
+                15 --- 10((10))
+                15 --- inv2[ ]:::invisible
+                10 --- 7((7))
+                10 --- 13((13))
+
+                classDef invisible fill:none,stroke:none;
+            </div>
+            <div class="viz-caption">Tree after attempting to delete 20 and splaying 17.</div>
+        </div>
+    </div>
+
+    <!-- Example 5 -->
+    <div class="card edge-case">
+        <span class="tag">Edge Case: Root Node</span>
+        <h2>Deleting 17 (The Root)</h2>
+        <p><strong>Step 1: Search & Delete</strong><br>We want to delete 17, which is currently the root of the tree. It has one child (the left subtree starting at 15). We delete 17, and 15 moves up to become the new root.</p>
+        
+        <p><strong>Step 2: Splay the Parent</strong><br>Because 17 was the root, it <span class="highlight">had no parent</span>. Therefore, the deletion process is complete and no splaying is required!</p>
+
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                15((15)) --- 10((10))
+                15 --- inv1[ ]:::invisible
+                10 --- 7((7))
+                10 --- 13((13))
+
+                classDef invisible fill:none,stroke:none;
+            </div>
+            <div class="viz-caption">Final Tree State. 17 deleted, no splay required.</div>
+        </div>
+    </div>
+
+    <!-- Conclusion Card -->
+    <div class="card">
+        <h2>Lecture Conclusion</h2>
+        <p>The instructor concludes by defining this specific methodology as the <strong>"Bottom-Up Splaying Approach"</strong> for deletion.</p>
+        <p>If an exam or assignment specifically asks for <em>Bottom-Up Deletion</em>, this is the exact two-step framework you use. In the next lecture, the instructor will cover the alternative method: the <strong>Top-Down Approach</strong>, which involves splitting the tree into two parts and merging them together.</p>
+    </div>
+
+</div>
+
+</body>
+</html>
