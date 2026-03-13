@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infix to Postfix via Stack | Study Feed</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+        
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; color: #0f172a; }
+        .font-mono { font-family: 'JetBrains Mono', monospace; }
+        
+        /* Smooth reveal animation for feed items */
+        .reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s ease-out; }
+        .reveal.active { opacity: 1; transform: translateY(0); }
+
+        /* Custom Stack Visualization Styling */
+        .stack-container {
+            display: flex;
+            flex-direction: column-reverse; /* Bottom items stay at bottom */
+            justify-content: flex-start;
+            height: 120px;
+            width: 60px;
+            border: 3px solid #334155;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            background: #f1f5f9;
+            padding: 4px;
+            overflow: hidden;
+        }
+        .stack-item {
+            background-color: #4f46e5;
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            padding: 4px 0;
+            margin-top: 2px;
+            border-radius: 4px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            animation: popIn 0.3s ease-out forwards;
+        }
+        .stack-item.top { background-color: #ec4899; } /* Highlight top of stack */
+        
+        @keyframes popIn {
+            0% { transform: translateY(-20px); opacity: 0; }
+            100% { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Feed Line connecting steps */
+        .feed-line {
+            position: absolute;
+            left: 2rem;
+            top: 0;
+            bottom: 0;
+            width: 2px;
+            background: #cbd5e1;
+            z-index: -1;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-indigo-200 selection:text-indigo-900">
+
+    <!-- Sticky Progress Header -->
+    <header class="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b border-slate-200 shadow-sm">
+        <div class="max-w-4xl mx-auto px-4 py-4 flex items-center justify-between">
+            <h1 class="text-xl font-bold text-slate-800"><i class="fa-solid fa-layer-group text-indigo-600 mr-2"></i>Infix to Postfix Conversion</h1>
+            <span class="text-sm font-semibold text-slate-500 bg-slate-100 px-3 py-1 rounded-full border border-slate-200">Scroll to learn <i class="fa-solid fa-arrow-down ml-1 animate-bounce"></i></span>
+        </div>
+        <!-- Progress Bar -->
+        <div class="h-1 bg-slate-100 w-full"><div id="progressBar" class="h-full bg-indigo-600 w-0 transition-all duration-300"></div></div>
+    </header>
+
+    <main class="max-w-4xl mx-auto px-4 py-12 space-y-24">
+
+        <!-- SECTION 1: Introduction -->
+        <section class="reveal space-y-6">
+            <div class="inline-block bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full font-bold text-xs tracking-wider uppercase mb-2">1. Core Concepts</div>
+            <h2 class="text-3xl font-bold text-slate-900">Understanding Expressions</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 border-l-4 border-l-blue-500">
+                    <h3 class="text-lg font-bold mb-2"><i class="fa-solid fa-font text-blue-500 mr-2"></i>Infix Expression</h3>
+                    <p class="text-slate-600 mb-4">The operator is written <strong>between</strong> the operands. This is how humans read math.</p>
+                    <div class="bg-slate-50 p-3 rounded font-mono text-center text-lg font-bold border border-slate-200">A + B</div>
+                </div>
+                <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-200 border-l-4 border-l-purple-500">
+                    <h3 class="text-lg font-bold mb-2"><i class="fa-solid fa-code text-purple-500 mr-2"></i>Postfix Expression</h3>
+                    <p class="text-slate-600 mb-4">The operator is written <strong>after</strong> the operands. This is easier for computers to process.</p>
+                    <div class="bg-slate-50 p-3 rounded font-mono text-center text-lg font-bold border border-slate-200">A B +</div>
+                </div>
+            </div>
+            <div class="bg-amber-50 border border-amber-200 rounded-xl p-6 flex gap-4 mt-6">
+                <i class="fa-solid fa-lightbulb text-amber-500 text-2xl"></i>
+                <div>
+                    <h4 class="font-bold text-slate-800">Why use a Stack?</h4>
+                    <p class="text-slate-600 text-sm mt-1">Converting manually using BODMAS requires scanning the expression back and forth multiple times. The <strong>Stack Algorithm</strong> allows a computer to convert the expression efficiently in a <strong>single scan</strong> from left to right.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: Prerequisites -->
+        <section class="reveal space-y-6">
+            <div class="inline-block bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full font-bold text-xs tracking-wider uppercase mb-2">2. Prerequisites</div>
+            <h2 class="text-3xl font-bold text-slate-900">Precedence & Associativity Chart</h2>
+            <p class="text-slate-600 text-lg">You <strong>must</strong> memorize this chart. It is the foundation of the stack logic.</p>
+            
+            <div class="overflow-hidden rounded-xl border border-slate-200 shadow-sm">
+                <table class="w-full text-left bg-white">
+                    <thead class="bg-slate-800 text-white">
+                        <tr>
+                            <th class="p-4 font-semibold">Precedence Level</th>
+                            <th class="p-4 font-semibold">Operator(s)</th>
+                            <th class="p-4 font-semibold">Associativity</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-slate-200">
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="p-4 font-bold text-slate-800">1 (Highest)</td>
+                            <td class="p-4 font-mono text-indigo-600 font-bold text-xl">( )</td>
+                            <td class="p-4 text-slate-600">Left to Right</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50 transition-colors bg-pink-50/50">
+                            <td class="p-4 font-bold text-slate-800">2</td>
+                            <td class="p-4 font-mono text-pink-600 font-bold text-xl">^</td>
+                            <td class="p-4 font-bold text-pink-700"><i class="fa-solid fa-arrow-left mr-2"></i>Right to Left <span class="text-xs bg-pink-200 px-2 py-1 rounded-full ml-2">Special Case!</span></td>
+                        </tr>
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="p-4 font-bold text-slate-800">3</td>
+                            <td class="p-4 font-mono text-indigo-600 font-bold text-xl">* , /</td>
+                            <td class="p-4 text-slate-600">Left to Right</td>
+                        </tr>
+                        <tr class="hover:bg-slate-50 transition-colors">
+                            <td class="p-4 font-bold text-slate-800">4 (Lowest)</td>
+                            <td class="p-4 font-mono text-indigo-600 font-bold text-xl">+ , -</td>
+                            <td class="p-4 text-slate-600">Left to Right</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </section>
+
+        <!-- SECTION 3: The Algorithm Rules -->
+        <section class="reveal space-y-6">
+            <div class="inline-block bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full font-bold text-xs tracking-wider uppercase mb-2">3. The Rules</div>
+            <h2 class="text-3xl font-bold text-slate-900">How the Algorithm Works</h2>
+            <p class="text-slate-600 text-lg">Scan the expression from left to right. Apply these rules based on the symbol you read:</p>
+
+            <div class="grid gap-4">
+                <div class="bg-white border border-slate-200 rounded-lg p-5 flex gap-4 shadow-sm items-start">
+                    <div class="bg-emerald-100 text-emerald-600 w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold">1</div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-lg">If it's an Operand (Letter/Number)</h4>
+                        <p class="text-slate-600 mt-1">Print it directly to the Postfix output. Operands never go into the stack.</p>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-lg p-5 flex gap-4 shadow-sm items-start">
+                    <div class="bg-blue-100 text-blue-600 w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold">2</div>
+                    <div class="w-full">
+                        <h4 class="font-bold text-slate-800 text-lg">If it's an Operator (+, -, *, /, ^)</h4>
+                        <p class="text-slate-600 mt-1 mb-3">Compare it with the operator currently at the <strong>Top of the Stack</strong>.</p>
+                        <div class="space-y-2 text-sm">
+                            <div class="bg-slate-50 p-3 rounded border border-slate-200"><span class="font-bold text-indigo-600">Higher Precedence:</span> Push incoming operator to the stack.</div>
+                            <div class="bg-slate-50 p-3 rounded border border-slate-200"><span class="font-bold text-indigo-600">Lower Precedence:</span> Pop the stack top to the output. Repeat comparison until incoming > top, then Push.</div>
+                            <div class="bg-slate-50 p-3 rounded border border-slate-200"><span class="font-bold text-indigo-600">Same Precedence:</span> Check Associativity. If Left-to-Right -> Pop then Push. If Right-to-Left -> Push.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="bg-white border border-slate-200 rounded-lg p-5 flex gap-4 shadow-sm items-start">
+                    <div class="bg-amber-100 text-amber-600 w-10 h-10 rounded-full flex items-center justify-center shrink-0 font-bold">3</div>
+                    <div>
+                        <h4 class="font-bold text-slate-800 text-lg">Parentheses Handling</h4>
+                        <p class="text-slate-600 mt-1">If <strong>Opening `(` :</strong> Push it to the stack.<br>If <strong>Closing `)` :</strong> Pop operators from stack to output until you hit the `(`. Discard both parentheses.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: Interactive Feed Visualization -->
+        <section class="reveal space-y-6 pt-10 border-t-2 border-dashed border-slate-200">
+            <div class="inline-block bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full font-bold text-xs tracking-wider uppercase mb-2">4. Step-by-Step Visualization</div>
+            <h2 class="text-3xl font-bold text-slate-900">The Problem Walkthrough</h2>
+            
+            <div class="bg-slate-800 text-white rounded-xl p-6 text-center shadow-lg sticky top-20 z-40 mb-10">
+                <p class="text-slate-300 text-sm font-semibold uppercase tracking-widest mb-2">Target Expression</p>
+                <div class="font-mono text-xl md:text-2xl font-bold tracking-wider text-green-400 break-all">
+                    K + L - M * N + (O ^ P) * W / U / V * T + Q ^ J ^ A
+                </div>
+            </div>
+
+            <!-- The Feed Container where JS will inject steps -->
+            <div class="relative pl-4 md:pl-10 pb-10" id="walkthrough-feed">
+                <!-- Feed line drawn by CSS -->
+                <div class="feed-line hidden md:block"></div>
+                <!-- Steps injected here -->
+            </div>
+        </section>
+
+        <!-- SECTION 5: Final Result -->
+        <section class="reveal bg-gradient-to-br from-indigo-600 to-purple-700 rounded-2xl p-8 md:p-12 text-center text-white shadow-xl mt-10 mb-24">
+            <h2 class="text-2xl font-bold mb-2 text-indigo-100 uppercase tracking-widest">Final Postfix Result</h2>
+            <div class="font-mono text-2xl md:text-3xl font-bold bg-white/10 p-6 rounded-xl border border-white/20 break-all leading-relaxed shadow-inner">
+                K L + M N * - O P ^ W * U / V / T * + Q J A ^ ^ +
+            </div>
+            <p class="mt-6 text-indigo-200"><i class="fa-solid fa-check-circle mr-2"></i>Algorithm completed in a single O(N) scan.</p>
+        </section>
+
+    </main>
+
+    <!-- JavaScript to Generate the Feed and Handle Scroll Animations -->
+    <script>
+        // Data derived directly from the video breakdown
+        const stepsData = [
+            { token: 'K', type: 'operand', stack: [], output: 'K', desc: 'Operand. Goes directly to output.' },
+            { token: '+', type: 'operator', stack: ['+'], output: 'K', desc: 'Stack is empty, push operator.' },
+            { token: 'L', type: 'operand', stack: ['+'], output: 'K L', desc: 'Operand. Goes to output.' },
+            { token: '-', type: 'operator', stack: ['-'], output: 'K L +', desc: 'Same precedence as +. Assoc is Left-to-Right. Pop +, Push -.' },
+            { token: 'M', type: 'operand', stack: ['-'], output: 'K L + M', desc: 'Operand. Goes to output.' },
+            { token: '*', type: 'operator', stack: ['-', '*'], output: 'K L + M', desc: '* is higher precedence than -. Push *.' },
+            { token: 'N', type: 'operand', stack: ['-', '*'], output: 'K L + M N', desc: 'Operand. Goes to output.' },
+            { token: '+', type: 'operator', stack: ['+'], output: 'K L + M N * -', desc: '+ is lower than *. Pop *. New top is -. + and - have same precedence (L-R assoc). Pop -. Stack empty. Push +.' },
+            { token: '(', type: 'paren', stack: ['+', '('], output: 'K L + M N * -', desc: 'Always push opening parenthesis.' },
+            { token: 'O', type: 'operand', stack: ['+', '('], output: 'K L + M N * - O', desc: 'Operand. Goes to output.' },
+            { token: '^', type: 'operator', stack: ['+', '(', '^'], output: 'K L + M N * - O', desc: 'Push to stack (behaves as if ( is an empty stack boundary).' },
+            { token: 'P', type: 'operand', stack: ['+', '(', '^'], output: 'K L + M N * - O P', desc: 'Operand. Goes to output.' },
+            { token: ')', type: 'paren', stack: ['+'], output: 'K L + M N * - O P ^', desc: 'Closing parenthesis found. Pop until (. Pop ^. Discard both parentheses.' },
+            { token: '*', type: 'operator', stack: ['+', '*'], output: 'K L + M N * - O P ^', desc: '* is higher precedence than +. Push *.' },
+            { token: 'W', type: 'operand', stack: ['+', '*'], output: 'K L + M N * - O P ^ W', desc: 'Operand. Goes to output.' },
+            { token: '/', type: 'operator', stack: ['+', '/'], output: 'K L + M N * - O P ^ W *', desc: '/ and * have same precedence (L-R assoc). Pop *, push /.' },
+            { token: 'U', type: 'operand', stack: ['+', '/'], output: 'K L + M N * - O P ^ W * U', desc: 'Operand. Goes to output.' },
+            { token: '/', type: 'operator', stack: ['+', '/'], output: 'K L + M N * - O P ^ W * U /', desc: '/ and / have same precedence (L-R assoc). Pop existing /, push new /.' },
+            { token: 'V', type: 'operand', stack: ['+', '/'], output: 'K L + M N * - O P ^ W * U / V', desc: 'Operand. Goes to output.' },
+            { token: '*', type: 'operator', stack: ['+', '*'], output: 'K L + M N * - O P ^ W * U / V /', desc: '* and / have same precedence (L-R assoc). Pop /, push *.' },
+            { token: 'T', type: 'operand', stack: ['+', '*'], output: 'K L + M N * - O P ^ W * U / V / T', desc: 'Operand. Goes to output.' },
+            { token: '+', type: 'operator', stack: ['+'], output: 'K L + M N * - O P ^ W * U / V / T * +', desc: '+ is lower than *. Pop *. New top is +. Same precedence (L-R assoc). Pop existing +. Push new +.' },
+            { token: 'Q', type: 'operand', stack: ['+'], output: '... T * + Q', desc: 'Operand. Goes to output. (Output truncated for readability)' },
+            { token: '^', type: 'operator', stack: ['+', '^'], output: '... T * + Q', desc: '^ is higher than +. Push ^.' },
+            { token: 'J', type: 'operand', stack: ['+', '^'], output: '... T * + Q J', desc: 'Operand. Goes to output.' },
+            { token: '^', type: 'operator', stack: ['+', '^', '^'], output: '... T * + Q J', desc: 'CRUCIAL: Incoming ^, top ^. Same precedence, BUT Right-to-Left assoc. Rule: Push incoming.' },
+            { token: 'A', type: 'operand', stack: ['+', '^', '^'], output: '... T * + Q J A', desc: 'Operand. Goes to output.' },
+            { token: 'END', type: 'end', stack: [], output: '... T * + Q J A ^ ^ +', desc: 'End of expression. Pop remaining stack: Pop ^, Pop ^, Pop +.' }
+        ];
+
+        const feedContainer = document.getElementById('walkthrough-feed');
+
+        // Render the feed
+        stepsData.forEach((step, index) => {
+            // Determine styling based on token type
+            let tokenColor = 'bg-slate-200 text-slate-700';
+            if (step.type === 'operand') tokenColor = 'bg-blue-100 text-blue-700';
+            if (step.type === 'operator') tokenColor = 'bg-pink-100 text-pink-700';
+            if (step.type === 'paren') tokenColor = 'bg-amber-100 text-amber-700';
+            if (step.type === 'end') tokenColor = 'bg-emerald-100 text-emerald-700';
+
+            // Build Stack HTML
+            let stackHtml = '';
+            if (step.stack.length === 0) {
+                stackHtml = `<div class="text-slate-400 text-xs text-center w-full h-full flex items-center justify-center">Empty</div>`;
+            } else {
+                // Stack is drawn from bottom up. The HTML array is top-to-bottom logically, 
+                // but CSS column-reverse makes the first DOM element the bottom physically.
+                step.stack.forEach((item, i) => {
+                    const isTop = i === step.stack.length - 1;
+                    stackHtml += `<div class="stack-item ${isTop ? 'top' : ''}">${item}</div>`;
+                });
+            }
+
+            // Highlight the crucial step
+            const isCrucial = step.desc.includes('CRUCIAL');
+            const cardBg = isCrucial ? 'bg-pink-50 border-pink-300 shadow-pink-100' : 'bg-white border-slate-200';
+            
+            const stepHtml = `
+                <div class="reveal relative flex flex-col md:flex-row gap-6 items-start mb-12">
+                    
+                    <!-- Feed Dot -->
+                    <div class="hidden md:flex absolute -left-10 w-8 h-8 rounded-full bg-white border-4 border-indigo-500 items-center justify-center z-10 top-4">
+                        <span class="text-[10px] font-bold text-slate-700">${index + 1}</span>
+                    </div>
+
+                    <!-- Left: Token & Logic -->
+                    <div class="${cardBg} border rounded-xl p-5 shadow-sm w-full md:w-5/12 relative">
+                        ${isCrucial ? '<div class="absolute -top-3 -right-3 bg-pink-500 text-white text-[10px] font-bold px-2 py-1 rounded-full animate-pulse"><i class="fa-solid fa-star mr-1"></i>Right-to-Left rule</div>' : ''}
+                        <div class="flex items-center gap-3 mb-3">
+                            <span class="text-sm font-semibold text-slate-500 uppercase">Input:</span>
+                            <span class="font-mono text-2xl font-bold ${tokenColor} px-4 py-1 rounded-lg border border-slate-300 shadow-sm">${step.token}</span>
+                        </div>
+                        <p class="text-slate-700 text-sm leading-relaxed">${step.desc}</p>
+                    </div>
+
+                    <!-- Middle: Stack Visual -->
+                    <div class="w-full md:w-2/12 flex flex-col items-center justify-center pt-2">
+                        <span class="text-xs font-bold text-slate-500 uppercase tracking-widest mb-2">Stack</span>
+                        <div class="stack-container shadow-inner">
+                            ${stackHtml}
+                        </div>
+                    </div>
+
+                    <!-- Right: Output -->
+                    <div class="bg-slate-800 border border-slate-700 rounded-xl p-5 shadow-md w-full md:w-5/12 flex flex-col justify-center">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Current Postfix Output</span>
+                        <div class="font-mono text-lg font-bold text-green-400 break-words leading-tight">
+                            ${step.output}
+                        </div>
+                    </div>
+                </div>
+            `;
+            feedContainer.insertAdjacentHTML('beforeend', stepHtml);
+        });
+
+        // Scroll Animation (Intersection Observer)
+        const reveals = document.querySelectorAll('.reveal');
+        
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.15
+        };
+
+        const revealObserver = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('active');
+                }
+            });
+        }, observerOptions);
+
+        reveals.forEach(reveal => {
+            revealObserver.observe(reveal);
+        });
+
+        // Progress bar logic
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById("progressBar").style.width = scrolled + "%";
+        });
+
+        // Trigger reveal for elements already in view on load
+        setTimeout(() => {
+            reveals.forEach(reveal => {
+                const rect = reveal.getBoundingClientRect();
+                if (rect.top < window.innerHeight) {
+                    reveal.classList.add('active');
+                }
+            });
+        }, 100);
+
+    </script>
+</body>
+</html>
