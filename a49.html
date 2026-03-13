@@ -1,0 +1,563 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Introduction to Trees | Study Notes Feed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Fira+Code:wght@400;600&display=swap');
+
+        :root {
+            --bg-color: #f4f6f9;
+            --card-bg: #ffffff;
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+            --accent: #0984e3;
+            --root-color: #ff7675;
+            --leaf-color: #55efc4;
+            --path-color: #a29bfe;
+            --node-border: #b2bec3;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Vertical Feed Layout */
+        .feed-container {
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 3px solid var(--accent);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--accent);
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h2 span {
+            background: var(--accent);
+            color: white;
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+            font-size: 1.2rem;
+        }
+
+        .content-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 30px;
+        }
+
+        .whiteboard-notes {
+            background: #fffdfaa1;
+            border-left: 4px solid #f1c40f;
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            color: #57606f;
+        }
+
+        .instructor-audio {
+            background: #f0f8ff;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .instructor-audio h4 {
+            color: var(--accent);
+            margin-bottom: 10px;
+        }
+
+        .instructor-audio ul {
+            padding-left: 20px;
+        }
+
+        .instructor-audio li {
+            margin-bottom: 10px;
+        }
+
+        /* --- CSS TREE VISUALIZATION SYSTEM --- */
+        .visual-box {
+            width: 100%;
+            overflow-x: auto;
+            background: #fafbfc;
+            border: 1px solid #e1e5ea;
+            border-radius: 12px;
+            padding: 40px 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .tree ul {
+            padding-top: 20px; 
+            position: relative;
+            display: flex;
+            justify-content: center;
+            transition: all 0.5s;
+        }
+
+        .tree li {
+            float: left; text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 5px 0 5px;
+            transition: all 0.5s;
+        }
+
+        /* Connectors */
+        .tree li::before, .tree li::after{
+            content: '';
+            position: absolute; top: 0; right: 50%;
+            border-top: 2px solid var(--node-border);
+            width: 50%; height: 20px;
+        }
+        .tree li::after{
+            right: auto; left: 50%;
+            border-left: 2px solid var(--node-border);
+        }
+
+        /* Remove connectors for single elements */
+        .tree li:only-child::after, .tree li:only-child::before { display: none; }
+        .tree li:only-child{ padding-top: 0;}
+
+        /* Remove left connector from first child and right connector from last child */
+        .tree li:first-child::before, .tree li:last-child::after{ border: 0 none; }
+        .tree li:last-child::before{ border-right: 2px solid var(--node-border); border-radius: 0 5px 0 0; }
+        .tree li:first-child::after{ border-radius: 5px 0 0 0; }
+
+        /* Downward connectors from parents */
+        .tree ul ul::before{
+            content: '';
+            position: absolute; top: 0; left: 50%;
+            border-left: 2px solid var(--node-border);
+            width: 0; height: 20px;
+            transform: translateX(-1px);
+        }
+
+        /* The Node Entity */
+        .tree a {
+            border: 2px solid var(--node-border);
+            padding: 15px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 1rem;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: white;
+            transition: all 0.3s;
+            position: relative;
+            z-index: 10;
+        }
+
+        /* Highlight Classes for Visualizations */
+        .hl-root { background-color: var(--root-color) !important; color: white !important; border-color: var(--root-color) !important; box-shadow: 0 0 15px rgba(255, 118, 117, 0.5); }
+        .hl-leaf { background-color: var(--leaf-color) !important; color: #111 !important; border-color: #00b894 !important; }
+        .hl-path { background-color: var(--path-color) !important; color: white !important; border-color: #6c5ce7 !important; }
+        .hl-parent { background-color: #fdcb6e !important; }
+        .hl-child { background-color: #ffeaa7 !important; }
+        .hl-edge::before, .hl-edge::after { border-color: #6c5ce7 !important; border-width: 3px !important; }
+
+        /* Custom Memory Representation block */
+        .memory-node {
+            display: flex;
+            border: 2px solid var(--text-main);
+            border-radius: 8px;
+            overflow: hidden;
+            width: max-content;
+            margin: 0 auto;
+            font-family: 'Fira Code', monospace;
+            background: white;
+        }
+        .memory-part {
+            padding: 15px 20px;
+            border-right: 2px solid var(--text-main);
+        }
+        .memory-part:last-child { border-right: none; }
+        .memory-data { background: #ffeaa7; font-weight: bold;}
+        .memory-null { color: #d63031; }
+
+        pre {
+            background: #2d3436;
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* Level Indicators */
+        .level-wrapper { display: flex; position: relative; }
+        .level-labels { display: flex; flex-direction: column; justify-content: space-around; margin-right: 20px; font-weight: bold; color: var(--accent); padding-top: 15px; padding-bottom: 15px;}
+        .level-labels div { position: relative; height: 60px; display: flex; align-items: center;}
+        .level-labels div::after { content: ''; position: absolute; left: 100%; top: 50%; width: 800px; height: 1px; border-bottom: 2px dashed #b2bec3; z-index: 0; opacity: 0.4;}
+
+        @media (max-width: 768px) {
+            .card { padding: 20px; }
+            .tree a { width: 35px; height: 35px; padding: 8px; font-size: 0.85rem;}
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <header class="header">
+        <h1>Introduction to Trees</h1>
+        <p>Complete Audio-Visual Notes Breakdown</p>
+    </header>
+
+    <!-- SECTION 1 -->
+    <article class="card">
+        <h2><span>1</span> Data Structures Overview</h2>
+        <div class="content-grid">
+            <div class="whiteboard-notes">
+                <strong>Whiteboard Notes:</strong><br><br>
+                Linear DS: Arrays, Linked List, Stack, Queue<br>
+                Non-linear DS: Tree, Graph
+            </div>
+            <div class="instructor-audio">
+                <h4>🎙️ Instructor's Explanation</h4>
+                <ul>
+                    <li><strong>What is a Data Structure?</strong> It is a way to organize data in memory so it can be processed efficiently.</li>
+                    <li><strong>Linear Structures:</strong> Data is arranged sequentially (one after another). There is only one level. Elements are traversed in a single run (e.g., Stack follows LIFO, Queue follows FIFO).</li>
+                    <li><strong>Non-linear Structures:</strong> Data is arranged in a hierarchical manner with multiple levels. Data is <i>not</i> sequential. Trees and Graphs fall into this category.</li>
+                </ul>
+            </div>
+        </div>
+    </article>
+
+    <!-- SECTION 2 -->
+    <article class="card">
+        <h2><span>2</span> The Tree Structure & Analogy</h2>
+        <p style="margin-bottom: 20px; color: var(--text-muted);">A standard hierarchy where data flows Top-to-Bottom.</p>
+        
+        <div class="visual-box">
+            <div class="tree">
+                <ul>
+                    <li><a href="#" class="hl-root">A</a>
+                        <ul>
+                            <li><a href="#">B</a>
+                                <ul>
+                                    <li><a href="#">E</a>
+                                        <ul>
+                                            <li><a href="#">I</a></li>
+                                            <li><a href="#">J</a></li>
+                                            <li><a href="#">K</a></li>
+                                        </ul>
+                                    </li>
+                                    <li><a href="#">F</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#">C</a>
+                                <ul>
+                                    <li><a href="#">G</a>
+                                        <ul>
+                                            <li><a href="#">L</a></li>
+                                            <li><a href="#">M</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><a href="#">D</a>
+                                <ul>
+                                    <li><a href="#">H</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content-grid" style="margin-top: 20px;">
+            <div class="instructor-audio">
+                <h4>🎙️ Instructor's Explanation</h4>
+                <ul>
+                    <li><strong>Hierarchy Analogy:</strong> Think of a college or company hierarchy. Node <span style="color:var(--root-color); font-weight:bold;">'A'</span> is the Director. 'B, C, D' are Deans. Below them are HODs, then Faculty. Everyone reports upwards to the root.</li>
+                    <li><strong>Direction:</strong> Unlike a real tree that grows from the ground up, a Data Structure tree grows from the <strong>top to the bottom</strong>.</li>
+                    <li><strong>Context Matters:</strong> In <i>Graph Theory</i>, a tree is an undirected, connected, acyclic graph. But in <i>Data Structures</i>, a tree has a specific direction. You can go from A to B, but not B to A.</li>
+                </ul>
+            </div>
+        </div>
+    </article>
+
+    <!-- SECTION 3 -->
+    <article class="card">
+        <h2><span>3</span> Formal Definition & Basic Terminology</h2>
+        
+        <div class="visual-box">
+            <div class="tree">
+                <ul>
+                    <li><a href="#">A</a>
+                        <ul>
+                            <li><a href="#">B</a>...</li>
+                            <li><a href="#" class="hl-parent">C</a>
+                                <ul>
+                                    <li><a href="#" class="hl-child">G</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#">D</a>...</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content-grid" style="margin-top: 20px;">
+            <div class="whiteboard-notes">
+                <strong>Definition:</strong> "Tree can be defined as a collection of entities (nodes) linked together to simulate a hierarchy."<br><br>
+                - Root = A<br>
+                - Parent Node = C is parent of G<br>
+                - Child Node = G is a child of C
+            </div>
+            <div class="instructor-audio">
+                <h4>🎙️ Instructor's Explanation</h4>
+                <ul>
+                    <li><strong>Node:</strong> Unlike arrays (which have "elements"), trees have "nodes." A node contains information <i>and</i> a link to the next node.</li>
+                    <li><strong>Root:</strong> The topmost node. It is the <i>only</i> node that does not have a parent.</li>
+                    <li><strong>Parent Node <span style="background:#fdcb6e; padding:2px 5px; border-radius:3px;">(C)</span>:</strong> The immediate predecessor (the node directly above) of any node.</li>
+                    <li><strong>Child Node <span style="background:#ffeaa7; padding:2px 5px; border-radius:3px;">(G)</span>:</strong> The immediate successor (the node directly below) of a node.</li>
+                </ul>
+            </div>
+        </div>
+    </article>
+
+    <!-- SECTION 4 -->
+    <article class="card">
+        <h2><span>4</span> Advanced Terminology: Paths & Relationships</h2>
+        
+        <div class="visual-box">
+            <div class="tree">
+                <ul>
+                    <li><a href="#" class="hl-path">A</a>
+                        <ul>
+                            <li class="hl-edge"><a href="#" class="hl-path">B</a>
+                                <ul>
+                                    <li class="hl-edge"><a href="#" class="hl-path">E</a>
+                                        <ul>
+                                            <li><a href="#" class="hl-leaf">I</a></li>
+                                            <li class="hl-edge"><a href="#" class="hl-path hl-leaf">J</a></li>
+                                            <li><a href="#" class="hl-leaf">K</a></li>
+                                        </ul>
+                                    </li>
+                                    <li><a href="#" class="hl-leaf">F</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="content-grid" style="margin-top: 20px;">
+            <div class="whiteboard-notes">
+                <strong>Leaf Node:</strong> I, J, K, F, L, M, H<br>
+                <strong>Non-leaf Node:</strong> A, B, C, D, E, G<br>
+                <strong>Path:</strong> sequence of consecutive edges from source to destination.<br>
+                <strong>Ancestor:</strong> predecessor node on path to root.<br>
+                <strong>Descendant:</strong> successor node on path to leaf.
+            </div>
+            <div class="instructor-audio">
+                <h4>🎙️ Instructor's Explanation</h4>
+                <ul>
+                    <li><strong>Leaf Node <span style="background:var(--leaf-color); padding:2px 5px; border-radius:3px;">(I, K, F)</span>:</strong> A node that has <i>zero</i> children. It is at the very bottom of its path (also called an External Node).</li>
+                    <li><strong>Non-Leaf Node:</strong> A node that has <i>at least one</i> child (Internal Node).</li>
+                    <li><strong>Path <span style="background:var(--path-color); color:white; padding:2px 5px; border-radius:3px;">(A→B→E→J)</span>:</strong> To get from A to J, you follow the connected edges. You count the edges (links) to determine path length.</li>
+                    <li><strong>Ancestor (Go Up):</strong> The ancestors of 'E' are B and A.</li>
+                    <li><strong>Descendant (Go Down):</strong> The descendants of 'B' are E, F, I, J, K.</li>
+                </ul>
+            </div>
+        </div>
+    </article>
+
+    <!-- SECTION 5 -->
+    <article class="card">
+        <h2><span>5</span> Subtrees, Siblings, and Degree</h2>
+        
+        <div class="content-grid">
+            <div class="instructor-audio">
+                <h4>🎙️ Instructor's Explanation</h4>
+                <ul>
+                    <li><strong>Subtree:</strong> Any node in the tree along with all of its descendants forms a completely valid smaller tree.</li>
+                    <li><strong>Sibling:</strong> Nodes that share the <i>exact same parent</i>. E and F are siblings. F and G are <i>not</i> siblings (they are cousins).</li>
+                    <li><strong>Degree of a Node:</strong> Just count its immediate children. Degree of A is 3. Degree of B is 2. Degree of any leaf node is always 0.</li>
+                    <li><strong>Degree of the Tree:</strong> Look at every node in the tree. Find the node with the highest degree. That number is the degree of the entire tree. (In this video's example, it is 3 because Node A has 3 children).</li>
+                </ul>
+            </div>
+        </div>
+    </article>
+
+    <!-- SECTION 6 -->
+    <article class="card">
+        <h2><span>6</span> Depth, Height, Level & Edges</h2>
+        <p style="margin-bottom: 20px; color: var(--text-muted); background: #ffeaa7; padding: 10px; border-radius: 5px;">⚠️ <strong>Note:</strong> Pay close attention here, as students frequently mix up Height and Depth!</p>
+        
+        <div class="visual-box">
+            <div class="level-wrapper">
+                <div class="level-labels">
+                    <div>Level 0</div>
+                    <div>Level 1</div>
+                    <div>Level 2</div>
+                    <div>Level 3</div>
+                </div>
+                <div class="tree">
+                    <ul>
+                        <li><a href="#" class="hl-root">A</a>
+                            <ul>
+                                <li><a href="#">B</a>
+                                    <ul>
+                                        <li><a href="#">E</a>
+                                            <ul><li><a href="#" class="hl-leaf">J</a></li></ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li><a href="#">C</a>
+                                    <ul>
+                                        <li><a href="#">G</a>
+                                            <ul><li><a href="#" class="hl-leaf">M</a></li></ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-grid" style="margin-top: 20px;">
+            <div class="whiteboard-notes">
+                <strong>depth of node</strong> = length of path from root to that node<br>
+                <strong>height of node</strong> = no. of edges in longest path from node to a leaf<br>
+                <strong>Formula:</strong> A tree with N nodes has exactly (N - 1) edges.
+            </div>
+            <div class="instructor-audio">
+                <h4>🎙️ Instructor's Explanation</h4>
+                <ul>
+                    <li><strong>Depth (Looks UP):</strong> Count the edges from the <strong>ROOT down to your target node</strong>. Depth of Root(A) = 0. Depth of E = 2.</li>
+                    <li><strong>Height (Looks DOWN):</strong> Count the edges from <strong>your target node down to the deepest LEAF</strong>. Height of Leaf(J) = 0. Height of B = 2.</li>
+                    <li><strong>Height of the Tree:</strong> Equals the height of the Root node (which is 3).</li>
+                    <li><strong>Level:</strong> Represents horizontal layers. Rule of thumb: <i>Level of a node = Depth of that node.</i></li>
+                    <li><strong>Edges Rule:</strong> A valid tree with N nodes will always have exactly <strong>N - 1 edges</strong>. If you add even one more edge, you create a cycle, and it is no longer a tree!</li>
+                </ul>
+            </div>
+        </div>
+    </article>
+
+    <!-- SECTION 7 -->
+    <article class="card">
+        <h2><span>7</span> Memory Representation (C Code)</h2>
+        
+        <div class="visual-box" style="flex-direction: column; align-items: center; gap: 30px;">
+            <p style="color: var(--text-muted);">Linked representation of a Binary Tree node in memory:</p>
+            <div class="memory-node">
+                <div class="memory-part">*left</div>
+                <div class="memory-part memory-data">Data</div>
+                <div class="memory-part">*right</div>
+            </div>
+            
+            <div style="display: flex; gap: 20px;">
+                <!-- Leaf Node representation -->
+                <div class="memory-node" style="font-size: 0.85rem;">
+                    <div class="memory-part memory-null">NULL</div>
+                    <div class="memory-part memory-data">D (Leaf)</div>
+                    <div class="memory-part memory-null">NULL</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="content-grid" style="margin-top: 20px;">
+            <pre><code>struct node {
+    int data;
+    struct node *left;
+    struct node *right;
+};</code></pre>
+            <div class="instructor-audio">
+                <h4>🎙️ Instructor's Explanation</h4>
+                <ul>
+                    <li>How do we actually code this? We use a Linked Representation (similar to doubly linked lists).</li>
+                    <li>She introduces a <strong>Binary Tree</strong> (a tree where the maximum degree is 2).</li>
+                    <li>Each node requires a <code>struct</code> with three components:
+                        <ol style="margin-left: 20px; margin-top:10px;">
+                            <li><strong>Data:</strong> To store the actual value.</li>
+                            <li><strong>Left Pointer:</strong> Memory address of the left child.</li>
+                            <li><strong>Right Pointer:</strong> Memory address of the right child.</li>
+                        </ol>
+                    </li>
+                    <li>If a node is a leaf node, its left and right pointers will simply point to <code>NULL</code>.</li>
+                </ul>
+            </div>
+        </div>
+    </article>
+
+    <!-- SECTION 8 -->
+    <article class="card">
+        <h2><span>8</span> Real-World Applications</h2>
+        <div class="content-grid">
+            <div class="instructor-audio" style="background: white; border: 2px solid #e1e5ea;">
+                <ul>
+                    <li>📁 <strong>File Systems:</strong> Your operating system (Windows, Linux) uses tree data structures to manage directories, sub-directories, and files efficiently.</li>
+                    <li>🌐 <strong>Networking:</strong> Routing protocols use tree data structures to find the shortest/best paths across networks.</li>
+                    <li>🔍 <strong>Searching & Sorting:</strong> Specifically formatted trees (like Binary Search Trees, AVL trees, Heap trees) are used when we need extremely fast, efficient data insertion, deletion, and searching operations.</li>
+                </ul>
+            </div>
+        </div>
+    </article>
+
+</div>
+
+</body>
+</html>
