@@ -1,0 +1,399 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Notes: Circular Linked List in C</title>
+    <style>
+        /* Base Styles & Typography */
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #333;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --accent-red: #ef4444;
+            --accent-green: #10b981;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Vertical Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* Feed Cards */
+        .feed-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            color: var(--secondary);
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin: 20px 0 10px;
+            color: var(--text-main);
+        }
+
+        p {
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+        }
+
+        strong {
+            color: var(--secondary);
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .keyword { color: #569cd6; }
+        .type { color: #4ec9b0; }
+        .string { color: #ce9178; }
+        .comment { color: #6a9955; font-style: italic; }
+        .function { color: #dcdcaa; }
+
+        /* Callouts / Notes */
+        .callout {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border-left: 5px solid;
+            background-color: #f8fafc;
+        }
+        .callout.warning {
+            border-left-color: var(--accent-red);
+            background-color: #fef2f2;
+        }
+        .callout.info {
+            border-left-color: var(--primary);
+            background-color: #eff6ff;
+        }
+        .callout h4 {
+            margin-bottom: 5px;
+            font-size: 1.1rem;
+        }
+
+        /* Linked List Visualizations (Pure CSS) */
+        .viz-container {
+            margin: 30px 0;
+            padding: 20px;
+            background-color: #fcfcfc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: auto;
+        }
+
+        .ll-row {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            position: relative;
+            margin-bottom: 10px;
+        }
+
+        .pointer-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+            margin-right: 10px;
+        }
+
+        .node {
+            display: flex;
+            border: 2px solid var(--text-main);
+            border-radius: 6px;
+            background-color: white;
+            position: relative;
+        }
+
+        .node-part {
+            padding: 10px 15px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            text-align: center;
+        }
+
+        .node-data {
+            border-right: 2px solid var(--text-main);
+            background-color: #e0f2fe;
+        }
+
+        .node-ptr {
+            background-color: #f1f5f9;
+            color: var(--accent-red);
+            font-weight: bold;
+        }
+
+        .node-ptr.null {
+            color: var(--text-main);
+        }
+
+        .arrow {
+            font-size: 1.5rem;
+            color: var(--text-main);
+        }
+
+        .address-label {
+            position: absolute;
+            top: -25px;
+            font-size: 0.8rem;
+            color: gray;
+            font-family: monospace;
+            width: 100%;
+            text-align: center;
+        }
+
+        /* Circular Loop Arrow Representation */
+        .circular-path {
+            width: 85%;
+            height: 40px;
+            border-bottom: 3px solid var(--primary);
+            border-left: 3px solid var(--primary);
+            border-right: 3px solid var(--primary);
+            border-radius: 0 0 10px 10px;
+            position: relative;
+            margin-top: -5px;
+        }
+        
+        .circular-path::before {
+            content: "▲";
+            position: absolute;
+            top: -15px;
+            left: -8px;
+            color: var(--primary);
+            font-size: 1.2rem;
+        }
+
+        .badge {
+            background-color: var(--primary);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+            vertical-align: middle;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <!-- Title Card -->
+    <header class="feed-card">
+        <h1>Implementation of Circular Linked List in C</h1>
+        <p style="text-align: center; color: gray;">In-depth visual notes from the whiteboard lecture.</p>
+    </header>
+
+    <!-- Part 1: Conceptual Understanding -->
+    <article class="feed-card">
+        <h2>1. The Core Concept: Singly vs. Circular</h2>
+        <p>The instructor begins by establishing what a standard Singly Linked List looks like. In a singly linked list, the final node always points to <strong>0 (NULL)</strong>, signifying the end of the list.</p>
+        
+        <div class="viz-container">
+            <h4 style="margin-bottom: 20px;">Singly Linked List (Before)</h4>
+            <div class="ll-row">
+                <div class="pointer-box">head<br>↓<br>200</div>
+                <div class="node"><div class="address-label">200</div><div class="node-part node-data">6</div><div class="node-part node-ptr">150</div></div>
+                <div class="arrow">➔</div>
+                <div class="node"><div class="address-label">150</div><div class="node-part node-data">7</div><div class="node-part node-ptr">300</div></div>
+                <div class="arrow">➔</div>
+                <div class="node"><div class="address-label">300</div><div class="node-part node-data">1</div><div class="node-part node-ptr null">0 (NULL)</div></div>
+            </div>
+        </div>
+
+        <p><strong>How do we make it Circular?</strong></p>
+        <p>To create a circle, we simply take the pointer of the very last node and replace the <code>NULL</code> value with the <strong>address of the first node</strong> (the head). In the whiteboard example, the head is at address <code>200</code>.</p>
+
+        <div class="viz-container">
+            <h4 style="margin-bottom: 20px;">Circular Linked List (After)</h4>
+            <div class="ll-row">
+                <div class="pointer-box">head<br>↓<br>200</div>
+                <div class="node"><div class="address-label">200</div><div class="node-part node-data">6</div><div class="node-part node-ptr">150</div></div>
+                <div class="arrow">➔</div>
+                <div class="node"><div class="address-label">150</div><div class="node-part node-data">7</div><div class="node-part node-ptr">300</div></div>
+                <div class="arrow">➔</div>
+                <div class="node"><div class="address-label">300</div><div class="node-part node-data">1</div><div class="node-part node-ptr">200</div></div>
+            </div>
+            <div class="circular-path"></div>
+        </div>
+
+        <div class="callout info">
+            <h4 style="color: var(--primary);">Instructor Insight 💡</h4>
+            <p>In a Circular Linked List, there is no "start" or "end" node just by looking at the circle. That is exactly why we <strong>must maintain a `head` pointer</strong> to keep track of our entry point into the circle.</p>
+        </div>
+    </article>
+
+    <!-- Part 2: Node Structure -->
+    <article class="feed-card">
+        <h2>2. Defining the Node Structure in C</h2>
+        <p>Before writing the creation logic, we must define what a "node" looks like in code. Each node has two parts: a data part and a pointer part.</p>
+
+<pre><code><span class="keyword">struct</span> <span class="type">node</span> {
+    <span class="type">int</span> data;
+    <span class="keyword">struct</span> <span class="type">node</span> *next;
+};
+
+<span class="keyword">struct</span> <span class="type">node</span> *head = <span class="keyword">0</span>; <span class="comment">// Global pointer initialized to NULL</span></code></pre>
+
+        <h3>Why <code>struct node *next</code>?</h3>
+        <p>The instructor emphasizes this point heavily: If a pointer is going to store the address of an integer, it must be an <code>int *</code>. Because our <code>next</code> pointer is storing the address of another <em>node</em>, its data type must be a pointer to a <code>struct node</code>.</p>
+    </article>
+
+    <!-- Part 3: Creating the Circular Linked List -->
+    <article class="feed-card">
+        <h2>3. Creating the Circular Linked List (createCLL)</h2>
+        <p>To dynamically create the list, we need to take input from the user in a loop, dynamically allocate memory using <code>malloc</code>, and correctly link the nodes.</p>
+
+        <h3>The "Temp" Pointer Dilemma</h3>
+        <p>When inserting nodes, you might be tempted to use the <code>head</code> pointer to link the new nodes together (e.g., <code>head->next = newnode</code>). <strong>Do not do this!</strong></p>
+        
+        <div class="callout warning">
+            <h4 style="color: var(--accent-red);">🚨 Common Student Mistake</h4>
+            <p>If you move the <code>head</code> pointer to the newly created node, you lose the address of the very first node forever. You will never be able to access the start of your list. <strong>Always use a <code>temp</code> pointer to traverse and add nodes to the end!</strong></p>
+        </div>
+
+        <h3>The Full Creation Logic</h3>
+        <p>Here is the exact code block written on the whiteboard, combining the memory allocation, the <code>head</code> check, the <code>temp</code> traversal, and closing the circular loop.</p>
+
+<pre><code><span class="type">void</span> <span class="function">createCLL</span>() {
+    <span class="keyword">struct</span> <span class="type">node</span> *newnode, *temp;
+    <span class="type">int</span> choice = <span class="keyword">1</span>;
+
+    <span class="keyword">while</span> (choice == <span class="keyword">1</span>) {
+        <span class="comment">// 1. Allocate dynamic memory for the new node</span>
+        newnode = (<span class="keyword">struct</span> <span class="type">node</span>*)<span class="function">malloc</span>(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> <span class="type">node</span>));
+
+        <span class="comment">// 2. Populate the node with data</span>
+        <span class="function">printf</span>(<span class="string">"Enter data: "</span>);
+        <span class="function">scanf</span>(<span class="string">"%d"</span>, &newnode->data);
+        newnode->next = <span class="keyword">0</span>; <span class="comment">// Initialize next as 0 temporarily</span>
+
+        <span class="comment">// 3. Link the node into the list</span>
+        <span class="keyword">if</span> (head == <span class="keyword">0</span>) {
+            <span class="comment">// If list is empty, head and temp both point to the first node</span>
+            head = temp = newnode;
+        } <span class="keyword">else</span> {
+            <span class="comment">// Link the current last node (temp) to the new node</span>
+            temp->next = newnode;
+            <span class="comment">// Move temp forward to the new node</span>
+            temp = newnode;
+        }
+
+        <span class="comment">// 4. MAKE IT CIRCULAR!</span>
+        <span class="comment">// At the end of every insertion, the last node (temp) must point to head</span>
+        temp->next = head;
+
+        <span class="comment">// Ask user to continue</span>
+        <span class="function">printf</span>(<span class="string">"Press 1 to continue, 0 to exit: "</span>);
+        <span class="function">scanf</span>(<span class="string">"%d"</span>, &choice);
+    }
+}</code></pre>
+        
+        <p>Notice Step 4: <code>temp->next = head;</code>. Because <code>temp</code> is always updated to be the last node in the <code>else</code> block, we simply take <code>temp->next</code> and point it back to <code>head</code> to maintain the circle.</p>
+    </article>
+
+    <!-- Part 4: Displaying the Circular Linked List -->
+    <article class="feed-card">
+        <h2>4. Displaying (Traversing) the List</h2>
+        <p>Displaying a circular linked list requires a different <code>while</code> loop condition than a singly linked list.</p>
+
+        <h3>The Infinite Loop Trap</h3>
+        <p>In a singly linked list, we traverse using <code>while (temp != 0)</code>. However, in a circular list, <strong>there is no 0 (NULL)</strong>. If you use that logic, your code will print numbers in an infinite circle forever.</p>
+        
+        <p>Instead, we must stop the loop when the <em>next</em> node is the head: <code>while (temp->next != head)</code>.</p>
+
+<pre><code><span class="type">void</span> <span class="function">display</span>() {
+    <span class="keyword">struct</span> <span class="type">node</span> *temp;
+
+    <span class="keyword">if</span> (head == <span class="keyword">0</span>) {
+        <span class="function">printf</span>(<span class="string">"List is empty"</span>);
+    } <span class="keyword">else</span> {
+        temp = head; <span class="comment">// Start at the beginning</span>
+
+        <span class="comment">// Traverse the circle until the node points back to the head</span>
+        <span class="keyword">while</span> (temp->next != head) {
+            <span class="function">printf</span>(<span class="string">"%d "</span>, temp->data);
+            temp = temp->next;
+        }
+
+        <span class="comment">// IMPORTANT: Print the very last node!</span>
+        <span class="function">printf</span>(<span class="string">"%d"</span>, temp->data);
+    }
+}</code></pre>
+
+        <div class="callout info">
+            <h4 style="color: var(--primary);">Why the extra printf at the end? 🤔</h4>
+            <p>Look closely at the condition: <code>while (temp->next != head)</code>. When <code>temp</code> reaches the last node, its <code>next</code> pointer <em>does</em> equal <code>head</code>. Therefore, the loop breaks <strong>before</strong> it has a chance to print the data inside the last node. We must manually write one final <code>printf</code> outside the loop to print that final value.</p>
+        </div>
+    </article>
+
+    <!-- Summary -->
+    <article class="feed-card" style="border: 2px solid var(--primary);">
+        <h2 style="border: none; margin-bottom: 10px;">📝 Quick Summary Checklist</h2>
+        <ul style="padding-left: 20px; font-size: 1.05rem;">
+            <li style="margin-bottom: 8px;"><strong>The Arrow Back:</strong> A Circular Linked List's final node points to the <code>head</code>, not <code>NULL</code>.</li>
+            <li style="margin-bottom: 8px;"><strong>Never move Head:</strong> Use a <code>temp</code> pointer to add nodes to the end of the list. If you move <code>head</code>, the list is lost.</li>
+            <li style="margin-bottom: 8px;"><strong>Closing the loop:</strong> After adding a node and moving <code>temp</code>, always write <code>temp->next = head;</code> to maintain the circle.</li>
+            <li style="margin-bottom: 8px;"><strong>Traversal Condition:</strong> Use <code>while (temp->next != head)</code> to traverse, and remember to print the final node's data outside the loop.</li>
+        </ul>
+    </article>
+
+</div>
+
+</body>
+</html>
