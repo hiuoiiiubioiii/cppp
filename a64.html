@@ -1,0 +1,424 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red-Black Trees Study Notes</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+            --red-node: #e63946;
+            --black-node: #1d3557;
+            --nil-node: #457b9d;
+            --accent: #4a69bd;
+            --border-radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--card-bg);
+            padding: 2rem 1rem;
+            text-align: center;
+            border-bottom: 1px solid #e1e4e8;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+        }
+
+        header h1 {
+            color: var(--black-node);
+            font-size: 2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-weight: 500;
+        }
+
+        .feed-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding: 0 1rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 2.5rem;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.04);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .card h2 {
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h3 {
+            margin: 1.5rem 0 1rem;
+            font-size: 1.25rem;
+        }
+
+        .card p {
+            margin-bottom: 1rem;
+            font-size: 1.05rem;
+        }
+
+        .highlight {
+            background: #ffeaa7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .alert-box {
+            background: #fff3cd;
+            border-left: 5px solid #fdcb6e;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 4px;
+        }
+
+        .visualization {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 2rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .viz-caption {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            font-style: italic;
+        }
+
+        /* SVG Tree Styles */
+        svg {
+            max-width: 100%;
+            height: auto;
+            overflow: visible;
+        }
+        .edge { stroke: #b2bec3; stroke-width: 3; }
+        .edge-dashed { stroke: #b2bec3; stroke-width: 2; stroke-dasharray: 5,5; }
+        .node-black { fill: var(--black-node); }
+        .node-red { fill: var(--red-node); }
+        .node-nil { fill: var(--black-node); stroke: white; stroke-width: 2;}
+        .node-text { fill: white; font-family: monospace; font-size: 18px; font-weight: bold; text-anchor: middle; dominant-baseline: central; }
+        .node-text-sm { fill: white; font-family: monospace; font-size: 12px; font-weight: bold; text-anchor: middle; dominant-baseline: central; }
+
+        ul.rules-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        ul.rules-list li {
+            background: #f1f2f6;
+            margin-bottom: 1rem;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-left: 4px solid var(--black-node);
+            font-size: 1.1rem;
+        }
+
+        ul.rules-list li strong {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: var(--black-node);
+        }
+
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .comp-card {
+            background: #f8f9fa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border-top: 4px solid var(--accent);
+        }
+
+        @media (max-width: 600px) {
+            .comparison-grid { grid-template-columns: 1fr; }
+            .card { padding: 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Introduction to Red-Black Trees</h1>
+        <p>Interactive Vertical Study Notes • Scroll to Learn</p>
+    </header>
+
+    <main class="feed-container">
+
+        <!-- PART 1 -->
+        <article class="card">
+            <h2>🎯 Part 1: The "Why" - Need for Red-Black Trees</h2>
+            <p>We already have many data structures (Arrays, Linked Lists, Stacks, normal BSTs). The goal of any data structure is to organize data to perform operations (Search, Insert, Delete) in the shortest amount of time.</p>
+            
+            <h3>The Problem with Normal Binary Search Trees (BST)</h3>
+            <p>In a standard, somewhat balanced BST, searching takes <strong>O(log n)</strong> time. But what happens if the data is inserted in sorted order?</p>
+
+            <div class="visualization">
+                <svg width="400" height="250" viewBox="0 0 400 250">
+                    <!-- Right Skewed Tree Edges -->
+                    <line x1="200" y1="30" x2="250" y2="80" class="edge" />
+                    <line x1="250" y1="80" x2="300" y2="130" class="edge" />
+                    <line x1="300" y1="130" x2="350" y2="180" class="edge" />
+                    <line x1="350" y1="180" x2="380" y2="210" class="edge-dashed" />
+                    
+                    <!-- Nodes -->
+                    <circle cx="200" cy="30" r="20" fill="#636e72" />
+                    <text x="200" y="30" class="node-text">10</text>
+                    
+                    <circle cx="250" cy="80" r="20" fill="#636e72" />
+                    <text x="250" y="80" class="node-text">15</text>
+                    
+                    <circle cx="300" cy="130" r="20" fill="#636e72" />
+                    <text x="300" y="130" class="node-text">20</text>
+                    
+                    <circle cx="350" cy="180" r="20" fill="#636e72" />
+                    <text x="350" y="180" class="node-text">25</text>
+                </svg>
+                <p class="viz-caption">A Right-Skewed BST</p>
+            </div>
+
+            <p>If you want to search for the number `90` in the tree above, you have to visit every single node down the line. Because you check every element, the time complexity becomes <strong>O(n)</strong>. We need <em>balance</em> to guarantee fast operations.</p>
+
+            <div class="alert-box">
+                <strong>Instructor's Correction Moment:</strong> While drawing a "balanced" BST on the board, the instructor wrote the left child as 7, and the right child of 7 as 11. She immediately corrected herself: <em>"11 is greater than the root 10, so it cannot exist anywhere in the left subtree."</em> 
+                <br><br><strong>Key Takeaway:</strong> The entire left subtree must be smaller than the root, not just the immediate left child!
+            </div>
+        </article>
+
+        <!-- PART 1.5 -->
+        <article class="card">
+            <h2>⚖️ AVL Trees vs. Red-Black Trees</h2>
+            <p>If we need a balanced tree, we already have AVL Trees (which guarantee O(log n)). Why invent Red-Black Trees?</p>
+            
+            <div class="comparison-grid">
+                <div class="comp-card">
+                    <strong>AVL Trees</strong>
+                    <p><em>Strictly</em> Height-Balanced.</p>
+                    <p>Because they are strict, they might require many rotations (sometimes all the way up to the root) during insertion/deletion.</p>
+                    <p><strong>Best for:</strong> Frequent Searches.</p>
+                </div>
+                <div class="comp-card">
+                    <strong>Red-Black Trees</strong>
+                    <p><em>Roughly</em> Height-Balanced.</p>
+                    <p>Requires a <strong>maximum of 2 rotations</strong> to balance after an insert/delete. Sometimes only recoloring is needed.</p>
+                    <p><strong>Best for:</strong> Frequent Insertions/Deletions.</p>
+                </div>
+            </div>
+        </article>
+
+        <!-- PART 2 -->
+        <article class="card">
+            <h2>📜 Part 2: The 5 Golden Rules (Properties)</h2>
+            <p>For a tree to be officially called a "Red-Black Tree", it must perfectly satisfy these 5 rules:</p>
+
+            <ul class="rules-list">
+                <li>
+                    <strong>1. It is a valid Binary Search Tree.</strong>
+                    Left subtrees are smaller, right subtrees are greater. It is self-balancing.
+                </li>
+                <li>
+                    <strong>2. Every node is either Black or Red.</strong>
+                    In memory, this is stored using just 1 extra bit (0 for Black, 1 for Red).
+                </li>
+                <li>
+                    <strong>3. The Root is always Black.</strong>
+                    <em>Instructor Analogy:</em> Think of the root as the "head of the family" or grandparent. They must remain calm and cool-headed (Black), not angry (Red).
+                </li>
+                <li>
+                    <strong>4. Every leaf which is `NIL` is Black.</strong>
+                    In an RB Tree, the actual data nodes are "Internal Nodes". The ends of the paths don't just hang empty; they point to dummy `NIL` nodes (External Nodes). These must be Black.
+                </li>
+                <li>
+                    <strong>5. If a node is Red, its children MUST be Black.</strong>
+                    You can never have a Red-Red parent-child pair. (However, a Black parent can definitely have Black children).
+                </li>
+                <li>
+                    <strong>6. The "Black-Height" Rule.</strong>
+                    Every path from a node down to any of its descendant `NIL` leaves must contain the <em>exact same number of Black nodes</em>.
+                </li>
+            </ul>
+
+            <div class="visualization">
+                <svg width="300" height="200" viewBox="0 0 300 200">
+                    <!-- Edges -->
+                    <line x1="150" y1="30" x2="100" y2="90" class="edge" />
+                    <line x1="150" y1="30" x2="200" y2="90" class="edge" />
+                    <line x1="100" y1="90" x2="70" y2="150" class="edge" />
+                    <line x1="100" y1="90" x2="130" y2="150" class="edge" />
+                    
+                    <!-- Root -->
+                    <circle cx="150" cy="30" r="20" class="node-black" />
+                    <text x="150" y="30" class="node-text">10</text>
+                    
+                    <!-- Left Child (Red) -->
+                    <circle cx="100" cy="90" r="20" class="node-red" />
+                    <text x="100" y="90" class="node-text">5</text>
+
+                    <!-- Right Child (Black) -->
+                    <circle cx="200" cy="90" r="20" class="node-black" />
+                    <text x="200" y="90" class="node-text">15</text>
+
+                    <!-- NIL nodes for 5 -->
+                    <rect x="55" y="140" width="30" height="20" rx="4" class="node-nil" />
+                    <text x="70" y="150" class="node-text-sm">NIL</text>
+
+                    <rect x="115" y="140" width="30" height="20" rx="4" class="node-nil" />
+                    <text x="130" y="150" class="node-text-sm">NIL</text>
+                </svg>
+                <p class="viz-caption">Notice how the Internal Nodes hold data, while External `NIL` leaves terminate the tree. NILs are always Black.</p>
+            </div>
+        </article>
+
+        <!-- PART 3: TEST EXAMPLES -->
+        <article class="card">
+            <h2>🧪 Part 3: Testing Examples</h2>
+            <p>Let's look at the trees the instructor drew on the whiteboard and determine if they are valid Red-Black trees.</p>
+
+            <!-- Example 1 -->
+            <h3>Example 1</h3>
+            <div class="visualization">
+                <svg width="200" height="120" viewBox="0 0 200 120">
+                    <line x1="100" y1="30" x2="50" y2="90" class="edge" />
+                    <line x1="100" y1="30" x2="150" y2="90" class="edge" />
+                    
+                    <!-- Root -->
+                    <circle cx="100" cy="30" r="20" class="node-red" />
+                    <text x="100" y="30" class="node-text">5</text>
+                    
+                    <!-- Children -->
+                    <circle cx="50" cy="90" r="20" class="node-black" />
+                    <text x="50" y="90" class="node-text">2</text>
+
+                    <circle cx="150" cy="90" r="20" class="node-black" />
+                    <text x="150" y="90" class="node-text">8</text>
+                </svg>
+            </div>
+            <p>❌ <strong>Verdict: NOT a Red-Black Tree.</strong></p>
+            <p><strong>Reason:</strong> It violates Rule #3. The root of the tree (5) is colored Red. The root must always be Black.</p>
+            
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 2rem 0;">
+
+            <!-- Example 2 -->
+            <h3>Example 2</h3>
+            <div class="visualization">
+                <svg width="250" height="150" viewBox="0 0 250 150">
+                    <line x1="125" y1="30" x2="75" y2="80" class="edge" />
+                    <line x1="75" y1="80" x2="125" y2="130" class="edge" />
+                    
+                    <circle cx="125" cy="30" r="20" class="node-black" />
+                    <text x="125" y="30" class="node-text">10</text>
+                    
+                    <circle cx="75" cy="80" r="20" class="node-black" />
+                    <text x="75" y="80" class="node-text">5</text>
+
+                    <circle cx="125" cy="130" r="20" class="node-black" />
+                    <text x="125" y="130" class="node-text">11</text>
+                </svg>
+            </div>
+            <p>❌ <strong>Verdict: NOT a Red-Black Tree.</strong></p>
+            <p><strong>Reason:</strong> It violates Rule #1. It is not a valid Binary Search Tree. The node `11` is greater than `10`, so it cannot be placed inside the left subtree of the root.</p>
+
+            <hr style="border: 0; border-top: 1px solid #eee; margin: 2rem 0;">
+
+            <!-- Example 3 -->
+            <h3>Example 3</h3>
+            <div class="visualization">
+                <svg width="350" height="220" viewBox="0 0 350 220">
+                    <line x1="175" y1="30" x2="100" y2="90" class="edge" />
+                    <line x1="175" y1="30" x2="250" y2="90" class="edge" />
+                    <line x1="100" y1="90" x2="50" y2="150" class="edge" />
+                    <line x1="100" y1="90" x2="150" y2="150" class="edge" />
+                    
+                    <circle cx="175" cy="30" r="20" class="node-black" />
+                    <text x="175" y="30" class="node-text">10</text>
+                    
+                    <circle cx="100" cy="90" r="20" class="node-black" />
+                    <text x="100" y="90" class="node-text">4</text>
+
+                    <circle cx="250" cy="90" r="20" class="node-black" />
+                    <text x="250" y="90" class="node-text">15</text>
+
+                    <circle cx="50" cy="150" r="20" class="node-black" />
+                    <text x="50" y="150" class="node-text">2</text>
+
+                    <circle cx="150" cy="150" r="20" class="node-red" />
+                    <text x="150" y="150" class="node-text">5</text>
+
+                    <!-- Path highlighting -->
+                    <path d="M 175 30 L 250 90 L 250 150" fill="none" stroke="#00b894" stroke-width="4" stroke-dasharray="5,5" opacity="0.5"/>
+                    <path d="M 175 30 L 100 90 L 50 150 L 50 190" fill="none" stroke="#e17055" stroke-width="4" stroke-dasharray="5,5" opacity="0.5"/>
+                    
+                    <!-- NIL representations purely for counting -->
+                    <rect x="235" y="140" width="30" height="20" rx="4" class="node-nil" />
+                    <text x="250" y="150" class="node-text-sm">NIL</text>
+
+                    <rect x="35" y="180" width="30" height="20" rx="4" class="node-nil" />
+                    <text x="50" y="190" class="node-text-sm">NIL</text>
+                </svg>
+            </div>
+            <p>❌ <strong>Verdict: NOT a Red-Black Tree.</strong></p>
+            <p><strong>Reason:</strong> It violates the Black-Height Rule. Let's trace the paths (shown in dashed lines) from the root down to the NIL nodes (not counting the root itself):</p>
+            <ul>
+                <li>🟢 <strong>Path to Right NIL:</strong> Goes through 15 (Black) -> NIL (Black). <strong>Total = 2 Black nodes.</strong></li>
+                <li>🟠 <strong>Path to Far Left NIL:</strong> Goes through 4 (Black) -> 2 (Black) -> NIL (Black). <strong>Total = 3 Black nodes.</strong></li>
+            </ul>
+            <p>Because `2 != 3`, the Black-Height property fails.</p>
+
+        </article>
+
+        <!-- CONCLUSION -->
+        <article class="card">
+            <h2>🏆 The Core Mathematical Guarantee</h2>
+            <p>At the end of the video, the instructor explains the magic behind these rules. Because of the <strong>Black-Height rule</strong> (paths must have equal black nodes) and the <strong>Red-child rule</strong> (red nodes can't be consecutive), the tree is physically forced into a roughly balanced shape.</p>
+            
+            <div class="highlight" style="font-size: 1.2rem; text-align: center; margin: 1.5rem 0;">
+                The longest path from the root to a leaf is <strong>no more than twice the length</strong> of the shortest path.
+            </div>
+
+            <p>This strict constraint guarantees that the height of the tree will never degrade into a straight line, ensuring that Search, Insertion, and Deletion operations will always take <strong>O(log n)</strong> time.</p>
+        </article>
+
+    </main>
+
+</body>
+</html>
