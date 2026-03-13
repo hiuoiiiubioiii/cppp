@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Infix to Prefix Conversion | Study Feed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap');
+
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --primary: #4A90E2;
+            --secondary: #FF6B6B;
+            --success: #2ECC71;
+            --warning: #F5A623;
+            --stack-bg: #eef2f5;
+            --code-bg: #2d2d2d;
+            --code-text: #f8f8f2;
+            --highlight: #ffeaa7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeUp 0.6s ease forwards;
+        }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1, h2, h3 {
+            color: #111;
+            margin-bottom: 1rem;
+        }
+
+        h1 { font-size: 2.2rem; border-bottom: 4px solid var(--primary); padding-bottom: 0.5rem; display: inline-block;}
+        h2 { font-size: 1.5rem; color: var(--primary); margin-top: 1rem;}
+        
+        p { margin-bottom: 1rem; }
+
+        /* Code & Expressions */
+        code, .expr {
+            font-family: 'Fira Code', monospace;
+            background: var(--stack-bg);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            color: var(--secondary);
+            font-size: 0.95em;
+        }
+
+        .code-block {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            overflow-x: auto;
+            margin-bottom: 1rem;
+            font-size: 1.1rem;
+            letter-spacing: 1px;
+        }
+
+        .highlight-calc { background-color: var(--secondary); color: white; padding: 0 4px; border-radius: 3px; }
+        .highlight-done { background-color: var(--success); color: white; padding: 0 4px; border-radius: 3px; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+        }
+        th, td {
+            padding: 12px;
+            border-bottom: 1px solid #ddd;
+            text-align: left;
+        }
+        th { background-color: var(--stack-bg); color: var(--primary); font-weight: 600; }
+        
+        /* Stack Visualizer */
+        .visualizer-area {
+            display: flex;
+            gap: 2rem;
+            background: #fafafa;
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            margin: 1rem 0;
+            align-items: flex-end;
+        }
+
+        .stack-container {
+            width: 100px;
+            min-height: 200px;
+            border: 3px solid var(--text-muted);
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            display: flex;
+            flex-direction: column-reverse;
+            padding: 5px;
+            background: white;
+            justify-content: flex-start;
+        }
+
+        .stack-item {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            padding: 8px;
+            margin-top: 5px;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-weight: bold;
+            animation: popIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes popIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .io-container { flex: 1; display: flex; flex-direction: column; gap: 1rem;}
+        .io-box { background: white; padding: 10px; border: 1px solid #ddd; border-radius: 6px; }
+        .io-title { font-weight: bold; font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); margin-bottom: 5px; }
+        .io-content { font-family: 'Fira Code', monospace; font-size: 1.2rem; min-height: 30px;}
+
+        button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background: #357abd; }
+        button:disabled { background: #ccc; cursor: not-allowed; }
+
+        .rule-card {
+            border-left: 4px solid var(--warning);
+            padding-left: 1rem;
+            background: #fffdf5;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .step-list {
+            list-style: none;
+            counter-reset: steps;
+        }
+        .step-list li {
+            position: relative;
+            padding-left: 2.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .step-list li::before {
+            counter-increment: steps;
+            content: counter(steps);
+            position: absolute;
+            left: 0;
+            top: 0;
+            background: var(--primary);
+            color: white;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <!-- Header -->
+    <section class="card" style="animation-delay: 0.1s;">
+        <h1>Infix to Prefix Conversion</h1>
+        <p>Welcome to your study feed! Here, we break down exactly how to convert mathematical expressions from <strong>Infix</strong> (operators between operands) to <strong>Prefix</strong> (operators before operands). Keep scrolling to learn the prerequisites, manual conversion, and the Stack Algorithm.</p>
+    </section>
+
+    <!-- Prerequisites -->
+    <section class="card" style="animation-delay: 0.2s;">
+        <h2>1. Prerequisites 🔑</h2>
+        <p>Before we start, you must memorize operator <strong>Precedence</strong> and <strong>Associativity</strong>. This dictates which operator is solved first.</p>
+        <table>
+            <tr>
+                <th>Operator</th>
+                <th>Precedence</th>
+                <th>Associativity</th>
+            </tr>
+            <tr>
+                <td class="expr">^</td>
+                <td>Highest (3)</td>
+                <td>Right to Left (R → L)</td>
+            </tr>
+            <tr>
+                <td class="expr">* , /</td>
+                <td>Medium (2)</td>
+                <td>Left to Right (L → R)</td>
+            </tr>
+            <tr>
+                <td class="expr">+ , -</td>
+                <td>Lowest (1)</td>
+                <td>Left to Right (L → R)</td>
+            </tr>
+        </table>
+    </section>
+
+    <!-- Manual Simple Example -->
+    <section class="card" style="animation-delay: 0.3s;">
+        <h2>2. The Basics (Manual Conversion)</h2>
+        <p>Let's manually convert a simple Infix expression to Prefix: <code class="expr">A + B * C</code></p>
+        
+        <div class="code-block" style="font-size: 1rem;">
+            Step 1: A + <span class="highlight-calc">B * C</span><br>
+            <span style="color: #999;">/* * has higher precedence than +. Prefix means move operator BEFORE operands */</span><br><br>
+            Step 2: <span class="highlight-calc">A +</span> <span class="highlight-done">(*BC)</span><br>
+            <span style="color: #999;">/* Treat (*BC) as one operand. Move + to the front. */</span><br><br>
+            Final:  <span class="highlight-done">+ A * B C</span>
+        </div>
+        <div class="rule-card">
+            <strong>Why do we need a Stack Algorithm?</strong><br>
+            Doing this manually requires scanning the expression multiple times. For a computer, this is inefficient. A Stack allows the computer to convert complex expressions by scanning the string <strong>only once</strong>!
+        </div>
+    </section>
+
+    <!-- Algorithm Rules -->
+    <section class="card" style="animation-delay: 0.4s;">
+        <h2>3. The Stack Algorithm Rules 📜</h2>
+        <p>To use a Stack for Prefix conversion, follow these exact steps carefully:</p>
+        
+        <ul class="step-list">
+            <li><strong>Reverse the Infix Expression.</strong> Read from right to left. <br><em style="color: var(--secondary);">Instructor Trick:</em> Do NOT swap parentheses when reversing! Leave <code>)</code> as <code>)</code> and <code>(</code> as <code>(</code>. This means <code>)</code> will act as our "opening" trigger to push, and <code>(</code> will trigger a pop.</li>
+            <li><strong>Scan the reversed string from Left to Right:</strong>
+                <ul>
+                    <li>👉 <strong>If Operand (A-Z):</strong> Print directly to output.</li>
+                    <li>👉 <strong>If <code>)</code> :</strong> Push to Stack unconditionally.</li>
+                    <li>👉 <strong>If <code>(</code> :</strong> Pop from Stack and print to output until you find <code>)</code>. Discard both brackets.</li>
+                    <li>👉 <strong>If Operator:</strong>
+                        <ol style="margin-left: 1.5rem; margin-top: 0.5rem;">
+                            <li>If Stack is empty or top is <code>)</code> ➜ <strong>Push</strong>.</li>
+                            <li>If incoming is <strong>HIGHER</strong> precedence than Stack top ➜ <strong>Push</strong>.</li>
+                            <li>If incoming is <strong>LOWER</strong> precedence ➜ <strong>Pop and print</strong> top of stack until incoming is higher/equal, then push.</li>
+                            <li>If incoming is <strong>EQUAL</strong> precedence ➜ Check Associativity! Because we reversed the string, the rule flips. For Left-to-Right (<code>+,-,*,/</code>), you <strong>PUSH</strong> it!</li>
+                        </ol>
+                    </li>
+                </ul>
+            </li>
+            <li><strong>Reverse the final printed string</strong> to get your Prefix answer!</li>
+        </ul>
+    </section>
+
+    <!-- Interactive Stack Simulator -->
+    <section class="card" style="animation-delay: 0.5s;">
+        <h2>4. Interactive Stack Trace 💻</h2>
+        <p>Let's convert the massive expression from the video:<br>
+        <code class="expr">K + L - M * N + (O ^ P) * W / U / V * T + Q</code></p>
+        <p><strong>Step 1: Reverse it!</strong> <br><code class="expr">Q + T * V / U / W * ) P ^ O ( + N * M - L + K</code></p>
+        
+        <p>Click <strong>"Next Step"</strong> to watch the Stack Algorithm process this reversed string exactly as the instructor did on the whiteboard.</p>
+
+        <div class="visualizer-area">
+            <div class="stack-container" id="visual-stack">
+                <!-- Stack items injected here -->
+            </div>
+            <div class="io-container">
+                <div class="io-box">
+                    <div class="io-title">Reversed Input Remaining</div>
+                    <div class="io-content" id="vis-input">Q+T*V/U/W*)P^O(+N*M-L+K</div>
+                </div>
+                <div class="io-box">
+                    <div class="io-title">Output (Printed)</div>
+                    <div class="io-content" id="vis-output" style="color: var(--success);"></div>
+                </div>
+                <div class="io-box">
+                    <div class="io-title">Instructor's Logic</div>
+                    <div id="vis-logic" style="font-size: 0.9rem; color: var(--text-muted); min-height: 40px;">Ready to start scanning.</div>
+                </div>
+                <button id="next-btn" onclick="nextTraceStep()">Next Step ⏵</button>
+            </div>
+        </div>
+
+        <div style="overflow-x: auto;">
+            <table id="trace-table">
+                <tr>
+                    <th>Symbol</th>
+                    <th>Stack (Bottom → Top)</th>
+                    <th>Output</th>
+                </tr>
+                <!-- Table rows injected via JS -->
+            </table>
+        </div>
+
+        <div id="final-answer-box" style="display: none; margin-top: 1rem;" class="rule-card">
+            <strong>Algorithm Finished! Step 3: Reverse the Output.</strong><br>
+            Raw Output: <code class="expr" id="raw-out"></code><br>
+            Final Prefix: <strong style="color: var(--success);" class="expr" id="final-out"></strong>
+        </div>
+    </section>
+
+    <!-- Manual Verification -->
+    <section class="card" style="animation-delay: 0.6s;">
+        <h2>5. Manual Verification (Without Stack) ✍️</h2>
+        <p>To prove the Stack algorithm works perfectly, the instructor solves it manually using standard math rules (BODMAS/PEMDAS).</p>
+        <p>Original: <code class="expr">K + L - M * N + (O ^ P) * W / U / V * T + Q</code></p>
+        
+        <div class="code-block" style="font-size: 0.95rem;">
+            1. Parentheses first: <span class="highlight-calc">(O ^ P)</span><br>
+            K + L - M * N + <span class="highlight-done">^OP</span> * W / U / V * T + Q<br><br>
+
+            2. Mult/Div (L to R). First is <span class="highlight-calc">M * N</span><br>
+            K + L - <span class="highlight-done">*MN</span> + ^OP * W / U / V * T + Q<br><br>
+
+            3. Next Mult/Div: <span class="highlight-calc">^OP * W</span><br>
+            K + L - *MN + <span class="highlight-done">*^OPW</span> / U / V * T + Q<br><br>
+
+            4. Next Mult/Div: <span class="highlight-calc">*^OPW / U</span><br>
+            K + L - *MN + <span class="highlight-done">/*^OPWU</span> / V * T + Q<br><br>
+
+            5. Next Mult/Div: <span class="highlight-calc">/*^OPWU / V</span><br>
+            K + L - *MN + <span class="highlight-done">//*^OPWUV</span> * T + Q<br><br>
+
+            6. Next Mult/Div: <span class="highlight-calc">//*^OPWUV * T</span><br>
+            K + L - *MN + <span class="highlight-done">*//*^OPWUVT</span> + Q<br><br>
+
+            7. Add/Sub (L to R). First is <span class="highlight-calc">K + L</span><br>
+            <span class="highlight-done">+KL</span> - *MN + *//*^OPWUVT + Q<br><br>
+
+            8. Next Add/Sub: <span class="highlight-calc">+KL - *MN</span><br>
+            <span class="highlight-done">-+KL*MN</span> + *//*^OPWUVT + Q<br><br>
+
+            9. Next Add/Sub: <span class="highlight-calc">-+KL*MN + *//*^OPWUVT</span><br>
+            <span class="highlight-done">+-+KL*MN*//*^OPWUVT</span> + Q<br><br>
+
+            10. Final Addition: <br>
+            <span class="highlight-done">++-+KL*MN*//*^OPWUVTQ</span>
+        </div>
+        <p><strong>Conclusion:</strong> The manual answer matches the Stack algorithm's reversed output perfectly! 🎉</p>
+    </section>
+
+</div>
+
+<script>
+    // Data for the Interactive Stack Trace
+    const traceData = [
+        { sym: 'Q', stack: [], out: 'Q', logic: 'Operand → Print directly.' },
+        { sym: '+', stack: ['+'], out: 'Q', logic: 'Stack empty → Push.' },
+        { sym: 'T', stack: ['+'], out: 'QT', logic: 'Operand → Print.' },
+        { sym: '*', stack: ['+', '*'], out: 'QT', logic: '* is higher than + → Push.' },
+        { sym: 'V', stack: ['+', '*'], out: 'QTV', logic: 'Operand → Print.' },
+        { sym: '/', stack: ['+', '*', '/'], out: 'QTV', logic: '/ equals *. Equal prec, L-R assoc. → PUSH.' },
+        { sym: 'U', stack: ['+', '*', '/'], out: 'QTVU', logic: 'Operand → Print.' },
+        { sym: '/', stack: ['+', '*', '/', '/'], out: 'QTVU', logic: '/ equals /. Equal prec, L-R assoc. → PUSH.' },
+        { sym: 'W', stack: ['+', '*', '/', '/'], out: 'QTVUW', logic: 'Operand → Print.' },
+        { sym: '*', stack: ['+', '*', '/', '/', '*'], out: 'QTVUW', logic: '* equals /. Equal prec, L-R assoc. → PUSH.' },
+        { sym: ')', stack: ['+', '*', '/', '/', '*', ')'], out: 'QTVUW', logic: 'Right parenthesis ) → Push unconditionally.' },
+        { sym: 'P', stack: ['+', '*', '/', '/', '*', ')'], out: 'QTVUWP', logic: 'Operand → Print.' },
+        { sym: '^', stack: ['+', '*', '/', '/', '*', ')', '^'], out: 'QTVUWP', logic: 'Top is ) → Push unconditionally.' },
+        { sym: 'O', stack: ['+', '*', '/', '/', '*', ')', '^'], out: 'QTVUWPO', logic: 'Operand → Print.' },
+        { sym: '(', stack: ['+', '*', '/', '/', '*'], out: 'QTVUWPO^', logic: 'Left parenthesis (! Pop and print until ). Discard both brackets.' },
+        { sym: '+', stack: ['+', '+'], out: 'QTVUWPO^*//**', logic: '+ is lower than *,/,/,*. Pop them! Now + equals +. L-R assoc → PUSH.' },
+        { sym: 'N', stack: ['+', '+'], out: 'QTVUWPO^*//**N', logic: 'Operand → Print.' },
+        { sym: '*', stack: ['+', '+', '*'], out: 'QTVUWPO^*//**N', logic: '* is higher than + → Push.' },
+        { sym: 'M', stack: ['+', '+', '*'], out: 'QTVUWPO^*//**NM', logic: 'Operand → Print.' },
+        { sym: '-', stack: ['+', '+', '-'], out: 'QTVUWPO^*//**NM*', logic: '- is lower than * (Pop *). - equals + → PUSH.' },
+        { sym: 'L', stack: ['+', '+', '-'], out: 'QTVUWPO^*//**NM*L', logic: 'Operand → Print.' },
+        { sym: '+', stack: ['+', '+', '-', '+'], out: 'QTVUWPO^*//**NM*L', logic: '+ equals -. Equal prec, L-R assoc. → PUSH.' },
+        { sym: 'K', stack: ['+', '+', '-', '+'], out: 'QTVUWPO^*//**NM*LK', logic: 'Operand → Print.' },
+        { sym: 'END', stack: [], out: 'QTVUWPO^*//**NM*LK+-++', logic: 'End of string. Pop all remaining operators to output.' }
+    ];
+
+    let currentStep = 0;
+    let fullInput = "Q+T*V/U/W*)P^O(+N*M-L+K";
+
+    function nextTraceStep() {
+        if (currentStep >= traceData.length) return;
+
+        const data = traceData[currentStep];
+        
+        // Update Remaining Input Visual
+        if(data.sym !== 'END') {
+            fullInput = fullInput.substring(1);
+            document.getElementById('vis-input').innerText = fullInput === "" ? "Finished!" : fullInput;
+        }
+
+        // Update Logic and Output Visuals
+        document.getElementById('vis-logic').innerText = data.logic;
+        document.getElementById('vis-output').innerText = data.out;
+
+        // Render Stack Visualizer
+        const stackContainer = document.getElementById('visual-stack');
+        stackContainer.innerHTML = '';
+        // Because of flex column-reverse, we just append in normal order
+        data.stack.forEach(op => {
+            let div = document.createElement('div');
+            div.className = 'stack-item';
+            div.innerText = op;
+            stackContainer.appendChild(div);
+        });
+
+        // Add row to Table
+        const table = document.getElementById('trace-table');
+        let row = table.insertRow(-1);
+        row.innerHTML = `
+            <td class="expr">${data.sym}</td>
+            <td class="expr">${data.stack.join(' ')}</td>
+            <td class="expr" style="color: var(--success);">${data.out}</td>
+        `;
+
+        currentStep++;
+
+        // End state
+        if (currentStep === traceData.length) {
+            document.getElementById('next-btn').disabled = true;
+            document.getElementById('next-btn').innerText = "Trace Complete";
+            
+            const finalOut = traceData[traceData.length - 1].out;
+            const reversed = finalOut.split('').reverse().join('');
+            
+            document.getElementById('final-answer-box').style.display = 'block';
+            document.getElementById('raw-out').innerText = finalOut;
+            document.getElementById('final-out').innerText = reversed;
+        }
+    }
+</script>
+
+</body>
+</html>
