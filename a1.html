@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arrays in Data Structures - Study Notes</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #333333;
+            --text-muted: #555555;
+            --accent-blue: #007bff;
+            --accent-green: #28a745;
+            --accent-red: #dc3545;
+            --card-bg: #ffffff;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --border-light: #e0e0e0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .note-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+            border-top: 4px solid var(--accent-blue);
+        }
+
+        .header-card {
+            text-align: center;
+            background: linear-gradient(135deg, #007bff, #0056b3);
+            color: white;
+            border-top: none;
+        }
+
+        .header-card h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        h2 {
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-light);
+        }
+
+        h3 {
+            margin: 20px 0 10px 0;
+            color: #222;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Highlight tags */
+        .tag {
+            background-color: #e9ecef;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+            color: #d63384;
+        }
+
+        .tag-green { color: var(--accent-green); font-weight: bold; }
+        .tag-red { color: var(--accent-red); font-weight: bold; }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            margin-bottom: 15px;
+        }
+
+        /* --- VISUALIZATIONS --- */
+
+        /* 1. Memory Tape Visual */
+        .memory-tape {
+            display: flex;
+            margin: 20px 0;
+            border: 2px solid var(--text-main);
+            border-right: none;
+            border-left: none;
+            padding: 10px 0;
+            overflow-x: auto;
+            gap: 2px;
+        }
+
+        .byte {
+            min-width: 60px;
+            height: 60px;
+            border: 1px solid var(--border-light);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: #f8f9fa;
+            font-size: 0.8rem;
+            position: relative;
+        }
+
+        .byte.active {
+            background-color: #cce5ff;
+            border-color: var(--accent-blue);
+        }
+
+        .byte-address {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: auto;
+            padding-bottom: 2px;
+        }
+
+        .byte-val {
+            font-weight: bold;
+            color: var(--accent-blue);
+        }
+
+        /* 2. Array Visual */
+        .array-vis {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 30px 0;
+        }
+
+        .array-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 80px;
+        }
+
+        .cell-index {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .cell-box {
+            width: 100%;
+            height: 80px;
+            border: 2px solid var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            background-color: #fff;
+            box-shadow: 2px 2px 0px var(--border-light);
+            transition: transform 0.2s, background-color 0.2s;
+        }
+
+        .cell-box:hover {
+            transform: translateY(-5px);
+            background-color: #f1f8ff;
+            border-color: var(--accent-blue);
+        }
+
+        .cell-address {
+            font-size: 0.8rem;
+            color: var(--accent-red);
+            margin-top: 5px;
+            font-family: monospace;
+        }
+
+        .cell-empty {
+            background-color: #e9ecef;
+            color: #adb5bd;
+        }
+
+        /* Formula Box */
+        .formula-box {
+            background-color: #d1ecf1;
+            border-left: 5px solid var(--accent-blue);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+            font-size: 1.1rem;
+        }
+
+        .math {
+            font-family: monospace;
+            font-size: 1.2rem;
+            display: block;
+            margin-top: 10px;
+            color: #004085;
+        }
+
+        /* Summary List */
+        .summary-list {
+            list-style: none;
+            margin-left: 0;
+        }
+        .summary-list li {
+            padding: 15px;
+            background: #f8f9fa;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            border-left: 4px solid var(--accent-green);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+
+        <!-- Header -->
+        <div class="note-card header-card">
+            <h1>Arrays in Data Structures</h1>
+            <p>Comprehensive Study Notes & Visualizations based on the Instructor's breakdown.</p>
+        </div>
+
+        <!-- Section 1 -->
+        <div class="note-card">
+            <h2>1. The Basics: Standard Variables in Memory</h2>
+            <p>Before understanding arrays, we must understand how a standard variable is stored in a computer's memory.</p>
+            <pre><code>int a = 5;</code></pre>
+            <ul>
+                <li>This declares a single variable named <span class="tag">a</span> of integer data type.</li>
+                <li>In typical modern compilers, an <span class="tag">int</span> takes <strong>4 bytes</strong> (32 bits) of memory.</li>
+                <li>The value `5` is converted to binary: <span class="tag">00000000 00000000 00000000 00000101</span> and stored across 4 consecutive bytes.</li>
+            </ul>
+            
+            <h3>Visualizing Main Memory (The "Tape")</h3>
+            <p>If the compiler assigns the base address <span class="tag">100</span> to `a`, it occupies addresses 100, 101, 102, and 103.</p>
+            <div class="memory-tape">
+                <div class="byte"><span class="byte-address">...</span></div>
+                <div class="byte active"><span class="byte-val">00000000</span><span class="byte-address">100</span></div>
+                <div class="byte active"><span class="byte-val">00000000</span><span class="byte-address">101</span></div>
+                <div class="byte active"><span class="byte-val">00000000</span><span class="byte-address">102</span></div>
+                <div class="byte active"><span class="byte-val">00000101</span><span class="byte-address">103</span></div>
+                <div class="byte"><span class="byte-address">104</span></div>
+                <div class="byte"><span class="byte-address">...</span></div>
+            </div>
+        </div>
+
+        <!-- Section 2 -->
+        <div class="note-card">
+            <h2>2. The Need for Arrays: The "Why"</h2>
+            <p>Why do we need arrays when we have standard variables?</p>
+            <ul>
+                <li><strong>The Limitation:</strong> A standard variable can only hold <strong>one value at a time</strong>. If you write <span class="tag">a = 6;</span>, the <span class="tag">5</span> is overwritten and destroyed.</li>
+                <li><strong>The Problem Scenario:</strong> Imagine you need to store the roll numbers of 60 students. Creating 60 separate variables (`int roll1, roll2...`) is highly inefficient and impossible to manage.</li>
+                <li><strong>The Solution:</strong> An Array allows us to declare <strong>one variable name</strong> that can store <strong>multiple values</strong>.</li>
+            </ul>
+        </div>
+
+        <!-- Section 3 -->
+        <div class="note-card">
+            <h2>3. Defining and Declaring Arrays</h2>
+            <p><strong>Definition:</strong> An array is a collection of more than one data item, but the data items must all be of the <strong>same data type</strong>.</p>
+            
+            <h3>Syntax in C/C++</h3>
+            <pre><code>DataType ArrayName [Size];</code></pre>
+            <p>Example: <span class="tag">int a[60];</span> (Stores 60 integers)</p>
+
+            <h3>⚠️ Strict Compiler Rules for Size</h3>
+            <ul>
+                <li><span class="tag-red">Invalid:</span> <span class="tag">int a[];</span> (You cannot leave the size blank unless you initialize it immediately).</li>
+                <li><span class="tag-red">Invalid:</span> <span class="tag">int n; int a[n];</span> (The compiler must know the exact size at compile time. Variables whose values can change cannot be used here).</li>
+            </ul>
+        </div>
+
+        <!-- Section 4 -->
+        <div class="note-card">
+            <h2>4. Array Initialization</h2>
+            <p>There are two ways to put data into an array:</p>
+
+            <h3>A. Compile-Time Initialization (Static)</h3>
+            <p>You give the array its values directly in the code using curly braces.</p>
+            <pre><code>int a[5] = {6, 2, 4, 3, 0};</code></pre>
+            <p><em>Note: If you write <span class="tag">int a[5] = {6, 2};</span>, the remaining three spots will automatically be filled with 0s.</em></p>
+
+            <h3>B. Run-Time Initialization (Dynamic)</h3>
+            <p>You use loops to ask the user for input while the program is running.</p>
+            <pre><code>int a[5];
+printf("Enter the elements of array: \n");
+for(int i = 0; i < 5; i++) {
+    scanf("%d", &a[i]);
+}</code></pre>
+        </div>
+
+        <!-- Section 5 -->
+        <div class="note-card">
+            <h2>5. Under the Hood: Memory Representation</h2>
+            <p>When you initialize <span class="tag">int a[5] = {6, 2, 4, 3, 0};</span>, how does it sit in RAM?</p>
+            <ul>
+                <li><strong>Memory Calculation:</strong> 5 integers × 4 bytes each = <strong>20 total bytes</strong> needed.</li>
+                <li><strong>Contiguous Allocation:</strong> The memory manager finds 20 consecutive empty bytes.</li>
+            </ul>
+            
+            <h3>Interactive Array Visualization</h3>
+            <p>Hover over the blocks below. Notice how the indices start at 0, and the memory addresses jump by 4 bytes each time (because each `int` takes 4 bytes).</p>
+            
+            <div class="array-vis">
+                <div class="array-cell">
+                    <span class="cell-index">a[0]</span>
+                    <div class="cell-box">6</div>
+                    <span class="cell-address">100</span>
+                </div>
+                <div class="array-cell">
+                    <span class="cell-index">a[1]</span>
+                    <div class="cell-box">2</div>
+                    <span class="cell-address">104</span>
+                </div>
+                <div class="array-cell">
+                    <span class="cell-index">a[2]</span>
+                    <div class="cell-box">4</div>
+                    <span class="cell-address">108</span>
+                </div>
+                <div class="array-cell">
+                    <span class="cell-index">a[3]</span>
+                    <div class="cell-box">3</div>
+                    <span class="cell-address">112</span>
+                </div>
+                <div class="array-cell">
+                    <span class="cell-index">a[4]</span>
+                    <div class="cell-box">0</div>
+                    <span class="cell-address">116</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Section 6 -->
+        <div class="note-card">
+            <h2>6. The Address Calculation Formula (Random Access)</h2>
+            <p>Because arrays are stored contiguously, the computer does not have to search step-by-step for an element. It uses math to jump directly to it in constant time, known as <strong>O(1)</strong>.</p>
+            
+            <div class="formula-box">
+                <strong>Formula:</strong>
+                <span class="math">Address of a[i] = Base_Address + (i &times; Size_of_DataType)</span>
+            </div>
+
+            <h3>Example Calculation</h3>
+            <p>Let's find the memory address for <strong>a[2]</strong> from the visual above:</p>
+            <ul>
+                <li>Base Address (address of a[0]) = 100</li>
+                <li>Target Index <strong>i</strong> = 2</li>
+                <li>Size of `int` = 4 bytes</li>
+            </ul>
+            <pre><code>Address = 100 + (2 × 4)
+Address = 100 + 8
+Address = 108</code></pre>
+            <p>The computer jumps straight to address <strong>108</strong> to read the value '4'.</p>
+        </div>
+
+        <!-- Section 7 -->
+        <div class="note-card">
+            <h2>7. The Major Drawback: Fixed Size & Wasted Space</h2>
+            <p>What happens if we allocate a large array but only put a few items in it?</p>
+            <pre><code>char b[10] = {'j', 'e', 'n', 'n', 'y'};</code></pre>
+            <p><em>(Note: A `char` takes 1 byte).</em></p>
+            
+            <div class="array-vis">
+                <div class="array-cell"><span class="cell-index">b[0]</span><div class="cell-box">j</div></div>
+                <div class="array-cell"><span class="cell-index">b[1]</span><div class="cell-box">e</div></div>
+                <div class="array-cell"><span class="cell-index">b[2]</span><div class="cell-box">n</div></div>
+                <div class="array-cell"><span class="cell-index">b[3]</span><div class="cell-box">n</div></div>
+                <div class="array-cell"><span class="cell-index">b[4]</span><div class="cell-box">y</div></div>
+                <div class="array-cell"><span class="cell-index">b[5]</span><div class="cell-box cell-empty">\0</div></div>
+                <div class="array-cell"><span class="cell-index">b[6]</span><div class="cell-box cell-empty">\0</div></div>
+                <div class="array-cell"><span class="cell-index">b[7]</span><div class="cell-box cell-empty">\0</div></div>
+                <div class="array-cell"><span class="cell-index">b[8]</span><div class="cell-box cell-empty">\0</div></div>
+                <div class="array-cell"><span class="cell-index">b[9]</span><div class="cell-box cell-empty">\0</div></div>
+            </div>
+
+            <ul>
+                <li><strong>Wasted Space:</strong> 10 bytes were requested, but only 5 are used. The rest are filled with null characters, wasting memory.</li>
+                <li><strong>Lack of Flexibility:</strong> If you declare an array of size 100, but suddenly need to store 200 items at runtime, <strong>you cannot expand it</strong>. You must re-code and recompile.</li>
+            </ul>
+        </div>
+
+        <!-- Section 8 -->
+        <div class="note-card">
+            <h2>8. Instructor's Final Board Summary</h2>
+            <ul class="summary-list">
+                <li><strong>Definition:</strong> Array is a fixed-size sequenced collection of data items of the <em>same data type</em>.</li>
+                <li><strong>Accessing:</strong> To access a particular element, use <code>arrayname[index]</code>.</li>
+                <li><strong>Storage:</strong> Data items are physically stored in continuous (contiguous) memory locations.</li>
+                <li><strong>Speed:</strong> Allows Random Access, taking constant time <strong>O(1)</strong>.</li>
+                <li><strong>Types of Arrays:</strong> 1-D array (covered here), 2-D array (Matrices), Multi-dimensional array.</li>
+            </ul>
+        </div>
+
+    </div>
+
+</body>
+</html>
