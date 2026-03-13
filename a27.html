@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-width=1.0">
+    <title>Doubly Circular Linked List Deletion - Study Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap');
+
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --primary: #4f46e5;
+            --secondary: #38bdf8;
+            --danger: #ef4444;
+            --success: #10b981;
+            --code-bg: #1e293b;
+            --border: #e2e8f0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 0 20px;
+        }
+
+        /* Vertical Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 0;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .feed-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05);
+            border-top: 5px solid var(--primary);
+        }
+
+        h1 { font-size: 2.2rem; margin-bottom: 10px; color: var(--primary); line-height: 1.2;}
+        h2 { font-size: 1.8rem; margin-bottom: 20px; border-bottom: 2px solid var(--border); padding-bottom: 10px; }
+        h3 { font-size: 1.3rem; margin: 25px 0 15px 0; color: var(--text-main); }
+        p { margin-bottom: 15px; }
+        
+        .muted-text { color: var(--text-muted); font-size: 1.1rem; }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            color: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .code-comment { color: #94a3b8; }
+        .code-keyword { color: #c678dd; }
+        .code-func { color: #61afef; }
+
+        /* --- VISUALIZATIONS (Whiteboard Replica) --- */
+        .visualization-box {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px 20px;
+            margin: 30px 0;
+            overflow-x: auto;
+        }
+
+        .vis-title {
+            text-align: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.8rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+
+        .list-wrapper {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 15px;
+            min-width: max-content;
+        }
+
+        .node-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .pointer-label {
+            background: var(--primary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            position: absolute;
+            top: -35px;
+            white-space: nowrap;
+        }
+        .pointer-label.tail { background: var(--secondary); top: auto; bottom: -35px; }
+        .pointer-label.temp { background: var(--danger); top: -65px;}
+
+        .node {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            border: 2px solid var(--text-main);
+            border-radius: 6px;
+            width: 220px;
+            background: white;
+            text-align: center;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+
+        .node-address {
+            position: absolute;
+            top: -18px;
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .n-part {
+            padding: 12px 5px;
+            border-right: 2px solid var(--text-main);
+            position: relative;
+        }
+        .n-part:last-child { border-right: none; }
+        .n-data { font-weight: bold; background: #e0f2fe; }
+        .n-ptr { background: #f1f5f9; color: var(--primary); }
+        
+        .old-val {
+            text-decoration: line-through;
+            color: var(--danger);
+            display: block;
+            font-size: 0.75rem;
+        }
+        .new-val {
+            color: var(--success);
+            font-weight: bold;
+            display: block;
+        }
+
+        .connector {
+            font-size: 1.5rem;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        .circular-note {
+            display: block;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--primary);
+            margin-top: 30px;
+            font-style: italic;
+        }
+
+        /* Info boxes */
+        .info-box {
+            background: #eff6ff;
+            border-left: 4px solid #3b82f6;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+
+        @media(max-width: 768px) {
+            .feed-card { padding: 25px; }
+            h1 { font-size: 1.8rem; }
+            .node { width: 180px; font-size: 0.8rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+
+    <!-- FEED ITEM: INTRO & PREREQUISITES -->
+    <article class="feed-card">
+        <h1>Doubly Circular Linked List: Deletion Algorithms</h1>
+        <p class="muted-text">An in-depth breakdown of the instructor's whiteboard lecture, visualized for easy scrolling and perfect study notes.</p>
+        
+        <h3>🧱 Prerequisites: The Node Structure</h3>
+        <p>Before jumping into deletion algorithms, we must understand the underlying structure. A doubly circular linked list node has three parts, and the ends loop back to each other.</p>
+        
+<pre>
+<span class="code-keyword">struct</span> node {
+    <span class="code-keyword">int</span> data;
+    <span class="code-keyword">struct</span> node *next;
+    <span class="code-keyword">struct</span> node *prev;
+};
+
+<span class="code-comment">// Global pointers maintained by the program</span>
+<span class="code-keyword">struct</span> node *head = <span class="code-keyword">0</span>; 
+<span class="code-keyword">struct</span> node *tail = <span class="code-keyword">0</span>;
+</pre>
+        <div class="info-box">
+            <strong>Key Rule:</strong> In a circular list, `tail->next` always holds the address of `head`, and `head->prev` always holds the address of `tail`. We must update these specifically when deleting end nodes.
+        </div>
+    </article>
+
+    <!-- FEED ITEM: DELETE FROM BEGINNING -->
+    <article class="feed-card" style="border-color: #f59e0b;">
+        <h2>1. Deletion from the Beginning (<code>delfrombeg</code>)</h2>
+        <p><strong>Goal:</strong> Remove the very first node (pointed to by <code>head</code>), re-link the tail to the new first node, and free the memory.</p>
+
+        <h3>📝 Logic & Code</h3>
+        <p>We use a temporary pointer (<code>temp</code>) to hold the node we want to delete so we don't lose its memory address when moving the head.</p>
+
+<pre>
+<span class="code-keyword">void</span> <span class="code-func">delfrombeg</span>() {
+    <span class="code-keyword">struct</span> node *temp;
+    temp = head; <span class="code-comment">// Step 1: Point temp to the first node</span>
+
+    <span class="code-comment">// Check 1: Is the list empty?</span>
+    <span class="code-keyword">if</span> (head == <span class="code-keyword">0</span>) {
+        printf("List is empty");
+    } 
+    <span class="code-comment">// Check 2: Is there only ONE node in the list?</span>
+    <span class="code-keyword">else if</span> (head->next == head) { 
+        head = <span class="code-keyword">0</span>;
+        tail = <span class="code-keyword">0</span>;
+        free(temp);
+    } 
+    <span class="code-comment">// Check 3: Standard deletion (Multiple nodes)</span>
+    <span class="code-keyword">else</span> {
+        head = head->next;     <span class="code-comment">// A. Move head to the 2nd node</span>
+        head->prev = tail;     <span class="code-comment">// B. New head's 'prev' points to tail</span>
+        tail->next = head;     <span class="code-comment">// C. Tail's 'next' points to new head</span>
+        free(temp);            <span class="code-comment">// D. Destroy the old first node</span>
+    }
+}
+</pre>
+
+        <h3>👁️ Visualizing the Pointer Updates</h3>
+        <p>Watch how the pointers change inside the <code>else</code> block. Notice the crossed-out addresses being replaced.</p>
+
+        <div class="visualization-box">
+            <div class="vis-title">Whiteboard Visualization: Delfrombeg()</div>
+            <div class="list-wrapper">
+                <!-- Node 1 (Being Deleted) -->
+                <div class="node-container" style="opacity: 0.5;">
+                    <div class="pointer-label temp">temp</div>
+                    <span class="node-address">100 (Old Head)</span>
+                    <div class="node">
+                        <div class="n-part n-ptr">250</div>
+                        <div class="n-part n-data">5</div>
+                        <div class="n-part n-ptr">200</div>
+                    </div>
+                </div>
+                
+                <div class="connector">⇄</div>
+
+                <!-- Node 2 (New Head) -->
+                <div class="node-container">
+                    <div class="pointer-label">head</div>
+                    <span class="node-address">200</span>
+                    <div class="node">
+                        <div class="n-part n-ptr">
+                            <span class="old-val">100</span>
+                            <span class="new-val">250 (B)</span>
+                        </div>
+                        <div class="n-part n-data">9</div>
+                        <div class="n-part n-ptr">250</div>
+                    </div>
+                </div>
+
+                <div class="connector">⇄</div>
+
+                <!-- Node 3 (Tail) -->
+                <div class="node-container">
+                    <div class="pointer-label tail">tail</div>
+                    <span class="node-address">250</span>
+                    <div class="node">
+                        <div class="n-part n-ptr">200</div>
+                        <div class="n-part n-data">3</div>
+                        <div class="n-part n-ptr">
+                            <span class="old-val">100</span>
+                            <span class="new-val">200 (C)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <span class="circular-note">⟲ Node 250 (Tail) now loops back to Node 200 (New Head) ⟳</span>
+        </div>
+    </article>
+
+    <!-- FEED ITEM: DELETE FROM END -->
+    <article class="feed-card" style="border-color: #10b981;">
+        <h2>2. Deletion from the End (<code>delfromend</code>)</h2>
+        <p><strong>Goal:</strong> Remove the very last node (pointed to by <code>tail</code>), re-link the new last node to the head, and free the memory.</p>
+
+        <h3>📝 Logic & Code</h3>
+        <p>This is the exact mirror logic of deleting from the beginning. Instead of starting at <code>head</code>, we set <code>temp = tail</code>.</p>
+
+<pre>
+<span class="code-keyword">void</span> <span class="code-func">delfromend</span>() {
+    <span class="code-keyword">struct</span> node *temp;
+    temp = tail; <span class="code-comment">// Step 1: Point temp to the last node</span>
+
+    <span class="code-keyword">if</span> (head == <span class="code-keyword">0</span>) {
+        printf("List is empty");
+    } 
+    <span class="code-keyword">else if</span> (head->next == head) {
+        head = <span class="code-keyword">0</span>; tail = <span class="code-keyword">0</span>;
+        free(temp);
+    } 
+    <span class="code-keyword">else</span> {
+        tail = tail->prev;     <span class="code-comment">// A. Move tail back to 2nd-to-last node</span>
+        tail->next = head;     <span class="code-comment">// B. New tail's 'next' loops to head</span>
+        head->prev = tail;     <span class="code-comment">// C. Head's 'prev' loops to new tail</span>
+        free(temp);            <span class="code-comment">// D. Destroy the old last node</span>
+    }
+}
+</pre>
+
+        <h3>👁️ Visualizing the Pointer Updates</h3>
+
+        <div class="visualization-box">
+            <div class="vis-title">Whiteboard Visualization: Delfromend()</div>
+            <div class="list-wrapper">
+                <!-- Node 1 (Head) -->
+                <div class="node-container">
+                    <div class="pointer-label">head</div>
+                    <span class="node-address">100</span>
+                    <div class="node">
+                        <div class="n-part n-ptr">
+                            <span class="old-val">250</span>
+                            <span class="new-val">200 (C)</span>
+                        </div>
+                        <div class="n-part n-data">5</div>
+                        <div class="n-part n-ptr">200</div>
+                    </div>
+                </div>
+                
+                <div class="connector">⇄</div>
+
+                <!-- Node 2 (New Tail) -->
+                <div class="node-container">
+                    <div class="pointer-label tail">tail</div>
+                    <span class="node-address">200</span>
+                    <div class="node">
+                        <div class="n-part n-ptr">100</div>
+                        <div class="n-part n-data">9</div>
+                        <div class="n-part n-ptr">
+                            <span class="old-val">250</span>
+                            <span class="new-val">100 (B)</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="connector">⇄</div>
+
+                <!-- Node 3 (Being Deleted) -->
+                <div class="node-container" style="opacity: 0.5;">
+                    <div class="pointer-label temp">temp</div>
+                    <span class="node-address">250 (Old Tail)</span>
+                    <div class="node">
+                        <div class="n-part n-ptr">200</div>
+                        <div class="n-part n-data">3</div>
+                        <div class="n-part n-ptr">100</div>
+                    </div>
+                </div>
+            </div>
+            <span class="circular-note">⟲ Node 200 (New Tail) now loops forward to Node 100 (Head) ⟳</span>
+        </div>
+    </article>
+
+    <!-- FEED ITEM: DELETE FROM SPECIFIC POSITION -->
+    <article class="feed-card" style="border-color: #ec4899;">
+        <h2>3. Deletion from Specific Position (<code>delfrompos</code>)</h2>
+        <p><strong>Goal:</strong> Ask the user for a number (e.g., position 3), iterate through the list using a <code>while</code> loop to find it, bypass it, and delete it.</p>
+
+        <h3>📝 Logic & Code</h3>
+        <p>This requires a helper function <code>getlength()</code> to prevent the user from deleting a position that doesn't exist.</p>
+
+<pre>
+<span class="code-keyword">void</span> <span class="code-func">delfrompos</span>() {
+    <span class="code-keyword">struct</span> node *temp;
+    <span class="code-keyword">int</span> pos, i = <span class="code-keyword">1</span>, l;
+    
+    temp = head; <span class="code-comment">// Start at the beginning</span>
+    
+    printf("Enter Position: ");
+    scanf("%d", &pos);
+    
+    l = <span class="code-func">getlength</span>(); <span class="code-comment">// Fetch total total nodes</span>
+
+    <span class="code-keyword">if</span> (pos < <span class="code-keyword">1</span> || pos > l) {
+        printf("Invalid position");
+    } 
+    <span class="code-keyword">else if</span> (pos == <span class="code-keyword">1</span>) {
+        <span class="code-func">delfrombeg</span>(); <span class="code-comment">// Reuse existing function</span>
+    } 
+    <span class="code-keyword">else</span> {
+        <span class="code-comment">// A. Traverse to the target node</span>
+        <span class="code-keyword">while</span> (i < pos) {
+            temp = temp->next;
+            i++;
+        }
+
+        <span class="code-comment">// B. Edge Case: Is it the last node?</span>
+        <span class="code-keyword">if</span> (temp->next == head) { 
+            tail = temp->prev;
+            tail->next = head;
+            head->prev = tail;
+            free(temp);
+        } 
+        <span class="code-comment">// C. Normal Middle Deletion Bypassing</span>
+        <span class="code-keyword">else</span> {
+            <span class="code-comment">// The 'next' of the node BEFORE temp points to the node AFTER temp</span>
+            temp->prev->next = temp->next; 
+            
+            <span class="code-comment">// The 'prev' of the node AFTER temp points to the node BEFORE temp</span>
+            temp->next->prev = temp->prev; 
+            
+            free(temp);
+        }
+    }
+}
+</pre>
+        <div class="info-box">
+            <strong>Pro-Tip from Instructor:</strong> Instead of writing out the logic for the "last node" edge case manually inside <code>delfrompos()</code>, you could technically just write <code>else if (pos == l) { delfromend(); }</code>. However, writing the raw pointer logic is excellent practice for exams and interviews!
+        </div>
+
+        <h3>👁️ Visualizing the Bypass Logic</h3>
+        <p>If <code>pos = 2</code>, <code>temp</code> lands on Node 200. We must connect Node 100 directly to Node 300, completely isolating Node 200.</p>
+
+        <div class="visualization-box">
+            <div class="vis-title">Whiteboard Visualization: Bypassing a Middle Node</div>
+            <div class="list-wrapper">
+                <!-- Node 1 -->
+                <div class="node-container">
+                    <span class="node-address">100</span>
+                    <div class="node">
+                        <div class="n-part n-ptr">300</div>
+                        <div class="n-part n-data">5</div>
+                        <div class="n-part n-ptr">
+                            <span class="old-val">200</span>
+                            <span class="new-val">300</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="connector">⇄</div>
+
+                <!-- Node 2 (Being Deleted) -->
+                <div class="node-container" style="opacity: 0.5;">
+                    <div class="pointer-label temp">temp</div>
+                    <span class="node-address">200 (Pos 2)</span>
+                    <div class="node">
+                        <div class="n-part n-ptr">100</div>
+                        <div class="n-part n-data">9</div>
+                        <div class="n-part n-ptr">300</div>
+                    </div>
+                </div>
+
+                <div class="connector">⇄</div>
+
+                <!-- Node 3 -->
+                <div class="node-container">
+                    <span class="node-address">300</span>
+                    <div class="node">
+                        <div class="n-part n-ptr">
+                            <span class="old-val">200</span>
+                            <span class="new-val">100</span>
+                        </div>
+                        <div class="n-part n-data">3</div>
+                        <div class="n-part n-ptr">100</div>
+                    </div>
+                </div>
+            </div>
+            <span class="circular-note">⟲ Node 100 and Node 300 now point directly to each other, stranding Node 200. ⟳</span>
+        </div>
+    </article>
+
+</div>
+
+</body>
+</html>
