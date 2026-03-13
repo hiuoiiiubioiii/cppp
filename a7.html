@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linked Lists: Study Notes Feed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap');
+
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #374151;
+            --text-muted: #6b7280;
+            --primary: #2563eb;
+            --accent: #10b981;
+            --danger: #ef4444;
+            --memory-box: #e5e7eb;
+            --code-bg: #1e293b;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 100px;
+        }
+
+        /* Reading Progress Bar */
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 5px;
+            background: var(--primary);
+            width: 0%;
+            z-index: 1000;
+            transition: width 0.1s ease-out;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 3rem 1rem;
+            background: var(--card-bg);
+            border-bottom: 1px solid #e5e7eb;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: #111827;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .feed-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+        }
+
+        .card-tag {
+            display: inline-block;
+            background: #dbeafe;
+            color: var(--primary);
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .feed-card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1.5rem;
+            color: #111827;
+        }
+
+        .feed-card p {
+            margin-bottom: 1.5rem;
+            font-size: 1.05rem;
+        }
+
+        .highlight {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Visualizations Container */
+        .visual-container {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 2rem;
+            margin-bottom: 1.5rem;
+            overflow-x: auto;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Memory Tape Styles */
+        .memory-tape {
+            display: flex;
+            border: 2px solid var(--text-muted);
+            background: white;
+        }
+
+        .memory-cell {
+            width: 40px;
+            height: 50px;
+            border-right: 1px solid #d1d5db;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
+            position: relative;
+        }
+        .memory-cell:last-child { border-right: none; }
+        
+        .address {
+            position: absolute;
+            bottom: -25px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            transform: rotate(-45deg);
+        }
+
+        .occupied { background-color: #bfdbfe; font-weight: bold;}
+        .wasted { background-color: #fecaca; }
+
+        /* Node Styles */
+        .node-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .node {
+            display: flex;
+            border: 2px solid #374151;
+            border-radius: 4px;
+            background: white;
+            flex-direction: column;
+            position: relative;
+        }
+
+        .node-parts {
+            display: flex;
+        }
+
+        .node-data, .node-pointer {
+            padding: 15px;
+            min-width: 50px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .node-data {
+            border-right: 2px solid #374151;
+            color: var(--primary);
+        }
+
+        .node-pointer {
+            color: var(--text-muted);
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+
+        .node-address {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            color: var(--accent);
+            font-weight: 600;
+        }
+
+        .arrow {
+            width: 40px;
+            height: 2px;
+            background: var(--text-muted);
+            position: relative;
+        }
+
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-left: 8px solid var(--text-muted);
+        }
+
+        .head-pointer {
+            border: 2px dashed var(--danger);
+            padding: 10px;
+            border-radius: 4px;
+            color: var(--danger);
+            font-weight: bold;
+            margin-right: 15px;
+        }
+
+        /* Array Shifting Animation Styles */
+        .array-shift-box {
+            display: flex;
+            gap: 5px;
+        }
+        .array-slot {
+            width: 50px;
+            height: 50px;
+            border: 2px solid #374151;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            background: white;
+            transition: all 0.5s ease;
+        }
+        .new-item {
+            background: #10b981;
+            color: white;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        
+        code .keyword { color: #c678dd; }
+        code .type { color: #e5c07b; }
+        code .variable { color: #e06c75; }
+        code .comment { color: #5c6370; font-style: italic; }
+
+    </style>
+</head>
+<body>
+
+    <!-- Reading Progress Bar -->
+    <div id="progress-bar"></div>
+
+    <header>
+        <h1>Introduction to Linked Lists</h1>
+        <p>Complete visual study notes based on the lecture.</p>
+    </header>
+
+    <main class="feed-container">
+
+        <!-- Section 1: Memory -->
+        <article class="feed-card">
+            <span class="card-tag">Concept 1</span>
+            <h2>The Memory Manager</h2>
+            <p>Computer memory is like a long tape of bytes. Each byte has a unique, sequential address (like 100, 101, 102...).</p>
+            <p>It is a crucial and limited resource managed by the Operating System's <strong>Memory Manager</strong>, which decides which processes get memory and where.</p>
+            
+            <div class="visual-container">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: 20px;">
+                    <div><code>int x = 7;</code> (Allocates 4 Bytes)</div>
+                    <div class="memory-tape">
+                        <div class="memory-cell"><span class="address">100</span></div>
+                        <div class="memory-cell"><span class="address">101</span></div>
+                        <div class="memory-cell occupied">7<span class="address">102</span></div>
+                        <div class="memory-cell occupied"><span class="address">103</span></div>
+                        <div class="memory-cell occupied"><span class="address">104</span></div>
+                        <div class="memory-cell occupied"><span class="address">105</span></div>
+                        <div class="memory-cell"><span class="address">106</span></div>
+                        <div class="memory-cell"><span class="address">107</span></div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Section 2: Arrays -->
+        <article class="feed-card">
+            <span class="card-tag">Problem</span>
+            <h2>The Drawback of Arrays</h2>
+            <p>Arrays require <strong>contiguous (continuous) memory</strong> and have a <strong>fixed size</strong>. This leads to two major issues:</p>
+            
+            <ul>
+                <li style="margin-bottom: 10px;"><strong>Scenario A (Expensive Resizing):</strong> If you create <code>a[3]</code> and later need a 4th slot, you can't just attach it. The space next to it might be occupied. The manager has to find a whole new 16-byte block elsewhere, copy the data, and delete the old block.</li>
+                <li><strong>Scenario B (Wasted Space):</strong> To avoid resizing, you might declare a huge array just in case: <code>int a[50];</code>. If you only store 10 items, 40 slots (160 bytes) are entirely wasted and blocked from other programs.</li>
+            </ul>
+
+            <div class="visual-container" style="flex-direction: column; gap: 30px;">
+                <div style="text-align: center;">
+                    <p style="margin-bottom: 10px; font-size: 0.9rem;"><code>int a[50];</code> (Only storing 3 items - Wasted Space)</p>
+                    <div class="memory-tape">
+                        <div class="memory-cell occupied">1<span class="address">100</span></div>
+                        <div class="memory-cell occupied">4<span class="address">104</span></div>
+                        <div class="memory-cell occupied">3<span class="address">108</span></div>
+                        <div class="memory-cell wasted">...<span class="address">112</span></div>
+                        <div class="memory-cell wasted">...</div>
+                        <div class="memory-cell wasted">...</div>
+                        <div class="memory-cell wasted">...<span class="address">300</span></div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Section 3: Linked Lists Intro -->
+        <article class="feed-card">
+            <span class="card-tag">Solution</span>
+            <h2>Enter the Linked List (Nodes)</h2>
+            <p>A Linked List solves this by storing data wherever free memory is available. Items do not need to be next to each other!</p>
+            <p><strong>The Challenge:</strong> If items are scattered, how do we find the next one? <br>
+            <strong>The Fix:</strong> Each element must store extra information—a pointer with the address of the next element. This combo (Data + Pointer) is called a <strong>Node</strong>.</p>
+
+            <div class="visual-container">
+                <div class="node-wrapper">
+                    <div class="node">
+                        <span class="node-address">102</span>
+                        <div class="node-parts">
+                            <div class="node-data">4</div>
+                            <div class="node-pointer">113</div>
+                        </div>
+                    </div>
+                    <div class="arrow"></div>
+                    <div class="node">
+                        <span class="node-address">113</span>
+                        <div class="node-parts">
+                            <div class="node-data">3</div>
+                            <div class="node-pointer">123</div>
+                        </div>
+                    </div>
+                    <div class="arrow"></div>
+                    <div class="node">
+                        <span class="node-address">123</span>
+                        <div class="node-parts">
+                            <div class="node-data">8</div>
+                            <div class="node-pointer">NULL</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Section 4: Code -->
+        <article class="feed-card">
+            <span class="card-tag">Code</span>
+            <h2>Declaring a Node in C</h2>
+            <p>You cannot use standard data types (like <code>int</code>) to create a node because a node holds two <em>different</em> types of data: an integer and an address/pointer.</p>
+            <p>Therefore, we use a user-defined data type: <code>struct</code>. The pointer inside doesn't point to a standard integer; it points to the entirety of the <em>next node</em>.</p>
+
+<pre><code><span class="keyword">struct</span> <span class="type">node</span> {
+    <span class="type">int</span> <span class="variable">data</span>;             <span class="comment">// The actual data (e.g., 4)</span>
+    <span class="keyword">struct</span> <span class="type">node</span> *<span class="variable">next</span>;    <span class="comment">// Pointer to the next node</span>
+};</code></pre>
+        </article>
+
+        <!-- Section 5: Traversal -->
+        <article class="feed-card">
+            <span class="card-tag">Concept 2</span>
+            <h2>Traversal & The "Head" Pointer</h2>
+            <p>Because nodes are scattered randomly in memory, you can't just access the 3rd item instantly like you can in an array (<code>a[2]</code>).</p>
+            <p>You must have a starting point. This is the <span class="highlight">head</span> pointer. It is a dedicated variable that only stores the address of the very first node.</p>
+
+            <div class="visual-container">
+                <div class="node-wrapper">
+                    <div class="head-pointer">
+                        Head: 102
+                    </div>
+                    <div class="arrow"></div>
+                    <div class="node">
+                        <span class="node-address">102</span>
+                        <div class="node-parts">
+                            <div class="node-data">4</div>
+                            <div class="node-pointer">113</div>
+                        </div>
+                    </div>
+                    <div class="arrow"></div>
+                    <div class="node">
+                        <span class="node-address">...</span>
+                        <div class="node-parts">
+                            <div class="node-data">3</div>
+                            <div class="node-pointer">...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p><strong>The Trade-off:</strong> To find the 10th element, you must start at the head and follow 10 links sequentially. This makes searching slow. Time complexity for accessing data is <span class="danger" style="color:red; font-weight:bold;">O(n)</span>, compared to O(1) in arrays.</p>
+        </article>
+
+        <!-- Section 6: Insertion -->
+        <article class="feed-card">
+            <span class="card-tag">Advantage</span>
+            <h2>The Superpower: Insertion & Deletion</h2>
+            <p>While arrays are fast at searching, they are terrible at insertion and deletion. Linked lists excel here.</p>
+            
+            <h3 style="margin-top: 1rem; margin-bottom: 0.5rem; font-size: 1.1rem;">Array Insertion: O(n)</h3>
+            <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1rem;">Inserting at the beginning requires shifting every single element to the right to make room.</p>
+            <div class="visual-container">
+                <div class="array-shift-box">
+                    <div class="array-slot new-item">5</div>
+                    <div class="array-slot">10 &rarr;</div>
+                    <div class="array-slot">20 &rarr;</div>
+                    <div class="array-slot">30 &rarr;</div>
+                </div>
+            </div>
+
+            <h3 style="margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 1.1rem;">Linked List Insertion: O(1) <span style="font-size: 0.8rem; font-weight:normal;">(once position is found)</span></h3>
+            <p style="font-size: 0.95rem; color: var(--text-muted); margin-bottom: 1rem;">Just create a new node anywhere in memory, and update a couple of arrows (pointers). Nothing needs to be shifted!</p>
+            <div class="visual-container">
+                <div class="node-wrapper" style="flex-wrap: wrap; justify-content: center;">
+                    <div class="node">
+                        <span class="node-address">113</span>
+                        <div class="node-parts">
+                            <div class="node-data">3</div>
+                            <div class="node-pointer" style="color: var(--accent); font-weight:bold;">200</div>
+                        </div>
+                    </div>
+                    
+                    <svg width="40" height="40" viewBox="0 0 40 40" style="margin: 0 10px;">
+                        <path d="M 0,20 Q 20,0 40,20" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="4"/>
+                        <polygon points="35,15 40,20 35,25" fill="#10b981"/>
+                    </svg>
+
+                    <div class="node" style="border-color: var(--accent);">
+                        <span class="node-address">200 (New)</span>
+                        <div class="node-parts">
+                            <div class="node-data" style="color: var(--accent);">10</div>
+                            <div class="node-pointer">123</div>
+                        </div>
+                    </div>
+
+                    <svg width="40" height="40" viewBox="0 0 40 40" style="margin: 0 10px;">
+                        <path d="M 0,20 Q 20,40 40,20" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="4"/>
+                        <polygon points="35,15 40,20 35,25" fill="#10b981"/>
+                    </svg>
+
+                    <div class="node">
+                        <span class="node-address">123</span>
+                        <div class="node-parts">
+                            <div class="node-data">8</div>
+                            <div class="node-pointer">NULL</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+    </main>
+
+    <script>
+        // Simple script to update the reading progress bar at the top of the page
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+    </script>
+</body>
+</html>
