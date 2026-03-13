@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Implementation of Deque using Circular Array</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #333;
+            --text-muted: #555;
+            --accent-blue: #0056b3;
+            --card-bg: #ffffff;
+            --code-bg: #1e1e1e;
+            --code-text: #dcdcaa;
+            --pointer-f: #d9534f;
+            --pointer-r: #5cb85c;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--accent-blue);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Vertical Feed Layout */
+        main {
+            max-width: 850px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px; /* Continuous scroll spacing */
+        }
+
+        .feed-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--accent-blue);
+            transition: transform 0.2s ease;
+        }
+
+        .feed-card:hover {
+            transform: translateY(-2px);
+        }
+
+        h2 {
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #e1e8ed;
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            margin: 20px 0 10px 0;
+            color: #2c3e50;
+        }
+
+        p, ul, ol {
+            margin-bottom: 15px;
+            color: var(--text-muted);
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .highlight {
+            background-color: #ffeaa7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        /* Code Block Styling */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            margin: 15px 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .c-keyword { color: #569cd6; }
+        .c-type { color: #4ec9b0; }
+        .c-string { color: #ce9178; }
+        .c-comment { color: #6a9955; font-style: italic; }
+        .c-func { color: #dcdcaa; }
+
+        /* Array Visualizations */
+        .array-visual {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            margin: 40px 0 30px 0;
+            padding-bottom: 30px;
+            gap: 10px;
+        }
+
+        .array-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .cell-box {
+            width: 60px;
+            height: 60px;
+            border: 2px solid #bdc3c7;
+            background: #ecf0f1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 4px;
+            color: #2c3e50;
+        }
+
+        .cell-index {
+            margin-top: 5px;
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            font-weight: bold;
+        }
+
+        .pointers {
+            position: absolute;
+            bottom: -35px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .ptr-f { color: var(--pointer-f); }
+        .ptr-r { color: var(--pointer-r); }
+
+        .wrap-around-arrow {
+            text-align: center;
+            font-size: 1.2rem;
+            color: var(--accent-blue);
+            margin: 10px 0;
+            font-weight: bold;
+            font-style: italic;
+        }
+
+        /* Formula Box */
+        .formula-box {
+            background-color: #e8f4fd;
+            border-left: 4px solid var(--accent-blue);
+            padding: 15px 20px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .formula-box code {
+            font-size: 1.1rem;
+            color: var(--accent-blue);
+            font-weight: bold;
+        }
+
+        /* Dry Run Table */
+        .dry-run-step {
+            border: 1px solid #eee;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            background: #fafafa;
+        }
+        
+        .dry-run-step h4 {
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        @media (max-width: 600px) {
+            .cell-box { width: 45px; height: 45px; font-size: 1.2rem; }
+            .feed-card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Data Structures: Deque using Circular Array</h1>
+        <p>In-depth Lecture Breakdown & Visualizations • Vertical Scroll Feed</p>
+    </header>
+
+    <main id="feed">
+
+        <!-- Card 1: Concepts -->
+        <article class="feed-card">
+            <h2>1. Core Concepts</h2>
+            <p><strong>What is a Deque?</strong><br>
+            A Deque (Double-Ended Queue) is a generalized queue where insertion and deletion can happen at <strong>both ends</strong> (Front and Rear). Standard queues only allow insertion at the rear and deletion at the front.</p>
+            
+            <h3>Why use a Circular Array instead of a Linear Array?</h3>
+            <p>In a standard linear array, if the `Rear` pointer reaches the last index, the queue is considered "Full". However, if we have deleted elements from the front, the beginning indices are completely empty, resulting in wasted space.</p>
+            
+            <p>A <strong>Circular Array</strong> solves this by logically connecting the last index back to the first index (index 0). If `Rear` is at the end and index 0 is free, `Rear` wraps around to 0.</p>
+
+            <div class="formula-box">
+                <p><strong>The Wrap-Around Formula (Incrementing):</strong></p>
+                <code>Pointer = (Pointer + 1) % N</code>
+                <p style="margin-top: 8px; font-size: 0.9rem;"><em>Where N is the size of the array. Example: (4 + 1) % 5 = 0.</em></p>
+            </div>
+        </article>
+
+        <!-- Card 2: Initial Setup -->
+        <article class="feed-card">
+            <h2>2. Global Variables Setup</h2>
+            <p>Before coding the operations, we define the global state of our Deque. When the queue is empty, both Front and Rear pointers are initialized to <code>-1</code>.</p>
+            
+            <pre>
+<span class="c-comment">// Define the size of the array</span>
+<span class="c-keyword">#define</span> N 5
+
+<span class="c-type">int</span> deque[N];       <span class="c-comment">// The circular array</span>
+<span class="c-type">int</span> f = -1;         <span class="c-comment">// Front pointer</span>
+<span class="c-type">int</span> r = -1;         <span class="c-comment">// Rear pointer</span></pre>
+        </article>
+
+        <!-- Card 3: Enqueue Front -->
+        <article class="feed-card">
+            <h2>3. Operation: Insert Front / Enqueue Front</h2>
+            <p>Normally, queues insert at the rear. Inserting at the front means the Front pointer must move <strong>backwards</strong> (<code>f--</code>). But what if <code>f == 0</code>? It must wrap around to the end of the array.</p>
+
+            <h3>Logic Steps:</h3>
+            <ol>
+                <li><strong>Check Full:</strong> If <code>(f==0 && r==N-1)</code> OR <code>(f == r + 1)</code>.</li>
+                <li><strong>Check Empty:</strong> If <code>f == -1 && r == -1</code>, set both to 0.</li>
+                <li><strong>Wrap Around:</strong> If <code>f == 0</code>, move backwards to <code>f = N - 1</code>.</li>
+                <li><strong>Normal:</strong> Decrement <code>f--</code>.</li>
+            </ol>
+
+            <pre>
+<span class="c-type">void</span> <span class="c-func">enqueuefront</span>(<span class="c-type">int</span> x) {
+    <span class="c-comment">// 1. Is the Queue Full?</span>
+    <span class="c-keyword">if</span> ((f == 0 && r == N - 1) || (f == r + 1)) {
+        printf(<span class="c-string">"Queue is full\n"</span>);
+    }
+    <span class="c-comment">// 2. Is it empty?</span>
+    <span class="c-keyword">else if</span> (f == -1 && r == -1) {
+        f = 0;
+        r = 0;
+        deque[f] = x;
+    }
+    <span class="c-comment">// 3. Wrap-around case</span>
+    <span class="c-keyword">else if</span> (f == 0) {
+        f = N - 1;
+        deque[f] = x;
+    }
+    <span class="c-comment">// 4. Normal insertion</span>
+    <span class="c-keyword">else</span> {
+        f--;
+        deque[f] = x;
+    }
+}</pre>
+        </article>
+
+        <!-- Card 4: Enqueue Rear -->
+        <article class="feed-card">
+            <h2>4. Operation: Insert Rear / Enqueue Rear</h2>
+            <p>This is the standard queue insertion. We move the Rear pointer <strong>forwards</strong>. If <code>r == N - 1</code>, it wraps around to <code>0</code>.</p>
+
+            <pre>
+<span class="c-type">void</span> <span class="c-func">enqueuerear</span>(<span class="c-type">int</span> x) {
+    <span class="c-comment">// 1. Is the Queue Full?</span>
+    <span class="c-keyword">if</span> ((f == 0 && r == N - 1) || (f == r + 1)) {
+        printf(<span class="c-string">"Queue is full\n"</span>);
+    }
+    <span class="c-comment">// 2. Is it empty?</span>
+    <span class="c-keyword">else if</span> (f == -1 && r == -1) {
+        f = 0;
+        r = 0;
+        deque[r] = x;
+    }
+    <span class="c-comment">// 3. Wrap-around case</span>
+    <span class="c-keyword">else if</span> (r == N - 1) {
+        r = 0;
+        deque[r] = x;
+    }
+    <span class="c-comment">// 4. Normal insertion</span>
+    <span class="c-keyword">else</span> {
+        r++;  <span class="c-comment">// or r = (r + 1) % N;</span>
+        deque[r] = x;
+    }
+}</pre>
+        </article>
+
+        <!-- Card 5: Dequeue Front -->
+        <article class="feed-card">
+            <h2>5. Operation: Delete Front / Dequeue Front</h2>
+            <p>Standard queue deletion. We move the Front pointer <strong>forwards</strong> (<code>f++</code>) to effectively ignore the deleted element. If <code>f == N - 1</code>, it wraps around to <code>0</code>.</p>
+
+            <pre>
+<span class="c-type">void</span> <span class="c-func">dequeuefront</span>() {
+    <span class="c-comment">// 1. Is it empty?</span>
+    <span class="c-keyword">if</span> (f == -1 && r == -1) {
+        printf(<span class="c-string">"Queue is empty\n"</span>);
+    }
+    <span class="c-comment">// 2. Only one element left?</span>
+    <span class="c-keyword">else if</span> (f == r) {
+        printf(<span class="c-string">"Deleted: %d\n"</span>, deque[f]);
+        f = -1;
+        r = -1;
+    }
+    <span class="c-comment">// 3. Wrap-around case</span>
+    <span class="c-keyword">else if</span> (f == N - 1) {
+        printf(<span class="c-string">"Deleted: %d\n"</span>, deque[f]);
+        f = 0;
+    }
+    <span class="c-comment">// 4. Normal deletion</span>
+    <span class="c-keyword">else</span> {
+        printf(<span class="c-string">"Deleted: %d\n"</span>, deque[f]);
+        f++;
+    }
+}</pre>
+        </article>
+
+        <!-- Card 6: Dequeue Rear -->
+        <article class="feed-card">
+            <h2>6. Operation: Delete Rear / Dequeue Rear</h2>
+            <p>Deleting from the rear means moving the Rear pointer <strong>backwards</strong> (<code>r--</code>). If <code>r == 0</code>, wrapping backwards means setting <code>r = N - 1</code>.</p>
+
+            <pre>
+<span class="c-type">void</span> <span class="c-func">dequeuerear</span>() {
+    <span class="c-comment">// 1. Is it empty?</span>
+    <span class="c-keyword">if</span> (f == -1 && r == -1) {
+        printf(<span class="c-string">"Queue is empty\n"</span>);
+    }
+    <span class="c-comment">// 2. Only one element left?</span>
+    <span class="c-keyword">else if</span> (f == r) {
+        printf(<span class="c-string">"Deleted: %d\n"</span>, deque[r]);
+        f = -1;
+        r = -1;
+    }
+    <span class="c-comment">// 3. Wrap-around case (Moving backwards from index 0)</span>
+    <span class="c-keyword">else if</span> (r == 0) {
+        printf(<span class="c-string">"Deleted: %d\n"</span>, deque[r]);
+        r = N - 1;
+    }
+    <span class="c-comment">// 4. Normal deletion</span>
+    <span class="c-keyword">else</span> {
+        printf(<span class="c-string">"Deleted: %d\n"</span>, deque[r]);
+        r--;
+    }
+}</pre>
+        </article>
+
+        <!-- Card 7: Display -->
+        <article class="feed-card">
+            <h2>7. Utility: Displaying the Deque</h2>
+            <p><span class="highlight">Crucial Note:</span> Because the array is circular, a standard <code>for (int i = f; i <= r; i++)</code> loop will fail if Front has wrapped around and is mathematically greater than Rear (e.g., f=4, r=1). We must use a <code>while</code> loop with Modulo Arithmetic.</p>
+
+            <pre>
+<span class="c-type">void</span> <span class="c-func">display</span>() {
+    <span class="c-keyword">if</span> (f == -1 && r == -1) {
+        printf(<span class="c-string">"Queue is empty\n"</span>);
+        <span class="c-keyword">return</span>;
+    }
+    
+    <span class="c-type">int</span> i = f;
+    <span class="c-comment">// Loop until i reaches r</span>
+    <span class="c-keyword">while</span> (i != r) {
+        printf(<span class="c-string">"%d "</span>, deque[i]);
+        i = (i + 1) % N; <span class="c-comment">// Moves forward circularly</span>
+    }
+    <span class="c-comment">// Print the last element (where i == r)</span>
+    printf(<span class="c-string">"%d\n"</span>, deque[r]);
+}</pre>
+        </article>
+
+        <!-- Card 8: Full Dry Run Visualized -->
+        <article class="feed-card">
+            <h2>8. Full Dry Run Trace</h2>
+            <p>Let's execute the exact sequence from the whiteboard to see how the array and pointers change. <code>N = 5</code>.</p>
+
+            <div class="dry-run-step">
+                <h4>1. enqueuefront(2)</h4>
+                <p>Empty queue. `f` and `r` become `0`.</p>
+                <div class="array-visual">
+                    <div class="array-cell"><div class="cell-box">2</div><div class="cell-index">0</div>
+                        <div class="pointers"><span class="ptr-f">F</span><span class="ptr-r">R</span></div>
+                    </div>
+                    <div class="array-cell"><div class="cell-box"></div><div class="cell-index">1</div></div>
+                    <div class="array-cell"><div class="cell-box"></div><div class="cell-index">2</div></div>
+                    <div class="array-cell"><div class="cell-box"></div><div class="cell-index">3</div></div>
+                    <div class="array-cell"><div class="cell-box"></div><div class="cell-index">4</div></div>
+                </div>
+            </div>
+
+            <div class="dry-run-step">
+                <h4>2. enqueuefront(5)</h4>
+                <p>`f == 0`, wrapping backwards. `f` becomes `4`.</p>
+                <div class="array-visual">
+                    <div class="array-cell"><div class="cell-box">2</div><div class="cell-index">0</div>
+                        <div class="pointers"><span class="ptr-r">R</span></div>
+                    </div>
+                    <div class="array-cell"><div class="cell-box"></div><div class="cell-index">1</div></div>
+                    <div class="array-cell"><div class="cell-box"></div><div class="cell-index">2</div></div>
+                    <div class="array-cell"><div class="cell-box"></div><div class="cell-index">3</div></div>
+                    <div class="array-cell"><div class="cell-box">5</div><div class="cell-index">4</div>
+                        <div class="pointers"><span class="ptr-f">F</span></div>
+                    </div>
+                </div>
+                <div class="wrap-around-arrow">⟵ Circular Wrap ⟵</div>
+            </div>
+
+            <div class="dry-run-step">
+                <h4>3. enqueuerear(-1)</h4>
+                <p>Normal rear insertion. `r++` becomes `1`.</p>
+                <div class="array-visual">
+                    <div class="array-cell"><div class="cell-box">2</div><div class="cell-index">0</div></div>
+                    <div class="array-cell"><div class="cell-box">-1</div><div class="cell-index">1</div>
+                        <div class="pointers"><span class="ptr-r">R</span></div>
+                    </div>
+                    <div class="array-cell"><div class="cell-box"></div><div class="cell-index">2</div></div>
+                    <div class="array-cell"><div class="cell-box"></div><div class="cell-index">3</div></div>
+                    <div class="array-cell"><div class="cell-box">5</div><div class="cell-index">4</div>
+                        <div class="pointers"><span class="ptr-f">F</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dry-run-step">
+                <h4>4. enqueuerear(0)</h4>
+                <p>Normal rear insertion. `r++` becomes `2`.</p>
+                <div class="array-visual">
+                    <div class="array-cell"><div class="cell-box">2</div><div class="cell-index">0</div></div>
+                    <div class="array-cell"><div class="cell-box">-1</div><div class="cell-index">1</div></div>
+                    <div class="array-cell"><div class="cell-box">0</div><div class="cell-index">2</div>
+                        <div class="pointers"><span class="ptr-r">R</span></div>
+                    </div>
+                    <div class="array-cell"><div class="cell-box"></div><div class="cell-index">3</div></div>
+                    <div class="array-cell"><div class="cell-box">5</div><div class="cell-index">4</div>
+                        <div class="pointers"><span class="ptr-f">F</span></div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="dry-run-step">
+                <h4>5. enqueuefront(7)</h4>
+                <p>Normal front insertion (moving backwards). `f--` becomes `3`.</p>
+                <div class="array-visual">
+                    <div class="array-cell"><div class="cell-box">2</div><div class="cell-index">0</div></div>
+                    <div class="array-cell"><div class="cell-box">-1</div><div class="cell-index">1</div></div>
+                    <div class="array-cell"><div class="cell-box">0</div><div class="cell-index">2</div>
+                        <div class="pointers"><span class="ptr-r">R</span></div>
+                    </div>
+                    <div class="array-cell"><div class="cell-box">7</div><div class="cell-index">3</div>
+                        <div class="pointers"><span class="ptr-f">F</span></div>
+                    </div>
+                    <div class="array-cell"><div class="cell-box">5</div><div class="cell-index">4</div></div>
+                </div>
+                <p style="margin-top: 25px;"><strong>Logical Order of Queue:</strong> 7, 5, 2, -1, 0</p>
+            </div>
+
+            <div class="dry-run-step" style="border-left: 4px solid var(--pointer-f);">
+                <h4>6. enqueuefront(4)</h4>
+                <p>The code checks <code>if (f == r + 1)</code>. Here, <code>f(3) == r(2) + 1</code>. Condition is TRUE!</p>
+                <p style="color: var(--pointer-f); font-weight: bold; margin-top: 10px;">Output: "Queue is full"</p>
+            </div>
+        </article>
+
+    </main>
+
+</body>
+</html>
