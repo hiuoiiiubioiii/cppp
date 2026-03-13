@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doubly Linked List - Study Notes</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #333;
+            --text-light: #555;
+            --primary: #2a5298;
+            --secondary: #1e3c72;
+            --accent: #ff6b6b;
+            --node-border: #333;
+            --node-bg: #fff;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Vertical Feed Layout Container */
+        .feed-container {
+            max-width: 850px;
+            width: 100%;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Header Styling */
+        header {
+            text-align: center;
+            padding: 2rem;
+            background: linear-gradient(135deg, var(--secondary), var(--primary));
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Content Cards */
+        .card {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--primary);
+        }
+
+        .card h2 {
+            color: var(--primary);
+            margin-bottom: 1.5rem;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 0.5rem;
+        }
+
+        .card h3 {
+            color: var(--secondary);
+            margin: 1.5rem 0 0.5rem 0;
+            font-size: 1.3rem;
+        }
+
+        p, ul {
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            font-size: 1.05rem;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight {
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        /* --- VISUALIZATIONS --- */
+        .diagram-container {
+            width: 100%;
+            overflow-x: auto;
+            padding: 2rem 1rem;
+            background: #f9fbff;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Pointers (Head, Temp) */
+        .pointer-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: bold;
+            color: var(--primary);
+        }
+        
+        .pointer-rect {
+            border: 2px solid var(--primary);
+            padding: 8px 15px;
+            background: #e8f0fe;
+            border-radius: 4px;
+            margin-top: 5px;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        .down-arrow {
+            font-size: 1.5rem;
+            margin-top: 5px;
+            color: var(--primary);
+        }
+
+        /* Nodes */
+        .node-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .address-label {
+            font-family: monospace;
+            color: var(--text-light);
+            margin-bottom: 5px;
+            font-size: 0.9rem;
+        }
+
+        /* Singly Linked Node */
+        .sll-node {
+            display: flex;
+            border: 2px solid var(--node-border);
+            border-radius: 4px;
+            background: var(--node-bg);
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        .sll-node > div {
+            padding: 10px 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .sll-node .data { border-right: 2px solid var(--node-border); font-weight: bold; }
+        .sll-node .next { color: var(--primary); }
+
+        /* Doubly Linked Node */
+        .dll-node {
+            display: flex;
+            border: 2px solid var(--node-border);
+            border-radius: 4px;
+            background: var(--node-bg);
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        .dll-node > div {
+            padding: 10px 15px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .dll-node .prev { border-right: 2px solid var(--node-border); color: var(--accent); }
+        .dll-node .data { border-right: 2px solid var(--node-border); font-weight: bold; }
+        .dll-node .next { color: var(--primary); }
+
+        /* Arrows between nodes */
+        .link-arrow {
+            font-size: 2rem;
+            color: #888;
+            font-weight: bold;
+            margin: 0 5px;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.05rem;
+            margin-bottom: 1.5rem;
+        }
+        .code-keyword { color: #569cd6; }
+        .code-type { color: #4ec9b0; }
+        .code-comment { color: #6a9955; font-style: italic; }
+
+        /* Memory Breakdown Graphic */
+        .memory-compare {
+            display: flex;
+            justify-content: space-around;
+            flex-wrap: wrap;
+            gap: 2rem;
+            margin-top: 1.5rem;
+        }
+        
+        .memory-box {
+            text-align: center;
+            background: #fff;
+            padding: 1rem;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+            flex: 1;
+            min-width: 250px;
+        }
+
+        .mem-block-container {
+            display: flex;
+            justify-content: center;
+            margin-top: 1rem;
+            border: 2px solid #333;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .mem-block {
+            padding: 10px;
+            font-weight: bold;
+            color: white;
+            font-size: 0.9rem;
+        }
+        .mb-data { background: #4caf50; border-right: 2px solid #333;}
+        .mb-ptr { background: var(--primary); }
+        .mb-prev { background: var(--accent); border-right: 2px solid #333;}
+
+        @media (max-width: 768px) {
+            .diagram-container {
+                align-items: flex-start;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+
+        <!-- Header -->
+        <header>
+            <h1>Introduction to Doubly Linked Lists</h1>
+            <p>Complete breakdown of visual notes, node structures, and memory analysis.</p>
+        </header>
+
+        <!-- Topic 1: SLL Recap -->
+        <article class="card">
+            <h2>1. Quick Recap: Singly Linked List (SLL)</h2>
+            <p>Before jumping into Doubly Linked Lists, let's review the whiteboard diagram of the <strong>Singly Linked List</strong>.</p>
+            <ul>
+                <li>Each node contains <strong>one link</strong> pointing to the <em>next</em> node.</li>
+                <li>Memory addresses are random (e.g., 100, 200, 400).</li>
+                <li><strong>Limitation:</strong> You can only traverse the list in a forward direction. You cannot go backward.</li>
+            </ul>
+
+            <div class="diagram-container">
+                <div class="pointer-box">
+                    <span>head</span>
+                    <div class="pointer-rect">100</div>
+                    <div class="down-arrow">↓</div>
+                </div>
+
+                <div class="node-wrapper">
+                    <span class="address-label">Address: 100</span>
+                    <div class="sll-node">
+                        <div class="data">7</div>
+                        <div class="next">200</div>
+                    </div>
+                </div>
+
+                <div class="link-arrow">→</div>
+
+                <div class="node-wrapper">
+                    <span class="address-label">Address: 200</span>
+                    <div class="sll-node">
+                        <div class="data">4</div>
+                        <div class="next">400</div>
+                    </div>
+                </div>
+
+                <div class="link-arrow">→</div>
+
+                <div class="node-wrapper">
+                    <span class="address-label">Address: 400</span>
+                    <div class="sll-node">
+                        <div class="data">9</div>
+                        <div class="next">0</div>
+                    </div>
+                </div>
+            </div>
+            <p><em>Note: The last node points to `0` (Null) indicating the end of the list.</em></p>
+        </article>
+
+        <!-- Topic 2: What is a DLL -->
+        <article class="card">
+            <h2>2. What is a Doubly Linked List (DLL)?</h2>
+            <p>A Doubly Linked List is a linked list where each node contains <strong>two links</strong> instead of one. This splits the node into exactly <strong>three parts</strong>:</p>
+            <ul>
+                <li><span class="highlight">Prev Pointer:</span> Stores the memory address of the preceding node.</li>
+                <li><strong>Data Part:</strong> Stores the actual value (e.g., 7, 4, 9).</li>
+                <li><span class="highlight">Next Pointer:</span> Stores the memory address of the following node.</li>
+            </ul>
+
+            <h3>Visualizing the DLL</h3>
+            <p>Notice how the first node's `prev` is `0` (null) because there is no node before it. The arrows now go both ways!</p>
+
+            <div class="diagram-container">
+                <div class="pointer-box">
+                    <span>head</span>
+                    <div class="pointer-rect">100</div>
+                    <div class="down-arrow">↓</div>
+                </div>
+
+                <div class="node-wrapper">
+                    <span class="address-label">Address: 100</span>
+                    <div class="dll-node">
+                        <div class="prev">0</div>
+                        <div class="data">7</div>
+                        <div class="next">200</div>
+                    </div>
+                </div>
+
+                <div class="link-arrow">↔</div>
+
+                <div class="node-wrapper">
+                    <span class="address-label">Address: 200</span>
+                    <div class="dll-node">
+                        <div class="prev">100</div>
+                        <div class="data">4</div>
+                        <div class="next">400</div>
+                    </div>
+                </div>
+
+                <div class="link-arrow">↔</div>
+
+                <div class="node-wrapper">
+                    <span class="address-label">Address: 400</span>
+                    <div class="dll-node">
+                        <div class="prev">200</div>
+                        <div class="data">9</div>
+                        <div class="next">0</div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Topic 3: C Programming Representation -->
+        <article class="card">
+            <h2>3. C Programming Representation</h2>
+            <p>A node is a user-defined data type created using a <code>struct</code>. Because memory is dynamically allocated at runtime, we must declare a pointer (`head`) to access the first node.</p>
+            
+            <h3>Singly Linked List Code (For context)</h3>
+<pre>
+<span class="code-keyword">struct</span> <span class="code-type">node</span> {
+    <span class="code-keyword">int</span> data;
+    <span class="code-keyword">struct</span> <span class="code-type">node</span> *next;
+};
+<span class="code-keyword">struct</span> <span class="code-type">node</span> *head;
+</pre>
+
+            <h3>Doubly Linked List Code</h3>
+            <p>To convert this into a DLL, we simply add one more pointer inside the struct to hold the previous node's address.</p>
+<pre>
+<span class="code-keyword">struct</span> <span class="code-type">node</span> {
+    <span class="code-keyword">int</span> data;
+    <span class="code-keyword">struct</span> <span class="code-type">node</span> *next;
+    <span class="code-keyword">struct</span> <span class="code-type">node</span> *prev; <span class="code-comment">// New pointer for backward link</span>
+};
+<span class="code-keyword">struct</span> <span class="code-type">node</span> *head;
+</pre>
+        </article>
+
+        <!-- Topic 4: Advantages -->
+        <article class="card">
+            <h2>4. Advantages of Doubly Linked Lists</h2>
+            <p>Why do we use the extra memory for a DLL? It gives us massive advantages in traversal and modification.</p>
+            <ul>
+                <li><strong>Bidirectional Traversal:</strong> You can traverse the list forward AND backward.</li>
+                <li><strong>Easy Reverse Printing:</strong> Traverse to the very end of the list, then simply use the `prev` pointers to print the data backwards.</li>
+                <li><strong>Easier Deletion:</strong> You do not need to maintain a separate "trailing pointer" to delete a node, because the node itself knows the address of the node behind it.</li>
+            </ul>
+
+            <h3>The "Temp Pointer" Advantage</h3>
+            <p>Imagine you have a pointer named <code>temp</code> currently pointing to the middle node (Address 200). </p>
+            
+            <div class="diagram-container" style="justify-content: center;">
+                <div class="pointer-box">
+                    <span>temp</span>
+                    <div class="pointer-rect">200</div>
+                    <div class="down-arrow">↓</div>
+                </div>
+                <div class="node-wrapper">
+                    <span class="address-label">Current Node (200)</span>
+                    <div class="dll-node">
+                        <div class="prev">100</div>
+                        <div class="data">4</div>
+                        <div class="next">400</div>
+                    </div>
+                </div>
+            </div>
+
+            <ul>
+                <li>In an <strong>SLL</strong>, <code>temp->next</code> gets you to 400. But you are <em>stuck</em>. You cannot reach 100 without starting all over from the `head`.</li>
+                <li>In a <strong>DLL</strong>, <code>temp->next</code> gets you to 400, AND <code>temp->prev</code> gets you safely back to 100. Ultimate freedom!</li>
+            </ul>
+        </article>
+
+        <!-- Topic 5: Disadvantages & Memory -->
+        <article class="card">
+            <h2>5. Disadvantages: The Memory Cost</h2>
+            <p>The main drawback of a DLL is <strong>memory consumption</strong>. Let's calculate the exact memory required for a single node on a typical 32-bit compiler.</p>
+            
+            <ul>
+                <li>An integer (<code>data</code>) takes <strong>4 bytes</strong>.</li>
+                <li>A pointer (memory address) takes <strong>4 bytes</strong>.</li>
+            </ul>
+
+            <div class="memory-compare">
+                <div class="memory-box">
+                    <h3>Singly Linked Node</h3>
+                    <p>Total: <strong>8 Bytes</strong></p>
+                    <div class="mem-block-container">
+                        <div class="mem-block mb-data">Data<br>(4 bytes)</div>
+                        <div class="mem-block mb-ptr">Next Ptr<br>(4 bytes)</div>
+                    </div>
+                </div>
+
+                <div class="memory-box">
+                    <h3>Doubly Linked Node</h3>
+                    <p>Total: <strong class="highlight">12 Bytes</strong></p>
+                    <div class="mem-block-container">
+                        <div class="mem-block mb-prev">Prev Ptr<br>(4 bytes)</div>
+                        <div class="mem-block mb-data">Data<br>(4 bytes)</div>
+                        <div class="mem-block mb-ptr">Next Ptr<br>(4 bytes)</div>
+                    </div>
+                </div>
+            </div>
+
+            <p style="margin-top: 1.5rem;"><strong>Conclusion:</strong> Storing the exact same sequence of numbers (7, 4, 9) takes up 50% more memory per node in a Doubly Linked List because of the extra <code>prev</code> pointers. You trade memory efficiency for navigation speed and flexibility.</p>
+        </article>
+
+    </div>
+
+</body>
+</html>
