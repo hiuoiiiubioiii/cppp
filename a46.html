@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Implementation of Queue using Stacks</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap');
+
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #2d3748;
+            --card-bg: #ffffff;
+            --accent-blue: #4299e1;
+            --accent-purple: #9f7aea;
+            --accent-green: #48bb78;
+            --accent-red: #f56565;
+            --code-bg: #1a202c;
+            --code-text: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            width: 100%;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .header-block {
+            text-align: center;
+            padding: 2rem 0;
+        }
+
+        .header-block h1 {
+            font-size: 2.5rem;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        .header-block p {
+            color: #718096;
+            font-size: 1.1rem;
+        }
+
+        .feed-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.1);
+            border-top: 4px solid var(--accent-blue);
+        }
+
+        .feed-card.concept { border-top-color: var(--accent-purple); }
+        .feed-card.visual { border-top-color: var(--accent-green); }
+        .feed-card.homework { border-top-color: var(--accent-red); background-color: #fff5f5; }
+
+        .feed-card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .feed-card h3 {
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.5rem 0;
+            color: #4a5568;
+        }
+
+        p { margin-bottom: 1rem; }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+
+        .highlight {
+            background-color: #ebf8ff;
+            color: #2b6cb0;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            margin: 1rem 0;
+        }
+        
+        .code-comment { color: #a0aec0; }
+        .code-keyword { color: #f6ad55; }
+        .code-func { color: #63b3ed; }
+
+        /* Visualization Styles */
+        .viz-container {
+            display: flex;
+            justify-content: space-around;
+            align-items: flex-end;
+            background: #edf2f7;
+            padding: 2rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            height: 350px;
+        }
+
+        .stack-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 120px;
+        }
+
+        .stack-box {
+            width: 100px;
+            height: 250px;
+            border: 4px solid #2d3748;
+            border-top: none;
+            display: flex;
+            flex-direction: column-reverse;
+            justify-content: flex-start;
+            padding: 5px;
+            gap: 5px;
+            background: #fff;
+            position: relative;
+        }
+
+        .stack-label {
+            margin-top: 10px;
+            font-weight: 600;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .element {
+            background: var(--accent-blue);
+            color: white;
+            text-align: center;
+            padding: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            animation: dropIn 0.3s ease-out;
+        }
+
+        .element.moving {
+            background: var(--accent-purple);
+        }
+
+        .element.popped-final {
+            background: var(--accent-red);
+            animation: popOut 1s forwards;
+        }
+
+        @keyframes dropIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes popOut {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+
+        .viz-controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        button {
+            padding: 0.5rem 1rem;
+            border: none;
+            background: var(--text-main);
+            color: white;
+            font-weight: 600;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover { background: var(--accent-blue); }
+        button:disabled { background: #cbd5e0; cursor: not-allowed; }
+
+        .log-box {
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            padding: 1rem;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            color: #4a5568;
+            text-align: center;
+            min-height: 50px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <!-- Header -->
+        <div class="header-block">
+            <h1>Implementation of Queue using Stacks</h1>
+            <p>Comprehensive video breakdown & study notes</p>
+        </div>
+
+        <!-- Concept 1 -->
+        <div class="feed-card concept">
+            <h2>🧠 1. The Core Problem</h2>
+            <p>To implement a Queue using Stacks, we must understand the conflicting rules of both data structures:</p>
+            <ul>
+                <li><strong>Queue (FIFO):</strong> First In, First Out. Insertions happen at the <span class="highlight">Rear</span>, deletions at the <span class="highlight">Front</span>.</li>
+                <li><strong>Stack (LIFO):</strong> Last In, First Out. Insertions (<span class="highlight">Push</span>) and deletions (<span class="highlight">Pop</span>) happen at only one end: the <span class="highlight">Top</span>.</li>
+            </ul>
+            <p><strong>The Challenge:</strong> A single stack forces LIFO behavior. To simulate FIFO behavior, we <strong>must use two stacks (Stack 1 and Stack 2)</strong> to flip the order of the elements.</p>
+        </div>
+
+        <!-- Concept 2 -->
+        <div class="feed-card concept">
+            <h2>⚖️ 2. The Two Approaches</h2>
+            <p>The instructor highlights two primary ways to solve this. You trade off time complexity between the Enqueue and Dequeue operations.</p>
+            <ul>
+                <li><strong>Method 1 (Focus of this feed):</strong> <span class="highlight">Enqueue is O(1)</span> (Fast) | <span class="highlight">Dequeue is O(n)</span> (Slow/Costly).</li>
+                <li><strong>Method 2 (Next video):</strong> <span class="highlight">Enqueue is O(n)</span> (Slow/Costly) | <span class="highlight">Dequeue is O(1)</span> (Fast).</li>
+            </ul>
+        </div>
+
+        <!-- Interactive Visualization -->
+        <div class="feed-card visual">
+            <h2>🕹️ 3. Interactive Dry Run (Method 1)</h2>
+            <p>In Method 1, we make Enqueue fast by simply pushing to <strong>Stack 1</strong>. When it's time to Dequeue, we dump everything from Stack 1 into <strong>Stack 2</strong> to reverse the order, pop the top of Stack 2, and then move everything back. Try it below!</p>
+            
+            <div class="viz-controls">
+                <button id="btn-enq-5" onclick="runEnqueue(5)">Enqueue(5)</button>
+                <button id="btn-enq-2" onclick="runEnqueue(2)">Enqueue(2)</button>
+                <button id="btn-enq-3" onclick="runEnqueue(3)">Enqueue(3)</button>
+                <button id="btn-deq" onclick="runDequeue()" style="background: var(--accent-purple);">Dequeue()</button>
+                <button id="btn-reset" onclick="resetViz()" style="background: var(--accent-red);">Reset</button>
+            </div>
+
+            <div class="viz-container">
+                <div class="stack-wrapper">
+                    <div class="stack-box" id="stack1"></div>
+                    <div class="stack-label">Stack 1 (S1)</div>
+                </div>
+                <div class="stack-wrapper">
+                    <div class="stack-box" id="stack2"></div>
+                    <div class="stack-label">Stack 2 (S2)</div>
+                </div>
+            </div>
+            
+            <div class="log-box" id="log-output">Awaiting action...</div>
+        </div>
+
+        <!-- Code Breakdown 1 -->
+        <div class="feed-card">
+            <h2>💻 4. C-Code: Global Variables & Setup</h2>
+            <p>Here is the exact code setup from the whiteboard. We define the capacity, initialize two arrays to act as stacks, and maintain a <span class="highlight">count</span> variable to track elements.</p>
+<pre>
+<span class="code-comment">#define N 5</span>
+<span class="code-keyword">int</span> S1[N], S2[N];   <span class="code-comment">// The two arrays simulating stacks</span>
+<span class="code-keyword">int</span> top1 = -1;      <span class="code-comment">// Top pointer for Stack 1</span>
+<span class="code-keyword">int</span> top2 = -1;      <span class="code-comment">// Top pointer for Stack 2</span>
+<span class="code-keyword">int</span> count = 0;      <span class="code-comment">// Tracks total elements in the queue</span>
+</pre>
+            <p><strong>Note:</strong> We need standard stack helper functions: <span class="highlight">push1()</span>, <span class="highlight">pop1()</span>, <span class="highlight">push2()</span>, and <span class="highlight">pop2()</span>. These are standard implementations that increment/decrement the respective top pointers.</p>
+        </div>
+
+        <!-- Code Breakdown 2 -->
+        <div class="feed-card">
+            <h2>🚀 5. C-Code: The Enqueue Function (O(1))</h2>
+            <p>Because we are using Method 1, inserting an element is extremely fast. We simply push it onto Stack 1 and increment the element count.</p>
+<pre>
+<span class="code-keyword">void</span> <span class="code-func">enqueue</span>(<span class="code-keyword">int</span> x) {
+    push1(x);       <span class="code-comment">// Push data to Stack 1</span>
+    count++;        <span class="code-comment">// Increment total elements tracker</span>
+}
+</pre>
+        </div>
+
+        <!-- Code Breakdown 3 -->
+        <div class="feed-card">
+            <h2>⏳ 6. C-Code: The Dequeue Function O(n)</h2>
+            <p>This is the heavy lifter. To remove the "oldest" element, we move everything out of Stack 1 into Stack 2, pop Stack 2, and then restore Stack 1.</p>
+<pre>
+<span class="code-keyword">void</span> <span class="code-func">dequeue</span>() {
+    <span class="code-keyword">int</span> i, a, b;
+    
+    <span class="code-comment">// 1. Check for Underflow</span>
+    <span class="code-keyword">if</span> (top1 == -1 && top2 == -1) {
+        printf(<span class="code-text">"Queue is empty\n"</span>);
+        <span class="code-keyword">return</span>;
+    }
+    
+    <span class="code-comment">// 2. Move all elements from S1 to S2</span>
+    <span class="code-keyword">for</span> (i = 0; i < count; i++) {
+        a = pop1();
+        push2(a);
+    }
+    
+    <span class="code-comment">// 3. Pop the target element from S2</span>
+    b = pop2();
+    printf(<span class="code-text">"Dequeued element is %d\n"</span>, b);
+    
+    <span class="code-comment">// 4. Update the element count</span>
+    count--;
+    
+    <span class="code-comment">// 5. Move remaining elements back from S2 to S1</span>
+    <span class="code-keyword">for</span> (i = 0; i < count; i++) {
+        a = pop2();
+        push1(a);
+    }
+}
+</pre>
+        </div>
+
+        <!-- Homework -->
+        <div class="feed-card homework">
+            <h2>📝 7. Instructor's Homework Question</h2>
+            <p>At the end of the video, the instructor writes a <span class="highlight">display()</span> function to show the queue's contents:</p>
+<pre>
+<span class="code-keyword">void</span> <span class="code-func">display</span>() {
+    <span class="code-keyword">int</span> i;
+    <span class="code-keyword">for</span> (i = 0; i <= top1; i++) {
+        printf(<span class="code-text">"%d "</span>, S1[i]);
+    }
+    printf(<span class="code-text">"\n"</span>);
+}
+</pre>
+            <h3>The Question for You:</h3>
+            <p>The instructor wrote the loop condition as <strong><code>i <= top1</code></strong>.</p>
+            <p><em>What happens if you change that condition to <strong><code>i < count</code></strong>? Will it still work perfectly? Try testing it in your own compiler and think about edge cases!</em></p>
+        </div>
+
+    </div>
+
+    <!-- JavaScript for Interactive Visualization -->
+    <script>
+        let s1 = [];
+        let s2 = [];
+        let isAnimating = false;
+
+        const stack1Div = document.getElementById('stack1');
+        const stack2Div = document.getElementById('stack2');
+        const logOutput = document.getElementById('log-output');
+        const buttons = document.querySelectorAll('button');
+
+        function updateLog(message) {
+            logOutput.innerText = message;
+        }
+
+        function toggleButtons(disable) {
+            isAnimating = disable;
+            buttons.forEach(btn => btn.disabled = disable);
+        }
+
+        function renderStacks() {
+            stack1Div.innerHTML = '';
+            stack2Div.innerHTML = '';
+
+            // Render Stack 1
+            s1.forEach(val => {
+                let div = document.createElement('div');
+                div.className = 'element';
+                div.innerText = val;
+                stack1Div.appendChild(div);
+            });
+
+            // Render Stack 2
+            s2.forEach(val => {
+                let div = document.createElement('div');
+                div.className = 'element';
+                div.innerText = val;
+                stack2Div.appendChild(div);
+            });
+        }
+
+        async function runEnqueue(val) {
+            if (isAnimating) return;
+            if (s1.length >= 5) {
+                updateLog("Overflow! Queue (Stack 1) is full.");
+                return;
+            }
+            
+            s1.push(val);
+            renderStacks();
+            updateLog(`Enqueued ${val}. Pushed directly to Stack 1. (O(1) Time)`);
+        }
+
+        function sleep(ms) {
+            return new Promise(resolve => setTimeout(resolve, ms));
+        }
+
+        async function runDequeue() {
+            if (isAnimating) return;
+            if (s1.length === 0) {
+                updateLog("Underflow! Queue is empty.");
+                return;
+            }
+
+            toggleButtons(true);
+            updateLog("Dequeue initiated. Phase 1: Moving elements from S1 to S2...");
+
+            // Step 1: S1 to S2
+            while (s1.length > 0) {
+                await sleep(600);
+                let val = s1.pop();
+                s2.push(val);
+                renderStacks();
+            }
+
+            updateLog("Phase 2: Popping top element from S2...");
+            await sleep(800);
+            
+            // Step 2: Pop from S2 (The Dequeued element)
+            let dequeuedVal = s2.pop();
+            renderStacks();
+            
+            // visually show the popped element temporarily 
+            let popDiv = document.createElement('div');
+            popDiv.className = 'element popped-final';
+            popDiv.innerText = dequeuedVal;
+            popDiv.style.position = "absolute";
+            popDiv.style.top = "-60px";
+            stack2Div.appendChild(popDiv);
+
+            updateLog(`Dequeued Element is ${dequeuedVal}! Phase 3: Moving remaining back to S1...`);
+            await sleep(1200);
+            popDiv.remove();
+
+            // Step 3: S2 back to S1
+            while (s2.length > 0) {
+                await sleep(600);
+                let val = s2.pop();
+                s1.push(val);
+                renderStacks();
+            }
+
+            updateLog(`Dequeue complete. Element ${dequeuedVal} successfully removed. (O(n) Time)`);
+            toggleButtons(false);
+        }
+
+        function resetViz() {
+            s1 = [];
+            s2 = [];
+            renderStacks();
+            updateLog("Queue reset. Awaiting action...");
+        }
+    </script>
+
+</body>
+</html>
