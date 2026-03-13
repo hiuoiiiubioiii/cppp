@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Arrays in Data Structure | Study Feed</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f0f2f5;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --accent: #f59e0b;
+            --text: #1f2937;
+            --code-bg: #282c34;
+            --invalid: #ef4444;
+            --valid: #10b981;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+            background: linear-gradient(135deg, #1e3a8a, #2563eb);
+            color: white;
+            border-bottom-left-radius: 20px;
+            border-bottom-right-radius: 20px;
+            margin-bottom: 30px;
+        }
+
+        header h1 { margin: 0; font-size: 2.5rem; font-weight: 800; }
+        header p { opacity: 0.9; margin-top: 10px; }
+
+        /* Card Styling for Vertical Feed */
+        .topic-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-left: 5px solid var(--primary);
+        }
+
+        h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-top: 0;
+            border-bottom: 2px solid var(--bg);
+            padding-bottom: 10px;
+        }
+
+        .important-note {
+            background: #fffbeb;
+            border-left: 4px solid var(--accent);
+            padding: 15px;
+            margin: 20px 0;
+            font-weight: 600;
+        }
+
+        /* Visualization: Memory Tape */
+        .memory-tape {
+            display: flex;
+            overflow-x: auto;
+            background: var(--code-bg);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+
+        .byte-box {
+            min-width: 60px;
+            height: 60px;
+            border: 1px solid #4b5563;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+        }
+
+        .byte-box.highlight {
+            background: var(--primary);
+            border-color: white;
+        }
+
+        .address-label {
+            font-size: 0.7rem;
+            color: #9ca3af;
+            margin-top: 5px;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .keyword { color: #c678dd; }
+        .type { color: #d19a66; }
+        .val { color: #98c379; }
+
+        /* Comparison Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+
+        th, td {
+            padding: 12px;
+            border: 1px solid #e5e7eb;
+            text-align: left;
+        }
+
+        th { background: #f9fafb; }
+
+        .status-valid { color: var(--valid); font-weight: bold; }
+        .status-invalid { color: var(--invalid); font-weight: bold; }
+
+        /* Formula Box */
+        .formula-box {
+            text-align: center;
+            background: var(--text);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            font-size: 1.2rem;
+            font-family: 'Fira Code', monospace;
+            margin: 20px 0;
+        }
+
+        footer {
+            text-align: center;
+            padding: 40px;
+            color: #6b7280;
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <h1>Arrays in Data Structure</h1>
+    <p>Complete Masterclass Notes & Visualizations</p>
+</header>
+
+<div class="feed-container">
+
+    <!-- TOPIC 1: THE PROBLEM -->
+    <section class="topic-card">
+        <h2>1. Why do we need Arrays?</h2>
+        <p>Standard variables can only hold <strong>one value at a time</strong>. If you try to store a new value, the old one is overwritten.</p>
+        <pre>
+<span class="type">int</span> a = <span class="val">5</span>;  <span class="comment">// Memory stores 5</span>
+a = <span class="val">6</span>;      <span class="comment">// 5 is now deleted/overwritten by 6</span></pre>
+        <div class="important-note">
+            The Array was created to store large amounts of data (e.g., 60 student roll numbers) under a single variable name without declaring 60 different variables.
+        </div>
+    </section>
+
+    <!-- TOPIC 2: MEMORY FOUNDATIONS -->
+    <section class="topic-card">
+        <h2>2. Memory Representation</h2>
+        <p>Computer memory is viewed as a <strong>long tape of bytes</strong>. Each byte consists of 8 bits.</p>
+        <ul>
+            <li><strong>1 Integer (int):</strong> Typically consumes <strong>4 Bytes</strong> (32 bits).</li>
+            <li><strong>Binary Conversion:</strong> The value 5 is stored as 32 binary digits.</li>
+        </ul>
+        <div class="memory-tape">
+            <div class="byte-box">0000<div class="address-label">100</div></div>
+            <div class="byte-box">0000<div class="address-label">101</div></div>
+            <div class="byte-box">0000<div class="address-label">102</div></div>
+            <div class="byte-box highlight">0101<div class="address-label">103</div></div>
+            <div class="byte-box">...<div class="address-label">104</div></div>
+        </div>
+        <p><small>*Addresses are usually Hexadecimal (e.g., 0x677C0), but we use decimals for simplicity.</small></p>
+    </section>
+
+    <!-- TOPIC 3: DEFINITION & SYNTAX -->
+    <section class="topic-card">
+        <h2>3. Defining an Array</h2>
+        <p>An array is a <strong>fixed-size, sequenced collection of data items of the same data type.</strong></p>
+        <pre><span class="type">Data_Type</span> Array_Name[<span class="val">Size</span>];</pre>
+        
+        <h3>Validation Rules</h3>
+        <table>
+            <tr>
+                <th>Declaration</th>
+                <th>Status</th>
+                <th>Reason</th>
+            </tr>
+            <tr>
+                <td><code>int a[5] = {1, 2, 3, 4, 5};</code></td>
+                <td class="status-valid">VALID</td>
+                <td>Homogeneous (All integers)</td>
+            </tr>
+            <tr>
+                <td><code>char b[10];</code></td>
+                <td class="status-valid">VALID</td>
+                <td>Standard character array</td>
+            </tr>
+            <tr>
+                <td><code>int a[];</code></td>
+                <td class="status-invalid">INVALID</td>
+                <td>Size must be specified</td>
+            </tr>
+            <tr>
+                <td><code>int a[5] = {1, 'j', 3};</code></td>
+                <td class="status-invalid">INVALID</td>
+                <td>Heterogeneous (Mixed types)</td>
+            </tr>
+        </table>
+    </section>
+
+    <!-- TOPIC 4: 1-D ARRAY LAYOUT -->
+    <section class="topic-card">
+        <h2>4. Visualizing 1D Array Memory</h2>
+        <p>In a 1D Array, elements are stored in <strong>Contiguous (Consecutive)</strong> locations. One right after the other.</p>
+        <p>Example: <code>int a[5] = {6, 2, 4, 3, 0};</code> (Assuming Base Address 100)</p>
+        <div class="memory-tape">
+            <div class="byte-box highlight">6<div class="address-label">100</div></div>
+            <div class="byte-box">...</div>
+            <div class="byte-box highlight">2<div class="address-label">104</div></div>
+            <div class="byte-box">...</div>
+            <div class="byte-box highlight">4<div class="address-label">108</div></div>
+            <div class="byte-box">...</div>
+            <div class="byte-box highlight">3<div class="address-label">112</div></div>
+            <div class="byte-box">...</div>
+            <div class="byte-box highlight">0<div class="address-label">116</div></div>
+        </div>
+        <p>Note how each index jumps by 4 bytes (size of an int).</p>
+    </section>
+
+    <!-- TOPIC 5: INITIALIZATION -->
+    <section class="topic-card">
+        <h2>5. Initialization Methods</h2>
+        
+        <h3>A. Compile-Time (Static)</h3>
+        <p>Values are assigned during declaration.</p>
+        <pre><span class="type">int</span> a[<span class="val">5</span>] = {<span class="val">6, 2, 4, 3, 0</span>};</pre>
+
+        <h3>B. Run-Time (Dynamic)</h3>
+        <p>Asking the user for input while the program is running using a loop.</p>
+        <pre>
+<span class="keyword">for</span>(<span class="type">int</span> i=<span class="val">0</span>; i < <span class="val">5</span>; i++) {
+    <span class="keyword">scanf</span>(<span class="val">"%d"</span>, &a[i]);
+}</pre>
+    </section>
+
+    <!-- TOPIC 6: ACCESSING ELEMENTS -->
+    <section class="topic-card">
+        <h2>6. The Access Formula</h2>
+        <p>Arrays support <strong>Random Access</strong>. You can calculate the address of any element instantly using the formula:</p>
+        
+        <div class="formula-box">
+            Address = Base + (Index * Size)
+        </div>
+
+        <p><strong>Example Calculation:</strong><br>
+        To find <code>a[2]</code> where Base = 100 and Size = 4 bytes:<br>
+        <code>100 + (2 * 4) = 108</code></p>
+        
+        <ul>
+            <li><strong>Time Complexity:</strong> O(1) (Constant Time)</li>
+            <li><strong>Index:</strong> Always starts at <strong>0</strong>.</li>
+        </ul>
+    </section>
+
+    <!-- TOPIC 7: DRAWBACKS -->
+    <section class="topic-card">
+        <h2>7. Drawbacks of Arrays</h2>
+        <p>While powerful, arrays have significant limitations:</p>
+        <ol>
+            <li><strong>Fixed Size:</strong> You cannot increase or decrease the size at runtime.</li>
+            <li><strong>Wastage of Space:</strong> If you declare 100 slots but use only 10, the other 90 slots remain occupied and empty.</li>
+            <li><strong>Tedious Re-allocation:</strong> To expand an array, you must create a new larger array and manually copy all elements from the old one.</li>
+        </ol>
+    </section>
+
+    <footer>
+        <p>Next Topic: 2D Arrays & Operations | Data Structure Series</p>
+    </footer>
+
+</div>
+
+</body>
+</html>
