@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Notes: Infix, Prefix & Postfix</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;700&display=swap');
+
+        :root {
+            --bg-color: #f4f7f9;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --card-bg: #ffffff;
+            --primary: #4299e1;
+            --operand-bg: #e6fffa;
+            --operand-text: #2c7a7b;
+            --operator-bg: #fff5f5;
+            --operator-text: #c53030;
+            --highlight: #ecc94b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Scroll Progress Bar */
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 5px;
+            background: var(--primary);
+            width: 0%;
+            z-index: 1000;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            padding: 4rem 1rem 2rem;
+            background: linear-gradient(135deg, #2b6cb0, #4299e1);
+            color: white;
+            margin-bottom: 2rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Vertical Feed Layout */
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 1rem 4rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Feed Cards with Scroll Animation */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.025);
+            opacity: 0; /* Hidden initially for animation */
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            border-bottom: 2px solid #edf2f7;
+            padding-bottom: 0.5rem;
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.5rem;
+            color: #2d3748;
+        }
+
+        /* Visualizations */
+        .visual-box {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            background: #f7fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 1.1rem;
+            font-weight: 600;
+            flex-wrap: wrap;
+        }
+
+        .operand {
+            background-color: var(--operand-bg);
+            color: var(--operand-text);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid #b2f5ea;
+        }
+
+        .operator {
+            background-color: var(--operator-bg);
+            color: var(--operator-text);
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            border: 1px solid #fed7d7;
+            font-weight: bold;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background-color: #ebf8ff;
+            color: #2b6cb0;
+            font-weight: 600;
+        }
+
+        tr:hover {
+            background-color: #f7fafc;
+        }
+
+        /* Step-by-Step Math Blocks */
+        .math-steps {
+            background: #2d3748;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            line-height: 1.8;
+            margin: 1rem 0;
+        }
+
+        .math-step {
+            display: block;
+        }
+
+        .math-step.active-step {
+            color: #63b3ed;
+            font-weight: bold;
+        }
+
+        .math-step.final {
+            color: #48bb78;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-top: 0.5rem;
+            border-top: 1px dashed #718096;
+            padding-top: 0.5rem;
+        }
+
+        .note {
+            background-color: #fffaf0;
+            border-left: 4px solid #ed8936;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 0.95rem;
+            color: #7b341e;
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .visual-box { flex-direction: column; }
+            header h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="progress-bar" id="progressBar"></div>
+
+    <header>
+        <h1>Infix, Prefix, & Postfix</h1>
+        <p>Comprehensive Study Notes • Application of the Stack Data Structure</p>
+        <p style="font-size: 0.9rem; margin-top: 10px; font-weight: 300;">Instructor: Jayanti Khatri Lamba</p>
+    </header>
+
+    <main>
+        <!-- Card 1 -->
+        <article class="card">
+            <h2>1. What is an Expression?</h2>
+            <p>An expression is a combination of constants, variables, symbols, operators, and parentheses arranged according to grammar rules. In this lesson, we specifically focus on <strong>binary operators</strong> (operators that require exactly two operands).</p>
+            
+            <h3>The Standard: Infix Notation</h3>
+            <p>This is the standard mathematical format humans use. The operator sits <em>in between</em> the operands.</p>
+            
+            <div class="visual-box">
+                <span class="operand">&lt;operand&gt;</span>
+                <span class="operator">&lt;operator&gt;</span>
+                <span class="operand">&lt;operand&gt;</span>
+            </div>
+
+            <p><strong>Crucial Concept:</strong> Operands are not always just simple numbers. They can be entire complex sub-expressions themselves!</p>
+            
+            <div class="visual-box">
+                <span class="operand">(a - 1)</span>
+                <span class="operator">+</span>
+                <span class="operand">5</span>
+            </div>
+            <p style="font-size: 0.9rem; color: var(--text-muted); text-align: center;">Here, the entire expression <code>(a-1)</code> acts as Operand 1 for the <code>+</code> operator.</p>
+        </article>
+
+        <!-- Card 2 -->
+        <article class="card">
+            <h2>2. The Problem with Infix</h2>
+            <p>Because Infix expressions place the operator in the middle, they can be highly ambiguous to computers. Look at the expression below:</p>
+            
+            <div class="visual-box" style="font-size: 1.5rem;">
+                5 + 1 * 6
+            </div>
+
+            <p>How do we evaluate this? There are two ways to read it:</p>
+            <ul style="margin-left: 1.5rem; margin-top: 1rem;">
+                <li><strong>Wrong Way (Left to Right):</strong> 5 + 1 = 6. Then 6 * 6 = <strong>36</strong>.</li>
+                <li><strong>Correct Way (Precedence):</strong> 1 * 6 = 6. Then 5 + 6 = <strong>11</strong>.</li>
+            </ul>
+
+            <div class="note">
+                <strong>Why computers hate this:</strong> Parsing Infix expressions is easy for humans but requires a lot of extra time and memory for a computer. The computer has to constantly scan back and forth to check precedence, associativity, and parentheses.
+            </div>
+        </article>
+
+        <!-- Card 3 -->
+        <article class="card">
+            <h2>3. The Rules: Precedence & Associativity</h2>
+            <p>To get the correct answer from an Infix expression, we must follow strict grammar rules.</p>
+            <ul>
+                <li><strong>Precedence:</strong> Dictates which operation happens first.</li>
+                <li><strong>Associativity:</strong> Acts as a tie-breaker when two operators in the expression have the <em>exact same</em> precedence level.</li>
+            </ul>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Priority</th>
+                        <th>Operator(s)</th>
+                        <th>Name</th>
+                        <th>Associativity</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td>1 (Highest)</td>
+                        <td><code>( )</code> <code>[ ]</code> <code>{ }</code></td>
+                        <td>Parentheses / Brackets</td>
+                        <td>N/A</td>
+                    </tr>
+                    <tr>
+                        <td>2</td>
+                        <td><code>^</code></td>
+                        <td>Exponential (Power)</td>
+                        <td><strong>Right to Left (R → L)</strong></td>
+                    </tr>
+                    <tr>
+                        <td>3</td>
+                        <td><code>*</code> <code>/</code></td>
+                        <td>Multiply / Divide</td>
+                        <td><strong>Left to Right (L → R)</strong></td>
+                    </tr>
+                    <tr>
+                        <td>4 (Lowest)</td>
+                        <td><code>+</code> <code>-</code></td>
+                        <td>Add / Subtract</td>
+                        <td><strong>Left to Right (L → R)</strong></td>
+                    </tr>
+                </tbody>
+            </table>
+        </article>
+
+        <!-- Card 4 -->
+        <article class="card">
+            <h2>4. Step-by-Step: Left-to-Right Associativity</h2>
+            <p>Let's evaluate a complex expression where operators tie for precedence, forcing us to use <strong>Left to Right</strong> associativity.</p>
+            
+            <div class="math-steps">
+                <span class="math-step">Original: 1 + 2 * 5 + 30 / 5</span>
+                <span class="math-step active-step">Step 1:   1 + [2 * 5] + 30 / 5  <span style="color:#718096; font-size:0.8rem;">(* and / tie. Read L->R. Do * first)</span></span>
+                <span class="math-step">Step 2:   1 + 10 + 30 / 5</span>
+                <span class="math-step active-step">Step 3:   1 + 10 + [30 / 5]     <span style="color:#718096; font-size:0.8rem;">(Now do the division)</span></span>
+                <span class="math-step">Step 4:   1 + 10 + 6</span>
+                <span class="math-step active-step">Step 5:   [1 + 10] + 6          <span style="color:#718096; font-size:0.8rem;">(+ and + tie. Read L->R. Do first +)</span></span>
+                <span class="math-step final">Answer:   17</span>
+            </div>
+        </article>
+
+        <!-- Card 5 -->
+        <article class="card">
+            <h2>5. Step-by-Step: Right-to-Left Associativity</h2>
+            <p>Exponentials (Powers) are unique because their associativity goes <strong>Right to Left</strong>. Look at how this changes the math entirely!</p>
+
+            <div class="math-steps">
+                <span class="math-step">Original: 2 ^ 2 ^ 3</span>
+                <span class="math-step active-step">Step 1:   2 ^ [2 ^ 3]           <span style="color:#718096; font-size:0.8rem;">(^ and ^ tie. Read R->L. Do rightmost first!)</span></span>
+                <span class="math-step">Step 2:   2 ^ 8</span>
+                <span class="math-step final">Answer:   256</span>
+            </div>
+            <div class="note">
+                <strong>Warning:</strong> If you evaluated this Left to Right, you would do <code>(2^2) = 4</code>, then <code>4^3 = 64</code>. This is computationally <strong>incorrect</strong>!
+            </div>
+        </article>
+
+        <!-- Card 6 -->
+        <article class="card">
+            <h2>6. The Solution: Prefix Notation</h2>
+            <p>Also known as <strong>Polish Notation</strong>. By moving the operator to the <em>front</em> of the operands, we eliminate the need for parentheses and precedence rules entirely!</p>
+            
+            <div class="visual-box">
+                <span class="operator">&lt;operator&gt;</span>
+                <span class="operand">&lt;operand&gt;</span>
+                <span class="operand">&lt;operand&gt;</span>
+            </div>
+
+            <h3>Visualizing the Conversion</h3>
+            <p>Let's convert the Infix expression <code>a * b + c</code> to Prefix.</p>
+
+            <div class="math-steps" style="background: #2b6cb0;">
+                <span class="math-step">Infix:    a * b + c</span>
+                <span class="math-step">Step 1:   Observe precedence. * happens before +.</span>
+                <span class="math-step active-step" style="color:#fff;">Step 2:   [* a b] + c   <span style="color:#cbd5e0; font-size:0.8rem;">(Convert a*b first. Treat it as a single operand)</span></span>
+                <span class="math-step active-step" style="color:#fff;">Step 3:   + [* a b] c   <span style="color:#cbd5e0; font-size:0.8rem;">(Move the + to the front of the two operands)</span></span>
+                <span class="math-step final" style="color:#9ae6b4;">Prefix:   + * a b c</span>
+            </div>
+        </article>
+
+        <!-- Card 7 -->
+        <article class="card">
+            <h2>7. The Solution: Postfix Notation</h2>
+            <p>Also known as <strong>Reverse Polish Notation</strong>. The operator is moved to the <em>end</em> of the operands. This is highly preferred by computer Stack architectures.</p>
+            
+            <div class="visual-box">
+                <span class="operand">&lt;operand&gt;</span>
+                <span class="operand">&lt;operand&gt;</span>
+                <span class="operator">&lt;operator&gt;</span>
+            </div>
+
+            <h3>Visualizing the Conversion</h3>
+            <p>Let's convert the Infix expression <code>a * b + c</code> to Postfix.</p>
+
+            <div class="math-steps" style="background: #2b6cb0;">
+                <span class="math-step">Infix:    a * b + c</span>
+                <span class="math-step">Step 1:   Observe precedence. * happens before +.</span>
+                <span class="math-step active-step" style="color:#fff;">Step 2:   [a b *] + c   <span style="color:#cbd5e0; font-size:0.8rem;">(Convert a*b first. Treat it as a single operand)</span></span>
+                <span class="math-step active-step" style="color:#fff;">Step 3:   [a b *] c +   <span style="color:#cbd5e0; font-size:0.8rem;">(Move the + to the end of the two operands)</span></span>
+                <span class="math-step final" style="color:#9ae6b4;">Postfix:  a b * c +</span>
+            </div>
+        </article>
+
+        <!-- Card 8 -->
+        <article class="card">
+            <h2>8. Summary Conclusion</h2>
+            <p><strong>Infix</strong>, <strong>Prefix</strong>, and <strong>Postfix</strong> are three equivalent ways to write the exact same math problem.</p>
+            <ul style="margin-left: 1.5rem; margin-top: 1rem;">
+                <li><strong>Infix</strong> is best for humans. It requires Precedence and Associativity rules to be understood.</li>
+                <li><strong>Prefix and Postfix</strong> are best for computers. A computer can parse them linearly (Left-to-Right or Right-to-Left) using a Stack data structure without ever worrying about BEDMAS/PEMDAS rules or parentheses. This saves time and memory!</li>
+            </ul>
+        </article>
+    </main>
+
+    <script>
+        // Scroll Progress Bar Logic
+        window.addEventListener('scroll', () => {
+            const scrollTop = document.documentElement.scrollTop || document.body.scrollTop;
+            const scrollHeight = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrollPercentage = (scrollTop / scrollHeight) * 100;
+            document.getElementById('progressBar').style.width = scrollPercentage + '%';
+        });
+
+        // Intersection Observer to trigger fade-in animations as user scrolls
+        const cards = document.querySelectorAll('.card');
+        
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.15 // Triggers when 15% of the card is visible
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target); // Stop observing once it's visible
+                }
+            });
+        }, observerOptions);
+
+        cards.forEach(card => {
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
