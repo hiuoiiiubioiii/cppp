@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doubly Linked List Insertion - Study Notes</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-light: #555555;
+            --accent-blue: #2563eb;
+            --accent-green: #16a34a;
+            --accent-red: #dc2626;
+            --accent-orange: #f59e0b;
+            --code-bg: #1e1e1e;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Vertical Feed Layout Container */
+        .feed-container {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0 20px 0;
+            border-bottom: 3px solid var(--accent-blue);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--accent-blue);
+        }
+
+        header p {
+            color: var(--text-light);
+            font-size: 1.1rem;
+            margin-top: 10px;
+        }
+
+        /* Feed Cards */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-left: 5px solid var(--accent-blue);
+        }
+
+        h2 {
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h3 {
+            margin: 20px 0 10px 0;
+            color: #1f2937;
+        }
+
+        ul, ol {
+            margin-left: 25px;
+            margin-bottom: 15px;
+            color: var(--text-light);
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        .highlight {
+            background-color: #fef3c7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #92400e;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: #d4d4d8;
+            padding: 15px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 20px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            line-height: 1.4;
+        }
+
+        code .keyword { color: #569cd6; font-weight: bold;}
+        code .type { color: #4ec9b0; }
+        code .string { color: #ce9178; }
+        code .comment { color: #6a9955; font-style: italic; }
+
+        /* Visualization Area */
+        .visual-area {
+            background-color: #f8fafc;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: auto;
+        }
+
+        .node-container {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            margin-bottom: 20px;
+            min-height: 120px;
+        }
+
+        .node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .node-boxes {
+            display: flex;
+            border: 2px solid #1f2937;
+            border-radius: 4px;
+            background-color: white;
+        }
+
+        .box {
+            width: 50px;
+            height: 40px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        .box.prev { border-right: 2px solid #1f2937; color: var(--accent-red); }
+        .box.data { border-right: 2px solid #1f2937; background-color: #e0f2fe; color: #1e3a8a;}
+        .box.next { color: var(--accent-green); }
+
+        .address {
+            margin-top: 5px;
+            font-family: monospace;
+            color: var(--text-light);
+            font-size: 0.9rem;
+            background: #e5e7eb;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        /* Pointers */
+        .pointer-label {
+            position: absolute;
+            top: -30px;
+            font-weight: bold;
+            font-family: monospace;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            transition: all 0.5s ease;
+        }
+        .pointer-head { background-color: var(--accent-blue); }
+        .pointer-tail { background-color: var(--accent-orange); }
+        .pointer-temp { background-color: #8b5cf6; top: -60px; }
+
+        /* Controls */
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        button {
+            background-color: var(--accent-blue);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            font-size: 1rem;
+            transition: background-color 0.2s;
+        }
+
+        button:hover { background-color: #1d4ed8; }
+        button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+
+        .explanation {
+            min-height: 50px;
+            font-weight: 500;
+            color: var(--accent-blue);
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        /* Table styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+        th { background-color: #f3f4f6; color: #1f2937; }
+
+        .update-flash {
+            animation: flash 1s ease;
+        }
+        @keyframes flash {
+            0% { background-color: #fef08a; }
+            100% { background-color: white; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    <header>
+        <h1>Insertion in a Doubly Linked List</h1>
+        <p>Complete Audio-Visual Breakdown & Study Notes (in C)</p>
+    </header>
+
+    <!-- Topic 1 -->
+    <div class="card">
+        <h2>1. Core Concept: The <code style="color:var(--accent-orange)">tail</code> Pointer</h2>
+        <p>Before writing code, the instructor highlights a crucial design choice: maintaining a <strong>tail pointer</strong> alongside the head pointer.</p>
+        
+        <h3>What it is:</h3>
+        <p>Just as <code class="highlight">head</code> stores the memory address of the first node, <code class="highlight">tail</code> stores the memory address of the last node.</p>
+
+        <h3>The Pros vs. Cons:</h3>
+        <ul>
+            <li><strong>Pro:</strong> Inserting or deleting at the very end becomes an <strong>O(1) time complexity</strong> operation. You don't have to traverse the list sequentially.</li>
+            <li><strong>Con:</strong> Requires extra memory (4 bytes or 8 bytes) to store the pointer, and you must remember to update it when the last node changes.</li>
+        </ul>
+    </div>
+
+    <!-- Topic 2 -->
+    <div class="card">
+        <h2>2. Defining the Node Structure</h2>
+        <p>A doubly linked list node is divided into three specific parts:</p>
+        <ol>
+            <li><strong>prev:</strong> Pointer holding the address of the previous node.</li>
+            <li><strong>data:</strong> The actual value stored.</li>
+            <li><strong>next:</strong> Pointer holding the address of the next node.</li>
+        </ol>
+
+<pre><code><span class="comment">// Global pointers initialized to 0 (NULL)</span>
+<span class="keyword">struct</span> <span class="type">node</span> *head = <span class="keyword">0</span>;
+<span class="keyword">struct</span> <span class="type">node</span> *tail = <span class="keyword">0</span>;
+
+<span class="keyword">struct</span> <span class="type">node</span> {
+    <span class="keyword">int</span> data;
+    <span class="keyword">struct</span> <span class="type">node</span> *next;
+    <span class="keyword">struct</span> <span class="type">node</span> *prev;
+};</code></pre>
+    </div>
+
+    <!-- Topic 3 -->
+    <div class="card">
+        <h2>3. Creating the First Node (Empty List)</h2>
+        <p>When the list is empty, both <code class="highlight">head</code> and <code class="highlight">tail</code> are NULL. When inserting the first node, both pointers must be updated to point to this new single node.</p>
+
+<pre><code><span class="keyword">struct</span> <span class="type">node</span> *newnode;
+<span class="comment">// 1. Allocate memory dynamically</span>
+newnode = (<span class="keyword">struct</span> <span class="type">node</span>*)<span class="keyword">malloc</span>(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> <span class="type">node</span>));
+
+<span class="comment">// 2. Ask user for data</span>
+<span class="keyword">printf</span>(<span class="string">"Enter data: "</span>);
+<span class="keyword">scanf</span>(<span class="string">"%d"</span>, &newnode->data);
+
+<span class="comment">// 3. Set isolated node pointers</span>
+newnode->prev = <span class="keyword">0</span>;
+newnode->next = <span class="keyword">0</span>;
+
+<span class="comment">// 4. Update global pointers</span>
+<span class="keyword">if</span> (head == <span class="keyword">0</span>) {
+    head = tail = newnode;
+}</code></pre>
+    </div>
+
+    <!-- Topic 4 -->
+    <div class="card" id="sec-beg">
+        <h2>4. Insertion at the Beginning (<code style="color:var(--accent-blue)">insertAtBeg</code>)</h2>
+        <p><strong>Scenario:</strong> The list already exists. We want to push a new node to the very front.</p>
+        
+        <div class="visual-area">
+            <div class="explanation" id="exp-beg">Click "Step Forward" to trace the pointer updates.</div>
+            <div class="node-container" id="container-beg">
+                <!-- Vis populated by JS -->
+            </div>
+            <div class="controls">
+                <button id="btn-beg-step" onclick="stepBeg()">Step Forward</button>
+                <button onclick="resetBeg()" style="background-color: #6b7280;">Reset</button>
+            </div>
+        </div>
+
+        <p><strong>The Logic:</strong></p>
+        <ol>
+            <li>Create <code class="highlight">newnode</code> and fill data. Set its <code>prev = 0</code>.</li>
+            <li>Link forward: <code>newnode->next = head</code>.</li>
+            <li>Link backward: <code>head->prev = newnode</code>.</li>
+            <li>Shift head: <code>head = newnode</code>.</li>
+        </ol>
+
+<pre><code><span class="keyword">void</span> <span class="type">insertAtBeg</span>() {
+    <span class="keyword">struct</span> <span class="type">node</span> *newnode;
+    newnode = (<span class="keyword">struct</span> <span class="type">node</span>*)<span class="keyword">malloc</span>(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> <span class="type">node</span>));
+    <span class="keyword">scanf</span>(<span class="string">"%d"</span>, &newnode->data);
+    
+    newnode->prev = <span class="keyword">0</span>;
+    newnode->next = head; 
+    head->prev = newnode; 
+    head = newnode; 
+}</code></pre>
+    </div>
+
+    <!-- Topic 5 -->
+    <div class="card" id="sec-end">
+        <h2>5. Insertion at the End (<code style="color:var(--accent-orange)">insertAtEnd</code>)</h2>
+        <p><strong>Scenario:</strong> We want to add a node to the back. Thanks to the <code class="highlight">tail</code> pointer, no traversal is needed!</p>
+
+        <div class="visual-area">
+            <div class="explanation" id="exp-end">Click "Step Forward" to see tail insertion.</div>
+            <div class="node-container" id="container-end">
+                 <!-- Vis populated by JS -->
+            </div>
+            <div class="controls">
+                <button id="btn-end-step" onclick="stepEnd()">Step Forward</button>
+                <button onclick="resetEnd()" style="background-color: #6b7280;">Reset</button>
+            </div>
+        </div>
+
+        <p><strong>The Logic:</strong></p>
+        <ol>
+            <li>Create <code class="highlight">newnode</code> and fill data. Set its <code>next = 0</code>.</li>
+            <li>Link backward: <code>newnode->prev = tail</code>.</li>
+            <li>Link forward: <code>tail->next = newnode</code>.</li>
+            <li>Shift tail: <code>tail = newnode</code>.</li>
+        </ol>
+
+<pre><code><span class="keyword">void</span> <span class="type">insertAtEnd</span>() {
+    <span class="keyword">struct</span> <span class="type">node</span> *newnode;
+    newnode = (<span class="keyword">struct</span> <span class="type">node</span>*)<span class="keyword">malloc</span>(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> <span class="type">node</span>));
+    <span class="keyword">scanf</span>(<span class="string">"%d"</span>, &newnode->data);
+    
+    newnode->next = <span class="keyword">0</span>;
+    newnode->prev = tail; 
+    tail->next = newnode;
+    tail = newnode; 
+}</code></pre>
+    </div>
+
+    <!-- Topic 6 -->
+    <div class="card" id="sec-pos">
+        <h2>6. Insertion at a Specific Position (<code style="color:#8b5cf6">insertAtPos</code>)</h2>
+        <p><strong>Scenario:</strong> User inputs <code>pos = 3</code>. We want to insert <em>after</em> the 2nd node. We must traverse to <code>pos - 1</code>.</p>
+
+        <div class="visual-area">
+            <div class="explanation" id="exp-pos">Traversing to position - 1. Click "Step Forward".</div>
+            <div class="node-container" style="flex-wrap: wrap;" id="container-pos">
+                 <!-- Vis populated by JS -->
+            </div>
+            <div class="controls">
+                <button id="btn-pos-step" onclick="stepPos()">Step Forward</button>
+                <button onclick="resetPos()" style="background-color: #6b7280;">Reset</button>
+            </div>
+        </div>
+
+        <p><strong>The 4 Critical Pointer Updates (Order matters!):</strong></p>
+        <p>Assuming <code>temp</code> has stopped at the node just before insertion:</p>
+        <ol>
+            <li><code>newnode->prev = temp;</code> (New node looks back at temp)</li>
+            <li><code>newnode->next = temp->next;</code> (New node looks forward)</li>
+            <li><code>temp->next->prev = newnode;</code> (Next node looks back to new node)</li>
+            <li><code>temp->next = newnode;</code> (Temp looks forward to new node)</li>
+        </ol>
+
+<pre><code><span class="keyword">void</span> <span class="type">insertAtPos</span>() {
+    <span class="keyword">int</span> pos, i = <span class="keyword">1</span>;
+    <span class="keyword">scanf</span>(<span class="string">"%d"</span>, &pos);
+    
+    <span class="comment">// (Assume pos validity checks are done here)</span>
+    
+    <span class="keyword">struct</span> <span class="type">node</span> *newnode, *temp;
+    temp = head; 
+    
+    newnode = (<span class="keyword">struct</span> <span class="type">node</span>*)<span class="keyword">malloc</span>(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> <span class="type">node</span>));
+    <span class="keyword">scanf</span>(<span class="string">"%d"</span>, &newnode->data);
+    
+    <span class="comment">// Traverse to node at pos - 1</span>
+    <span class="keyword">while</span> (i < pos - <span class="keyword">1</span>) {
+        temp = temp->next;
+        i++;
+    }
+    
+    <span class="comment">// The 4 critical pointer links</span>
+    newnode->prev = temp;              
+    newnode->next = temp->next;        
+    temp->next->prev = newnode;        
+    temp->next = newnode;              
+}</code></pre>
+    </div>
+
+    <!-- Topic 7 -->
+    <div class="card">
+        <h2>7. Time Complexity Cheat Sheet</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operation</th>
+                    <th>Time Complexity</th>
+                    <th>Reason</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Insert at Beginning</strong></td>
+                    <td style="color:var(--accent-green); font-weight:bold;">O(1)</td>
+                    <td>Directly manipulates the <code>head</code> pointer. No traversal needed.</td>
+                </tr>
+                <tr>
+                    <td><strong>Insert at End (WITH tail)</strong></td>
+                    <td style="color:var(--accent-green); font-weight:bold;">O(1)</td>
+                    <td>Directly manipulates the <code>tail</code> pointer. No traversal needed.</td>
+                </tr>
+                <tr>
+                    <td><strong>Insert at End (WITHOUT tail)</strong></td>
+                    <td style="color:var(--accent-red); font-weight:bold;">O(n)</td>
+                    <td>Must use a <code>while</code> loop to traverse the entire list to find the last node.</td>
+                </tr>
+                <tr>
+                    <td><strong>Insert at Position</strong></td>
+                    <td style="color:var(--accent-red); font-weight:bold;">O(n)</td>
+                    <td>Must traverse the list sequentially to find the specific position.</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<script>
+    // Utility to generate Node HTML
+    function createNodeHTML(id, prev, data, next, addr, extraLabel = '') {
+        let labelHtml = extraLabel ? `<div class="pointer-label ${extraLabel.cls}" id="${extraLabel.id}">${extraLabel.text}</div>` : '';
+        return `
+            <div class="node" id="${id}">
+                ${labelHtml}
+                <div class="node-boxes">
+                    <div class="box prev" id="${id}-prev">${prev}</div>
+                    <div class="box data">${data}</div>
+                    <div class="box next" id="${id}-next">${next}</div>
+                </div>
+                <div class="address">${addr}</div>
+            </div>
+        `;
+    }
+
+    // --- Insert at Beginning Visualizer ---
+    let stateBeg = 0;
+    function renderBeg() {
+        const c = document.getElementById('container-beg');
+        const exp = document.getElementById('exp-beg');
+        
+        if (stateBeg === 0) {
+            c.innerHTML = `
+                ${createNodeHTML('beg-new', '0', '6', '0', '500', {cls: 'pointer-head', id:'lbl-new', text:'newnode'})}
+                <div style="font-weight:bold; color:#9ca3af; font-size:24px;">➕</div>
+                ${createNodeHTML('beg-n1', '0', '5', '200', '150', {cls: 'pointer-head', id:'lbl-head-beg', text:'head'})}
+            `;
+            exp.innerText = "State 0: newnode (500) created. List starts at head (150).";
+        } else if (stateBeg === 1) {
+            document.getElementById('beg-new-next').innerText = '150';
+            document.getElementById('beg-new-next').classList.add('update-flash');
+            exp.innerText = "State 1: newnode->next = head; (newnode now points forward to 150)";
+        } else if (stateBeg === 2) {
+            document.getElementById('beg-n1-prev').innerText = '500';
+            document.getElementById('beg-n1-prev').classList.add('update-flash');
+            exp.innerText = "State 2: head->prev = newnode; (Node 150 now points backward to 500)";
+        } else if (stateBeg === 3) {
+            const headLbl = document.getElementById('lbl-head-beg');
+            headLbl.style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('lbl-new').innerText = "head / newnode";
+                exp.innerText = "State 3: head = newnode; (Head pointer shifts to node 500). Done!";
+                document.getElementById('btn-beg-step').disabled = true;
+            }, 300);
+        }
+    }
+    function stepBeg() { stateBeg++; renderBeg(); }
+    function resetBeg() { stateBeg = 0; document.getElementById('btn-beg-step').disabled = false; renderBeg(); }
+
+
+    // --- Insert at End Visualizer ---
+    let stateEnd = 0;
+    function renderEnd() {
+        const c = document.getElementById('container-end');
+        const exp = document.getElementById('exp-end');
+        
+        if (stateEnd === 0) {
+            c.innerHTML = `
+                ${createNodeHTML('end-last', '150', '4', '0', '200', {cls: 'pointer-tail', id:'lbl-tail-end', text:'tail'})}
+                <div style="font-weight:bold; color:#9ca3af; font-size:24px;">➕</div>
+                ${createNodeHTML('end-new', '0', '7', '0', '400', {cls: 'pointer-head', id:'lbl-new-end', text:'newnode'})}
+            `;
+            exp.innerText = "State 0: newnode (400) created. tail is pointing to the last node (200).";
+        } else if (stateEnd === 1) {
+            document.getElementById('end-new-prev').innerText = '200';
+            document.getElementById('end-new-prev').classList.add('update-flash');
+            exp.innerText = "State 1: newnode->prev = tail; (newnode points backward to 200)";
+        } else if (stateEnd === 2) {
+            document.getElementById('end-last-next').innerText = '400';
+            document.getElementById('end-last-next').classList.add('update-flash');
+            exp.innerText = "State 2: tail->next = newnode; (Node 200 now points forward to 400)";
+        } else if (stateEnd === 3) {
+            const tailLbl = document.getElementById('lbl-tail-end');
+            tailLbl.style.opacity = '0';
+            setTimeout(() => {
+                document.getElementById('lbl-new-end').innerText = "tail / newnode";
+                document.getElementById('lbl-new-end').className = "pointer-label pointer-tail";
+                exp.innerText = "State 3: tail = newnode; (Tail pointer shifts to node 400). Done!";
+                document.getElementById('btn-end-step').disabled = true;
+            }, 300);
+        }
+    }
+    function stepEnd() { stateEnd++; renderEnd(); }
+    function resetEnd() { stateEnd = 0; document.getElementById('btn-end-step').disabled = false; renderEnd(); }
+
+
+    // --- Insert at Position Visualizer ---
+    let statePos = 0;
+    function renderPos() {
+        const c = document.getElementById('container-pos');
+        const exp = document.getElementById('exp-pos');
+        
+        if (statePos === 0) {
+            c.innerHTML = `
+                ${createNodeHTML('pos-n1', '0', '5', '150', '100')}
+                <div style="margin-top:20px; font-weight:bold;">⟷</div>
+                ${createNodeHTML('pos-n2', '100', '4', '200', '150', {cls: 'pointer-temp', id:'lbl-temp', text:'temp'})}
+                <div style="margin-top:20px; font-weight:bold;">⟷</div>
+                ${createNodeHTML('pos-n3', '150', '1', '0', '200')}
+                <div style="width: 100%; height: 20px;"></div> <!-- line break -->
+                <div style="margin-left:200px;">
+                    ${createNodeHTML('pos-new', '0', '7', '0', '500', {cls: 'pointer-head', text:'newnode'})}
+                </div>
+            `;
+            exp.innerText = "State 0: Target pos = 3. Traversal pointer 'temp' stopped at pos-1 (Node 150).";
+        } else if (statePos === 1) {
+            document.getElementById('pos-new-prev').innerText = '150';
+            document.getElementById('pos-new-prev').classList.add('update-flash');
+            exp.innerText = "Step 1: newnode->prev = temp; (newnode looks back to 150)";
+        } else if (statePos === 2) {
+            document.getElementById('pos-new-next').innerText = '200';
+            document.getElementById('pos-new-next').classList.add('update-flash');
+            exp.innerText = "Step 2: newnode->next = temp->next; (newnode looks forward to 200)";
+        } else if (statePos === 3) {
+            document.getElementById('pos-n3-prev').innerText = '500';
+            document.getElementById('pos-n3-prev').classList.add('update-flash');
+            exp.innerText = "Step 3: temp->next->prev = newnode; (Node 200 now looks back to 500)";
+        } else if (statePos === 4) {
+            document.getElementById('pos-n2-next').innerText = '500';
+            document.getElementById('pos-n2-next').classList.add('update-flash');
+            exp.innerText = "Step 4: temp->next = newnode; (Node 150 now looks forward to 500). Done!";
+            document.getElementById('btn-pos-step').disabled = true;
+        }
+    }
+    function stepPos() { statePos++; renderPos(); }
+    function resetPos() { statePos = 0; document.getElementById('btn-pos-step').disabled = false; renderPos(); }
+
+    // Initialize all visualizers on load
+    window.onload = () => {
+        renderBeg();
+        renderEnd();
+        renderPos();
+    };
+</script>
+
+</body>
+</html>
