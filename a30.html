@@ -1,0 +1,514 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stack using Linked List | Master Notes</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --code-bg: #1e1e1e;
+            --code-text: #e5e7eb;
+            --node-border: #374151;
+            --success: #10b981;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Top Sticky Header */
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 20px;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            font-weight: 600;
+        }
+
+        header p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-top: 5px;
+        }
+
+        /* Vertical Feed Container */
+        .feed-container {
+            max-width: 850px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* Feed Cards */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            border-bottom: 2px solid #e5e7eb;
+            padding-bottom: 10px;
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            margin: 20px 0 10px 0;
+            color: var(--text-main);
+        }
+
+        .card p {
+            margin-bottom: 15px;
+            color: var(--text-muted);
+        }
+
+        .highlight-box {
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Comparison Table */
+        .comparison {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .comp-card {
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .comp-card.reject { background-color: #fef2f2; border-color: #fca5a5; }
+        .comp-card.accept { background-color: #ecfdf5; border-color: #6ee7b7; }
+
+        /* Interactive Visualizer */
+        .visualizer-container {
+            background-color: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px 20px;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            overflow-x: auto;
+            position: relative;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        .btn-push { background-color: var(--primary); color: white; }
+        .btn-push:hover { background-color: #1d4ed8; }
+        
+        .btn-pop { background-color: var(--danger); color: white; }
+        .btn-pop:hover { background-color: #b91c1c; }
+
+        /* Nodes for Visualization */
+        .top-pointer {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 20px;
+            font-weight: bold;
+            color: var(--danger);
+        }
+
+        .list-wrapper {
+            display: flex;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .node-container {
+            display: flex;
+            align-items: center;
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .node {
+            display: flex;
+            border: 2px solid var(--node-border);
+            border-radius: 4px;
+            background: white;
+            flex-direction: column;
+        }
+
+        .node-address {
+            font-size: 0.7rem;
+            text-align: center;
+            background: #e2e8f0;
+            padding: 2px;
+            border-bottom: 2px solid var(--node-border);
+        }
+
+        .node-body {
+            display: flex;
+        }
+
+        .node-data {
+            padding: 15px 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-right: 2px solid var(--node-border);
+        }
+
+        .node-link {
+            padding: 15px;
+            font-size: 0.9rem;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .arrow {
+            margin: 0 15px;
+            font-weight: bold;
+            color: var(--node-border);
+            font-size: 1.5rem;
+        }
+
+        .null-box {
+            padding: 15px;
+            border: 2px solid #9ca3af;
+            border-radius: 4px;
+            background: #f3f4f6;
+            color: #4b5563;
+            font-weight: bold;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+        }
+        
+        .code-comment { color: #6ee7b7; }
+        .code-keyword { color: #93c5fd; }
+        .code-function { color: #fde047; }
+        .code-string { color: #fca5a5; }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Implementation of Stack using Linked List</h1>
+        <p>Continuous Scroll Study Notes • Visualizer • C Code Definitions</p>
+    </header>
+
+    <main class="feed-container">
+        
+        <!-- SECTION 1 -->
+        <article class="card">
+            <h2>1. Core Concepts & The "Why"</h2>
+            <p>Before writing code, we must understand the fundamental rules of the Stack and the Linked List data structures.</p>
+            
+            <h3>The Prerequisites</h3>
+            <p><b>Stack:</b> Follows the <b>LIFO</b> (Last In, First Out) principle. All insertions (<code>push</code>) and deletions (<code>pop</code>) happen at one specific end, called the <b>Top</b>.</p>
+            <p><b>Singly Linked List:</b> A collection of dynamic nodes. Each node contains a <code>data</code> part and a <code>link</code> part (a pointer to the next node's address).</p>
+            
+            <div class="highlight-box">
+                <b>The Golden Rule of Stacks:</b><br>
+                The time complexity for both <code>push</code> and <code>pop</code> operations <b>MUST be O(1)</b> (Constant Time). This dictates how we implement the stack.
+            </div>
+
+            <h3>Where do we Insert and Delete?</h3>
+            <p>We have a Linked List starting with a <code>Head</code> pointer. We have two choices for where the stack operations can take place:</p>
+
+            <div class="comparison">
+                <div class="comp-card reject">
+                    <h4 style="color: var(--danger);">Option A: At the Tail (End)</h4>
+                    <p style="margin-top: 10px; font-size: 0.9rem;">To push or pop a node at the very end of a linked list, you must traverse the entire list from Head to Tail.</p>
+                    <p style="margin-top: 10px; font-weight: bold;">Time Complexity: O(n)</p>
+                    <p style="color: var(--danger); font-weight: bold; margin-top: 5px;">❌ Rejected</p>
+                </div>
+                <div class="comp-card accept">
+                    <h4 style="color: var(--success);">Option B: At the Head (Beginning)</h4>
+                    <p style="margin-top: 10px; font-size: 0.9rem;">To push or pop a node at the beginning, you simply update the Head pointer. No traversal required!</p>
+                    <p style="margin-top: 10px; font-weight: bold;">Time Complexity: O(1)</p>
+                    <p style="color: var(--success); font-weight: bold; margin-top: 5px;">✅ Accepted</p>
+                </div>
+            </div>
+            
+            <p style="margin-top: 20px;"><b>Conclusion:</b> To match stack terminology, we will rename the <code>Head</code> pointer to <code>Top</code>. Every new element will be inserted at the Top, and every element removed will be taken from the Top.</p>
+        </article>
+
+        <!-- SECTION 2: INTERACTIVE VISUALIZER -->
+        <article class="card">
+            <h2>2. Visualizing Operations (Dry Run)</h2>
+            <p>Use the buttons below to simulate the operations visually. Watch how the <code>Top</code> pointer moves and how new nodes link backwards to the previous nodes.</p>
+            
+            <div class="controls">
+                <button class="btn-push" onclick="simulatePush()">Push Random Data</button>
+                <button class="btn-pop" onclick="simulatePop()">Pop Data</button>
+                <button style="background:#e5e7eb; color:#374151" onclick="resetStack()">Reset</button>
+            </div>
+
+            <div class="visualizer-container" id="visualizer">
+                <!-- Stack visualization will be injected here by JS -->
+                <div class="top-pointer">
+                    <span>TOP</span>
+                    <span>↓</span>
+                    <span id="top-address-display">0 (NULL)</span>
+                </div>
+                <div class="list-wrapper" id="list-wrapper">
+                    <div class="null-box">NULL</div>
+                </div>
+            </div>
+
+            <div class="highlight-box" style="background-color: #fef3c7; border-color: #eab308;">
+                <b>Notice the Mechanics:</b>
+                <ul style="margin-left: 20px; margin-top: 10px;">
+                    <li>When pushing, the <b>new node's link</b> stores the current address of Top.</li>
+                    <li>Then, <b>Top</b> updates to point to the new node.</li>
+                    <li>When popping, <b>Top</b> drops down to the next node (<code>Top = Top->link</code>), and the old node is freed from memory.</li>
+                </ul>
+            </div>
+        </article>
+
+        <!-- SECTION 3: CODE -->
+        <article class="card">
+            <h2>3. C Code Implementation</h2>
+            <p>Unlike arrays, implementing a stack with a linked list relies on dynamic memory allocation (using <code>malloc</code> and <code>free</code>). This means there is <b>no fixed maximum size</b>—no traditional "Overflow" condition!</p>
+
+            <h3>1. Structure Definition & Global Setup</h3>
+            <pre>
+<span class="code-keyword">#include</span> &lt;stdio.h&gt;
+<span class="code-keyword">#include</span> &lt;stdlib.h&gt;
+
+<span class="code-comment">// Define the Node structure</span>
+<span class="code-keyword">struct</span> node {
+    <span class="code-keyword">int</span> data;
+    <span class="code-keyword">struct</span> node *link; <span class="code-comment">// Pointer to the next node</span>
+};
+
+<span class="code-comment">// Declare Top globally, initialized to 0 (NULL)</span>
+<span class="code-keyword">struct</span> node *top = <span class="code-keyword">0</span>;
+            </pre>
+
+            <h3>2. The Push Function O(1)</h3>
+            <pre>
+<span class="code-keyword">void</span> <span class="code-function">push</span>(<span class="code-keyword">int</span> x) {
+    <span class="code-keyword">struct</span> node *newnode;
+    
+    <span class="code-comment">// Dynamically allocate memory for the new node</span>
+    newnode = (<span class="code-keyword">struct</span> node*)<span class="code-function">malloc</span>(<span class="code-keyword">sizeof</span>(<span class="code-keyword">struct</span> node));
+    
+    <span class="code-comment">// Store the data</span>
+    newnode->data = x;
+    
+    <span class="code-comment">// New node points to whatever Top is currently pointing to</span>
+    newnode->link = top; 
+    
+    <span class="code-comment">// Update Top to point to our newly inserted node</span>
+    top = newnode;
+}
+            </pre>
+
+            <h3>3. The Pop Function O(1)</h3>
+            <pre>
+<span class="code-keyword">void</span> <span class="code-function">pop</span>() {
+    <span class="code-keyword">struct</span> node *temp;
+    temp = top; <span class="code-comment">// Temp holds the node to be deleted</span>
+    
+    <span class="code-comment">// Check for Underflow (Empty Stack)</span>
+    <span class="code-keyword">if</span>(top == <span class="code-keyword">0</span>) {
+        <span class="code-function">printf</span>(<span class="code-string">"Underflow Condition! Stack is empty.\n"</span>);
+    } <span class="code-keyword">else</span> {
+        <span class="code-function">printf</span>(<span class="code-string">"Popped element is %d\n"</span>, top->data);
+        
+        <span class="code-comment">// Drop the Top pointer down to the next node</span>
+        top = top->link;
+        
+        <span class="code-comment">// Release memory back to the heap to prevent memory leaks</span>
+        <span class="code-function">free</span>(temp); 
+    }
+}
+            </pre>
+
+            <h3>4. Display & Peek Functions</h3>
+            <pre>
+<span class="code-keyword">void</span> <span class="code-function">peek</span>() {
+    <span class="code-keyword">if</span>(top == <span class="code-keyword">0</span>) {
+        <span class="code-function">printf</span>(<span class="code-string">"Stack is empty\n"</span>);
+    } <span class="code-keyword">else</span> {
+        <span class="code-function">printf</span>(<span class="code-string">"Top element is %d\n"</span>, top->data);
+    }
+}
+
+<span class="code-keyword">void</span> <span class="code-function">display</span>() {
+    <span class="code-keyword">struct</span> node *temp;
+    temp = top;
+    
+    <span class="code-keyword">if</span>(top == <span class="code-keyword">0</span>) {
+        <span class="code-function">printf</span>(<span class="code-string">"Stack is empty\n"</span>);
+    } <span class="code-keyword">else</span> {
+        <span class="code-comment">// Traverse until the end (NULL) is reached</span>
+        <span class="code-keyword">while</span>(temp != <span class="code-keyword">0</span>) {
+            <span class="code-function">printf</span>(<span class="code-string">"%d "</span>, temp->data);
+            temp = temp->link; <span class="code-comment">// Move pointer forward</span>
+        }
+    }
+}
+            </pre>
+        </article>
+        
+        <!-- SECTION 4: SUMMARY -->
+        <article class="card">
+            <h2>4. Final Summary for Exam Prep</h2>
+            <ul style="margin-left: 20px; line-height: 1.8;">
+                <li><b>Time Complexities:</b> <code>Push</code> = O(1), <code>Pop</code> = O(1), <code>Peek</code> = O(1), <code>Display</code> = O(n).</li>
+                <li><b>Memory Allocation:</b> Dynamic. Memory is requested at runtime using <code>malloc()</code>. No pre-defined size array is needed.</li>
+                <li><b>Insertion/Deletion Rule:</b> Always insert at the head (Top), always delete from the head (Top).</li>
+                <li><b>Memory Leaks:</b> Always use a temporary pointer and <code>free(temp)</code> when popping an element to release the heap memory.</li>
+            </ul>
+        </article>
+
+    </main>
+
+    <!-- JavaScript for the Interactive Visualizer -->
+    <script>
+        // JS State for the Stack
+        let stack = [];
+        let addressCounter = 100; // Mock addresses to display
+
+        function simulatePush() {
+            // Generate a random data value between 1 and 99
+            let randomData = Math.floor(Math.random() * 99) + 1;
+            
+            // The new node will point to the previous node's address. 
+            // If empty, it points to 0 (NULL).
+            let nextLink = stack.length > 0 ? stack[stack.length - 1].address : 0;
+            
+            let newNode = {
+                data: randomData,
+                address: addressCounter,
+                link: nextLink
+            };
+
+            stack.push(newNode);
+            addressCounter += 100; // Increment mock address for next node
+            renderStack();
+        }
+
+        function simulatePop() {
+            if (stack.length === 0) {
+                alert("Underflow! Stack is empty.");
+                return;
+            }
+            stack.pop();
+            renderStack();
+        }
+
+        function resetStack() {
+            stack = [];
+            addressCounter = 100;
+            renderStack();
+        }
+
+        function renderStack() {
+            const listWrapper = document.getElementById("list-wrapper");
+            const topAddressDisplay = document.getElementById("top-address-display");
+            
+            // Clear current visuals
+            listWrapper.innerHTML = "";
+
+            if (stack.length === 0) {
+                topAddressDisplay.innerText = "0 (NULL)";
+                listWrapper.innerHTML = `<div class="null-box">NULL</div>`;
+                return;
+            }
+
+            // Update Top pointer address display
+            topAddressDisplay.innerText = stack[stack.length - 1].address;
+
+            // To visually match the lecture, the Top node is on the left.
+            // We loop through the array backward to render Top -> Node 2 -> Node 1 -> NULL
+            for (let i = stack.length - 1; i >= 0; i--) {
+                const nodeData = stack[i];
+
+                // Create the node wrapper
+                const nodeContainer = document.createElement("div");
+                nodeContainer.className = "node-container";
+
+                // Inner HTML for the node card
+                nodeContainer.innerHTML = `
+                    <div class="node">
+                        <div class="node-address">Addr: ${nodeData.address}</div>
+                        <div class="node-body">
+                            <div class="node-data">${nodeData.data}</div>
+                            <div class="node-link">${nodeData.link}</div>
+                        </div>
+                    </div>
+                    <div class="arrow">→</div>
+                `;
+
+                listWrapper.appendChild(nodeContainer);
+            }
+
+            // Append the NULL box at the end
+            const nullBox = document.createElement("div");
+            nullBox.className = "null-box";
+            nullBox.innerText = "NULL";
+            listWrapper.appendChild(nullBox);
+        }
+    </script>
+</body>
+</html>
