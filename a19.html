@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reverse a Doubly Linked List - Lecture Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap');
+
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --card-bg: #ffffff;
+            --primary: #3182ce;
+            --secondary: #e2e8f0;
+            --code-bg: #1a202c;
+            --code-text: #e2e8f0;
+            --node-border: #4a5568;
+            --head-tail: #e53e3e;
+            --accent: #d6bcfa;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 0 20px;
+        }
+
+        /* Top Sticky Header */
+        header {
+            position: sticky;
+            top: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px 0;
+            text-align: center;
+            border-bottom: 2px solid var(--secondary);
+            z-index: 100;
+            margin-bottom: 40px;
+        }
+
+        h1 {
+            font-size: 1.8rem;
+            color: var(--primary);
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        /* The Vertical Feed */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto 100px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .feed-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .feed-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--secondary);
+            color: var(--primary);
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin: 20px 0 10px 0;
+            color: var(--text-main);
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .highlight {
+            background: #feebc8;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #dd6b20;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            margin: 15px 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+
+        code {
+            font-family: 'Fira Code', monospace;
+            background: var(--secondary);
+            color: var(--text-main);
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        /* Visualizations - Doubly Linked List Nodes */
+        .dll-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            padding: 40px 10px;
+            margin: 20px 0;
+            background: #edf2f7;
+            border-radius: 8px;
+            border: 1px solid var(--secondary);
+        }
+
+        .node-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .node-address {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .node-box {
+            display: flex;
+            border: 2px solid var(--node-border);
+            border-radius: 6px;
+            background: white;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .node-part {
+            padding: 10px 15px;
+            text-align: center;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+
+        .node-part.prev, .node-part.next {
+            background: #e2e8f0;
+            color: #4a5568;
+        }
+
+        .node-part.data {
+            background: #fff;
+            font-weight: bold;
+            font-size: 1.1rem;
+            border-left: 2px solid var(--node-border);
+            border-right: 2px solid var(--node-border);
+            color: var(--primary);
+            min-width: 40px;
+        }
+
+        .pointer-label {
+            position: absolute;
+            top: -35px;
+            background: var(--head-tail);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .pointer-label.tail {
+            top: auto;
+            bottom: -35px;
+            background: #38a169;
+        }
+
+        .arrows {
+            display: flex;
+            flex-direction: column;
+            margin: 0 10px;
+            color: var(--text-muted);
+            font-weight: bold;
+        }
+
+        /* Iteration Trace Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid var(--secondary);
+        }
+
+        th {
+            background-color: var(--secondary);
+            color: var(--text-main);
+        }
+
+        .alert-box {
+            background-color: #fed7d7;
+            border-left: 5px solid #e53e3e;
+            padding: 15px;
+            border-radius: 4px;
+            margin: 20px 0;
+            color: #9b2c2c;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Reverse a Doubly Linked List</h1>
+        <p class="subtitle">Complete Lecture Breakdown & Visualization Feed</p>
+    </header>
+
+    <main class="feed-container">
+
+        <!-- Card 1: Introduction -->
+        <section class="feed-card">
+            <h2>1. The Core Concept</h2>
+            <p>The goal of this algorithm is to reverse a doubly linked list (DLL). Before we write any code, we need to understand exactly what "reversing" means in this context.</p>
+            <ul>
+                <li><strong>What we are NOT doing:</strong> We are not physically moving the nodes in memory, nor are we swapping the data values inside them (e.g., swapping data <code>6</code> with <code>7</code>).</li>
+                <li><strong>What we ARE doing:</strong> We are simply reversing the <span class="highlight">links (pointers)</span> between the nodes.</li>
+            </ul>
+            <p>For every single node in the list, we need to <strong>swap the values of its <code>prev</code> and <code>next</code> pointers</strong>.</p>
+        </section>
+
+        <!-- Card 2: Visualizing Initial State -->
+        <section class="feed-card">
+            <h2>2. Visualizing the Initial State</h2>
+            <p>The instructor draws a DLL with 4 nodes on the whiteboard. Here is the exact starting setup. Notice how <code>head</code> points to the first node (200), and <code>tail</code> points to the last node (400).</p>
+            
+            <div class="dll-container">
+                <!-- Node 1 -->
+                <div class="node-wrapper">
+                    <div class="pointer-label">HEAD</div>
+                    <div class="node-address">200</div>
+                    <div class="node-box">
+                        <div class="node-part prev">0</div>
+                        <div class="node-part data">6</div>
+                        <div class="node-part next">150</div>
+                    </div>
+                </div>
+                
+                <div class="arrows">
+                    <span>&rarr;</span>
+                    <span>&larr;</span>
+                </div>
+
+                <!-- Node 2 -->
+                <div class="node-wrapper">
+                    <div class="node-address">150</div>
+                    <div class="node-box">
+                        <div class="node-part prev">200</div>
+                        <div class="node-part data">5</div>
+                        <div class="node-part next">500</div>
+                    </div>
+                </div>
+
+                <div class="arrows">
+                    <span>&rarr;</span>
+                    <span>&larr;</span>
+                </div>
+
+                <!-- Node 3 -->
+                <div class="node-wrapper">
+                    <div class="node-address">500</div>
+                    <div class="node-box">
+                        <div class="node-part prev">150</div>
+                        <div class="node-part data">1</div>
+                        <div class="node-part next">400</div>
+                    </div>
+                </div>
+
+                <div class="arrows">
+                    <span>&rarr;</span>
+                    <span>&larr;</span>
+                </div>
+
+                <!-- Node 4 -->
+                <div class="node-wrapper">
+                    <div class="node-address">400</div>
+                    <div class="node-box">
+                        <div class="node-part prev">500</div>
+                        <div class="node-part data">7</div>
+                        <div class="node-part next">0</div>
+                    </div>
+                    <div class="pointer-label tail">TAIL</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Card 3: The Problem -->
+        <section class="feed-card">
+            <h2>3. The Problem: Breaking the Chain</h2>
+            <p>To reverse the links, we will take a pointer <code>current</code> to traverse the list starting at <code>head</code>.</p>
+            <div class="alert-box">
+                <strong>Warning!</strong> If we immediately write <code>current->next = current->prev</code>, we run into a major issue!
+            </div>
+            <p>Look at Node 1 (Address 200). Its <code>next</code> is currently <code>150</code>. If we change its <code>next</code> to <code>0</code> (its `prev` value) right away, <strong>we lose the address 150 completely!</strong> The link is broken, and we can no longer move forward to traverse the rest of the list.</p>
+            <p><strong>The Solution:</strong> We must use a second pointer, <code>nextnode</code>, to temporarily save the address of the next node <em>before</em> we overwrite the <code>next</code> pointer.</p>
+        </section>
+
+        <!-- Card 4: The C Code Structure -->
+        <section class="feed-card">
+            <h2>4. Writing the C Code</h2>
+            <p>First, the instructor defines the structure and the global pointers:</p>
+<pre><code>struct node {
+    int data;
+    struct node *next;
+    struct node *prev;
+};
+
+// Global pointers pointing to the start and end
+struct node *head, *tail;</code></pre>
+
+            <h3>The Reversal Function</h3>
+            <p>Here is the exact code block the instructor builds on the board step-by-step:</p>
+<pre><code>void reverseDLL() {
+    // 1. Declare two extra pointers
+    struct node *current, *nextnode;
+    
+    // 2. Start at the beginning
+    current = head;
+    
+    // 3. Traverse the entire list
+    while (current != 0) { // '0' represents NULL
+        
+        // Step 3a: Save the next node so we don't lose the list
+        nextnode = current->next;
+        
+        // Step 3b: Swap the pointers in the current node
+        current->next = current->prev;
+        current->prev = nextnode;
+        
+        // Step 3c: Move the current pointer forward
+        current = nextnode; 
+    }
+    
+    // 4. Swap the global Head and Tail pointers
+    current = head;
+    head = tail;
+    tail = current;
+}</code></pre>
+        </section>
+
+        <!-- Card 5: Step by Step Trace -->
+        <section class="feed-card">
+            <h2>5. Whiteboard Trace: Iteration by Iteration</h2>
+            <p>Let's dry-run the <code>while</code> loop exactly as the instructor did on the board. We start with <code>current = head</code> (Address 200).</p>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>Iteration</th>
+                        <th>Current Node</th>
+                        <th>Actions Performed</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>1</strong></td>
+                        <td>Node 200<br>(Data: 6)</td>
+                        <td>
+                            • <code>nextnode</code> gets <strong>150</strong>.<br>
+                            • Node 200's <code>next</code> becomes <strong>0</strong>.<br>
+                            • Node 200's <code>prev</code> becomes <strong>150</strong>.<br>
+                            • <code>current</code> moves forward to <strong>150</strong>.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>2</strong></td>
+                        <td>Node 150<br>(Data: 5)</td>
+                        <td>
+                            • <code>nextnode</code> gets <strong>500</strong>.<br>
+                            • Node 150's <code>next</code> becomes <strong>200</strong>.<br>
+                            • Node 150's <code>prev</code> becomes <strong>500</strong>.<br>
+                            • <code>current</code> moves forward to <strong>500</strong>.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>3</strong></td>
+                        <td>Node 500<br>(Data: 1)</td>
+                        <td>
+                            • <code>nextnode</code> gets <strong>400</strong>.<br>
+                            • Node 500's <code>next</code> becomes <strong>150</strong>.<br>
+                            • Node 500's <code>prev</code> becomes <strong>400</strong>.<br>
+                            • <code>current</code> moves forward to <strong>400</strong>.
+                        </td>
+                    </tr>
+                    <tr>
+                        <td><strong>4</strong></td>
+                        <td>Node 400<br>(Data: 7)</td>
+                        <td>
+                            • <code>nextnode</code> gets <strong>0</strong> (NULL).<br>
+                            • Node 400's <code>next</code> becomes <strong>500</strong>.<br>
+                            • Node 400's <code>prev</code> becomes <strong>0</strong>.<br>
+                            • <code>current</code> becomes <strong>0</strong> (NULL). Loop exits.
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <!-- Card 6: Head and Tail -->
+        <section class="feed-card">
+            <h2>6. The Final Crucial Step: Swapping Head & Tail</h2>
+            <p>If we stop after the loop, the individual links inside the boxes are perfectly reversed. However, <code>head</code> is still pointing to 200 and <code>tail</code> is pointing to 400!</p>
+            <p>If we try to print from <code>head</code> right now, the program goes to 200, sees that its <code>next</code> pointer is now <code>0</code>, and stops immediately. It thinks the list is only one node long.</p>
+            <p>We must execute the final block of code to swap the global pointers:</p>
+<pre><code>current = head; // current = 200
+head = tail;    // head = 400
+tail = current; // tail = 200</code></pre>
+            <p>Now, <code>head</code> correctly points to 400 (data 7), and <code>tail</code> correctly points to 200 (data 6).</p>
+        </section>
+
+        <!-- Card 7: Final Visual -->
+        <section class="feed-card">
+            <h2>7. Visualizing the Final Reversed State</h2>
+            <p>Here is what the Doubly Linked List looks like after the function finishes execution. Notice how the pointers inside the boxes are swapped compared to the start!</p>
+
+            <div class="dll-container">
+                <!-- Node 4 (Now First) -->
+                <div class="node-wrapper">
+                    <div class="pointer-label">HEAD</div>
+                    <div class="node-address">400</div>
+                    <div class="node-box">
+                        <div class="node-part prev" style="background: #fed7d7;">0</div>
+                        <div class="node-part data">7</div>
+                        <div class="node-part next" style="background: #c6f6d5;">500</div>
+                    </div>
+                </div>
+                
+                <div class="arrows">
+                    <span>&larr;</span>
+                    <span>&rarr;</span>
+                </div>
+
+                <!-- Node 3 (Now Second) -->
+                <div class="node-wrapper">
+                    <div class="node-address">500</div>
+                    <div class="node-box">
+                        <div class="node-part prev" style="background: #fed7d7;">400</div>
+                        <div class="node-part data">1</div>
+                        <div class="node-part next" style="background: #c6f6d5;">150</div>
+                    </div>
+                </div>
+
+                <div class="arrows">
+                    <span>&larr;</span>
+                    <span>&rarr;</span>
+                </div>
+
+                <!-- Node 2 (Now Third) -->
+                <div class="node-wrapper">
+                    <div class="node-address">150</div>
+                    <div class="node-box">
+                        <div class="node-part prev" style="background: #fed7d7;">500</div>
+                        <div class="node-part data">5</div>
+                        <div class="node-part next" style="background: #c6f6d5;">200</div>
+                    </div>
+                </div>
+
+                <div class="arrows">
+                    <span>&larr;</span>
+                    <span>&rarr;</span>
+                </div>
+
+                <!-- Node 1 (Now Last) -->
+                <div class="node-wrapper">
+                    <div class="node-address">200</div>
+                    <div class="node-box">
+                        <div class="node-part prev" style="background: #fed7d7;">150</div>
+                        <div class="node-part data">6</div>
+                        <div class="node-part next" style="background: #c6f6d5;">0</div>
+                    </div>
+                    <div class="pointer-label tail">TAIL</div>
+                </div>
+            </div>
+
+            <h3>Final Verification</h3>
+            <ul>
+                <li><strong>Before Reversing:</strong> Printing from Head yielded <strong>6, 5, 1, 7</strong>.</li>
+                <li><strong>After Reversing:</strong> Printing from the new Head yields <strong>7, 1, 5, 6</strong>.</li>
+            </ul>
+        </section>
+
+    </main>
+
+    <!-- JavaScript for scroll animations -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.feed-card');
+            
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15 // Triggers when 15% of the card is visible
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target); // Stop observing once it's visible
+                    }
+                });
+            }, observerOptions);
+
+            cards.forEach(card => {
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>
