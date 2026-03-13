@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BST Construction Notes</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #333;
+            --primary: #2a52be; /* Instructor's marker blue */
+            --root-color: #27ae60;
+            --left-color: #d35400;
+            --right-color: #8e44ad;
+            --card-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .feed-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--primary), #1a365d);
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        h1 { margin: 0; font-size: 2.2rem; }
+        .subtitle { font-size: 1.1rem; opacity: 0.9; margin-top: 10px; }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--primary);
+        }
+
+        h2 { color: var(--primary); margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px;}
+        
+        .highlight-box {
+            background: #eef2ff;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .array-box {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .array-item {
+            background: #f0f0f0;
+            padding: 10px 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+        }
+
+        .root-item { border: 2px solid var(--root-color); background: #e8f8f5; color: var(--root-color); }
+        .left-item { border: 2px dashed var(--left-color); color: var(--left-color); }
+        .right-item { border: 2px dashed var(--right-color); color: var(--right-color); }
+
+        .tree-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 30px 0;
+            background: #fafafa;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid #eee;
+        }
+
+        .node {
+            background: white;
+            border: 2px solid var(--root-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            color: var(--root-color);
+        }
+
+        .children {
+            display: flex;
+            justify-content: center;
+            gap: 80px;
+            width: 100%;
+        }
+
+        .subtree-box {
+            text-align: center;
+            padding: 10px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .left-sub { border: 2px solid var(--left-color); background: #fdf2e9; color: var(--left-color);}
+        .right-sub { border: 2px solid var(--right-color); background: #f4ecf8; color: var(--right-color);}
+
+        .instructor-note {
+            font-style: italic;
+            color: #555;
+            background: #fff8e1;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .instructor-note::before {
+            content: '🎙️ Audio Note: ';
+            font-weight: bold;
+            font-style: normal;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <!-- HEADER -->
+    <header>
+        <h1>Construct BST from Given Postorder</h1>
+        <div class="subtitle">Complete Video Breakdown & Step-by-Step Notes</div>
+    </header>
+
+    <!-- SECTION 1: Core Rules -->
+    <div class="card">
+        <h2>1. The Fundamentals (Whiteboard Top Right)</h2>
+        <p>Before solving the problem, the instructor writes down the crucial rules for tree traversals.</p>
+        <ul>
+            <li><strong>Postorder:</strong> (Left, Right, Root) 👉 <em>The Root is ALWAYS at the last position.</em></li>
+            <li><strong>Inorder:</strong> (Left, Root, Right) 👉 <em>The Root is in the middle.</em></li>
+            <li><strong>Preorder:</strong> (Root, Left, Right) 👉 <em>The Root is at the first position.</em></li>
+        </ul>
+        <div class="instructor-note">
+            "As you know, the property of a Binary Search Tree (BST) is: when you find out the Inorder traversal of a BST, that Inorder traversal would <strong>always be in ascending order.</strong> That is for sure."
+        </div>
+    </div>
+
+    <!-- SECTION 2: The Problem -->
+    <div class="card">
+        <h2>2. The Given Problem & Finding Inorder</h2>
+        <p><strong>Given Postorder Traversal:</strong></p>
+        <div class="array-box">
+            <div class="array-item">5</div><div class="array-item">17</div><div class="array-item">19</div>
+            <div class="array-item">18</div><div class="array-item">16</div><div class="array-item">70</div>
+            <div class="array-item">85</div><div class="array-item">60</div><div class="array-item root-item">20 (Root)</div>
+        </div>
+
+        <p><strong>Step 1: Construct the Inorder Array</strong></p>
+        <p>Because it's a BST, we simply take the given Postorder elements and arrange them in ascending order. No math needed!</p>
+        <div class="array-box">
+            <div class="array-item left-item">5</div><div class="array-item left-item">16</div><div class="array-item left-item">17</div>
+            <div class="array-item left-item">18</div><div class="array-item left-item">19</div><div class="array-item root-item">20 (Root)</div>
+            <div class="array-item right-item">60</div><div class="array-item right-item">70</div><div class="array-item right-item">85</div>
+        </div>
+        <div class="highlight-box">
+            <strong>Key Strategy:</strong> We use Postorder to find the ROOT (scanning right to left). We use Inorder to figure out who goes in the LEFT subtree and who goes in the RIGHT subtree.
+        </div>
+    </div>
+
+    <!-- SECTION 3: Step-by-Step Construction -->
+    <div class="card">
+        <h2>3. Building the Tree (Level 1)</h2>
+        <p><strong>Finding the Main Root:</strong> Look at the Postorder array. The right-most element is <strong>20</strong>. Therefore, 20 is the root of the entire tree.</p>
+        <p><strong>Splitting the tree:</strong> Go to the Inorder array and locate 20. Everything to the left of 20 goes to the left subtree. Everything to the right goes to the right subtree.</p>
+        
+        <div class="tree-container">
+            <div class="node">20</div>
+            <div class="children">
+                <div class="subtree-box left-sub">Left Subtree Elements:<br> {5, 16, 17, 18, 19}</div>
+                <div class="subtree-box right-sub">Right Subtree Elements:<br> {60, 70, 85}</div>
+            </div>
+        </div>
+        <div class="instructor-note">
+            "Now the problem has been divided into two parts. You can construct either the left subtree first or the right subtree first. It's up to you. I am going to construct the left subtree first."
+        </div>
+    </div>
+
+    <!-- SECTION 4: Left Subtree -->
+    <div class="card">
+        <h2>4. Building the Left Subtree</h2>
+        <p>We need to find the root among <strong>{5, 16, 17, 18, 19}</strong>.</p>
+        <p><strong>Rule:</strong> Scan the Postorder array from Right to Left. Whichever of these numbers appears <em>first</em> is the root of this subtree.</p>
+        <p>Postorder: 5, 17, 19, 18, <strong>16</strong>, 70, 85, 60, 20.</p>
+        <p>Reading right to left, skipping 70, 85, 60... we hit <strong>16</strong> first. So, 16 is the root!</p>
+        
+        <p>Go to the Inorder array: 5, <strong>16</strong>, 17, 18, 19.</p>
+        <ul>
+            <li>Left of 16 is {5}.</li>
+            <li>Right of 16 is {17, 18, 19}.</li>
+        </ul>
+
+        <div class="tree-container">
+            <div class="node">16</div>
+            <div class="children" style="gap: 40px;">
+                <div class="subtree-box left-sub">Left:<br>{5}</div>
+                <div class="subtree-box right-sub">Right:<br>{17, 18, 19}</div>
+            </div>
+        </div>
+
+        <p><em>(Since 5 is a single element, it becomes a leaf node automatically).</em></p>
+
+        <h3>Resolving {17, 18, 19}</h3>
+        <p>Scan Postorder right-to-left looking for 17, 18, or 19. <br>
+        Postorder: 5, 17, 19, <strong>18</strong>, 16...</p>
+        <p>We hit <strong>18</strong> first! So 18 is the root. <br>
+        Inorder split: 17, <strong>18</strong>, 19. <br>
+        17 goes to the left of 18. 19 goes to the right of 18.</p>
+    </div>
+
+    <!-- SECTION 5: Right Subtree -->
+    <div class="card">
+        <h2>5. Building the Right Subtree</h2>
+        <p>Now we go back up to the right side of 20. The elements are <strong>{60, 70, 85}</strong>.</p>
+        <p>Scan Postorder right-to-left: 5, 17, 19, 18, 16, 70, 85, <strong>60</strong>, 20.</p>
+        <p>We hit <strong>60</strong> first! So 60 is the root.</p>
+
+        <p>Go to the Inorder array: <strong>60</strong>, 70, 85.</p>
+        <ul>
+            <li>Left of 60: Nothing!</li>
+            <li>Right of 60: {70, 85}. Both go to the right.</li>
+        </ul>
+
+        <h3>Resolving {70, 85}</h3>
+        <p>Scan Postorder right-to-left looking for 70 or 85: ... 70, <strong>85</strong>, 60...</p>
+        <p>We hit <strong>85</strong> first! 85 is the root.<br>
+        Inorder split: 70, <strong>85</strong>.<br>
+        70 is to the left of 85, so it becomes the left child. Right child is Null.</p>
+    </div>
+
+    <!-- SECTION 6: Final Tree -->
+    <div class="card">
+        <h2>6. Final Visualized Tree</h2>
+        <p>Here is the completed BST exactly as drawn on the board:</p>
+        
+        <div class="tree-container">
+            <!-- Level 0 -->
+            <div class="node" style="margin-bottom: 20px;">20</div>
+            
+            <!-- Level 1 -->
+            <div style="display: flex; gap: 150px; width: 100%; justify-content: center; margin-bottom: 20px;">
+                <div class="node">16</div>
+                <div class="node">60</div>
+            </div>
+
+            <!-- Level 2 -->
+            <div style="display: flex; gap: 70px; width: 100%; justify-content: center; margin-bottom: 20px;">
+                <div class="node">5</div>
+                <div class="node">18</div>
+                <div style="width: 50px;"></div> <!-- Spacer for missing left child of 60 -->
+                <div class="node">85</div>
+            </div>
+
+            <!-- Level 3 -->
+            <div style="display: flex; gap: 20px; width: 100%; justify-content: center;">
+                <div style="width: 50px; margin-right: 35px;"></div><!-- Spacer -->
+                <div class="node">17</div>
+                <div class="node">19</div>
+                <div style="width: 20px;"></div><!-- Spacer -->
+                <div class="node" style="margin-left: 30px;">70</div>
+                <div style="width: 50px;"></div><!-- Spacer -->
+            </div>
+        </div>
+    </div>
+
+    <!-- SECTION 7: The "Fast" Method -->
+    <div class="card" style="border-top: 5px solid #e67e22;">
+        <h2>💡 7. Pro-Tip: The Direct Method (Without Inorder)</h2>
+        <p>At the very end of the video, the instructor explains a faster method for exams if you don't want to write out the Inorder array every time.</p>
+        <div class="instructor-note">
+            "Without Inorder also you can construct the binary search tree. Just trace out this Postorder from right to left..."
+        </div>
+        <ol>
+            <li><strong>Start at right end of Postorder:</strong> 20. This is the root.</li>
+            <li><strong>Next is 60:</strong> Because it is a BST, compare 60 to 20. 60 > 20, so it goes to the Right.</li>
+            <li><strong>Next is 85:</strong> Compare from root. 85 > 20 (go right). 85 > 60 (go right). 85 is right child of 60.</li>
+            <li><strong>Next is 70:</strong> 70 > 20 (go right). 70 > 60 (go right). 70 < 85 (go left). 70 is left child of 85.</li>
+            <li><strong>Next is 16:</strong> 16 < 20 (go left). 16 is left child of 20.</li>
+            <li>...and so on!</li>
+        </ol>
+        <p><strong>Why this works:</strong> The nature of a Binary Search Tree dictates that all left children must be smaller than the parent, and right children must be greater. Reading Postorder backwards essentially gives you the nodes top-down, right-to-left.</p>
+    </div>
+
+</div>
+
+</body>
+</html>
