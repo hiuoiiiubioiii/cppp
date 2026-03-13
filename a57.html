@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree from Preorder & Postorder | Study Notes</title>
+    <style>
+        /* Base Styles & Typography */
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --primary: #4299e1;
+            --primary-light: #ebf8ff;
+            --danger: #f56565;
+            --danger-light: #fff5f5;
+            --success: #48bb78;
+            --success-light: #f0fff4;
+            --warning: #ed8936;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+        }
+
+        h1 { font-size: 2.2rem; margin-top: 0; color: #1a202c; line-height: 1.2; }
+        h2 { font-size: 1.5rem; margin-top: 0; border-bottom: 2px solid var(--primary-light); padding-bottom: 10px; color: #2b6cb0; }
+        h3 { font-size: 1.2rem; color: #2d3748; }
+        p { margin-bottom: 1rem; }
+
+        /* Golden Rules Alerts */
+        .alert {
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        .alert-danger { background-color: var(--danger-light); border-left: 4px solid var(--danger); color: #c53030; }
+        .alert-success { background-color: var(--success-light); border-left: 4px solid var(--success); color: #276749; }
+
+        /* Array Visualizations */
+        .array-container { margin: 20px 0; }
+        .array-label { font-weight: bold; margin-bottom: 8px; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; letter-spacing: 1px;}
+        .array-boxes { display: flex; flex-wrap: wrap; gap: 8px; }
+        .box {
+            width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            background-color: white; border: 2px solid var(--border);
+            border-radius: 8px; font-weight: bold; font-size: 1.1rem;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            transition: transform 0.2s;
+        }
+        .box:hover { transform: translateY(-2px); }
+        .box.root { background-color: var(--primary); color: white; border-color: var(--primary); }
+        .box.lst { background-color: #fefcbf; border-color: #d69e2e; color: #744210;}
+        .box.rst { background-color: #e9d8fd; border-color: #9f7aea; color: #44337a;}
+
+        /* CSS Tree Visualization */
+        .tree-wrapper { display: flex; justify-content: center; overflow-x: auto; padding: 20px 0; }
+        .tree ul { padding-top: 20px; position: relative; transition: all 0.5s; display: flex; justify-content: center; padding-left: 0;}
+        .tree li { float: left; text-align: center; list-style-type: none; position: relative; padding: 20px 5px 0 5px; transition: all 0.5s; }
+        
+        /* Connecting lines */
+        .tree li::before, .tree li::after {
+            content: ''; position: absolute; top: 0; right: 50%;
+            border-top: 2px solid #cbd5e0; width: 50%; height: 20px;
+        }
+        .tree li::after { right: auto; left: 50%; border-left: 2px solid #cbd5e0; }
+        .tree li:only-child::after, .tree li:only-child::before { display: none; }
+        .tree li:only-child { padding-top: 0; }
+        .tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
+        .tree li:last-child::before { border-right: 2px solid #cbd5e0; border-radius: 0 5px 0 0; }
+        .tree li:first-child::after { border-radius: 5px 0 0 0; }
+        .tree ul ul::before {
+            content: ''; position: absolute; top: 0; left: 50%;
+            border-left: 2px solid #cbd5e0; width: 0; height: 20px;
+        }
+        
+        /* Node styles */
+        .tree li .node {
+            border: 2px solid var(--primary); padding: 10px; text-decoration: none;
+            color: var(--primary); font-family: monospace; font-size: 1.2rem;
+            display: inline-flex; align-items: center; justify-content: center;
+            width: 24px; height: 24px; border-radius: 50%;
+            background-color: white; font-weight: bold; z-index: 1; position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .tree li .node.null-node {
+            border-color: #e2e8f0; color: transparent; background-color: transparent; box-shadow: none; border-style: dashed;
+        }
+
+        /* Two column layout for proof */
+        .split-view {
+            display: flex; gap: 20px; flex-wrap: wrap;
+        }
+        .split-view > div {
+            flex: 1; min-width: 300px;
+            background: #f7fafc; padding: 20px; border-radius: 12px; border: 1px solid var(--border);
+        }
+
+        /* Method Steps */
+        .step {
+            display: flex; margin-bottom: 16px; background: var(--bg-color); padding: 16px; border-radius: 8px;
+        }
+        .step-num {
+            background: var(--primary); color: white; width: 28px; height: 28px;
+            display: flex; align-items: center; justify-content: center;
+            border-radius: 50%; font-weight: bold; margin-right: 16px; flex-shrink: 0;
+        }
+        .step-content p { margin: 0; }
+
+        .highlight { background: var(--primary-light); padding: 2px 6px; border-radius: 4px; font-weight: 500; color: #2b6cb0;}
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+
+    <!-- Header / Intro -->
+    <header>
+        <h1>Constructing a Binary Tree from Preorder & Postorder</h1>
+        <p style="color: var(--text-muted); font-size: 1.1rem;">In-depth visual notes from Jenny's Lectures. Scroll down to learn the formal recursive method, the quick exam trick, and the proof of why standard Binary Trees aren't unique!</p>
+    </header>
+
+    <!-- The Golden Rules -->
+    <section class="card">
+        <h2>🛑 The Two Golden Rules</h2>
+        <p>Before doing any calculations, you must memorize these two theoretical rules for your exams:</p>
+        
+        <div class="alert alert-danger">
+            <strong>Rule 1:</strong> If you are ONLY given Preorder and Postorder traversals, it is <strong>IMPOSSIBLE</strong> to construct a UNIQUE Binary Tree. (Multiple trees can share the same sequences).
+        </div>
+        
+        <div class="alert alert-success">
+            <strong>Rule 2:</strong> However, it <strong>IS POSSIBLE</strong> to construct a UNIQUE <em>Full</em> Binary Tree from Preorder and Postorder traversals. (A Full Binary tree is where every node has either 0 or 2 children).
+        </div>
+        <p><em>*We will prove both of these rules at the end of this feed.</em></p>
+    </section>
+
+    <!-- The Given Problem -->
+    <section class="card">
+        <h2>📝 The Given Problem</h2>
+        <p>We are given the following traversals. Remember the formulas:</p>
+        <ul>
+            <li><strong>Preorder:</strong> Root → Left → Right</li>
+            <li><strong>Postorder:</strong> Left → Right → Root</li>
+        </ul>
+
+        <div class="array-container">
+            <div class="array-label">Preorder Traversal</div>
+            <div class="array-boxes">
+                <div class="box root">F</div>
+                <div class="box">B</div><div class="box">A</div><div class="box">D</div>
+                <div class="box">C</div><div class="box">E</div><div class="box">G</div>
+                <div class="box">I</div><div class="box">H</div>
+            </div>
+        </div>
+
+        <div class="array-container">
+            <div class="array-label">Postorder Traversal</div>
+            <div class="array-boxes">
+                <div class="box">A</div><div class="box">C</div><div class="box">E</div>
+                <div class="box">D</div><div class="box">B</div><div class="box">H</div>
+                <div class="box">I</div><div class="box">G</div><div class="box root">F</div>
+            </div>
+        </div>
+        <p>Notice that the Main Root <span class="highlight">F</span> is always the <strong>first</strong> element in Preorder and the <strong>last</strong> element in Postorder.</p>
+    </section>
+
+    <!-- Method 1 -->
+    <section class="card">
+        <h2>🛠️ Method 1: The Formal (Recursive) Method</h2>
+        <p>This method involves repeatedly slicing the arrays into Left Subtrees (LST) and Right Subtrees (RST) until the tree is built.</p>
+
+        <div class="step">
+            <div class="step-num">1</div>
+            <div class="step-content">
+                <p><strong>Find the Main Root:</strong> As identified above, the root is <strong>F</strong>.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">2</div>
+            <div class="step-content">
+                <p><strong>Identify the root of the Left Subtree:</strong> Look at the element immediately following the root in Preorder. It is <strong>B</strong>.</p>
+            </div>
+        </div>
+
+        <div class="step">
+            <div class="step-num">3</div>
+            <div class="step-content">
+                <p><strong>Split the arrays:</strong> Find <strong>B</strong> in the Postorder array. Everything to the left of <strong>B</strong> (inclusive) forms the Left Subtree. Everything after <strong>B</strong> forms the Right Subtree.</p>
+            </div>
+        </div>
+
+        <div class="array-container">
+            <div class="array-label">Divided Postorder Array:</div>
+            <div class="array-boxes" style="margin-bottom: 10px;">
+                <div class="box lst">A</div><div class="box lst">C</div><div class="box lst">E</div>
+                <div class="box lst">D</div><div class="box lst">B</div>
+                <span style="display:flex; align-items:center; margin: 0 10px; color: var(--text-muted);">|</span>
+                <div class="box rst">H</div><div class="box rst">I</div><div class="box rst">G</div>
+                <span style="display:flex; align-items:center; margin: 0 10px; color: var(--text-muted);">|</span>
+                <div class="box root">F</div>
+            </div>
+            <small>🟡 LST Elements &nbsp;&nbsp; 🟣 RST Elements &nbsp;&nbsp; 🔵 Root</small>
+        </div>
+
+        <div class="step">
+            <div class="step-num">4</div>
+            <div class="step-content">
+                <p><strong>Recurse on Subtrees:</strong> Now, extract just the yellow elements <code>{A, C, E, D, B}</code> and repeat the exact same process to build the left side of the tree. Then do it for the purple elements <code>{H, I, G}</code> for the right side.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Method 2 -->
+    <section class="card">
+        <h2>🚀 Method 2: The "Simple Trick" (Exam Hack)</h2>
+        <p>The instructor highly recommends this visual trick for exams to save time without writing out sub-arrays.</p>
+
+        <div class="alert alert-success" style="background: white; border: 1px solid var(--success); color: var(--text-main);">
+            <strong>The Trick:</strong> Read elements one-by-one left-to-right from the <strong>Preorder</strong> array. Locate that element in the <strong>Postorder</strong> array. 
+            <br><br>
+            If the new element is to the <strong>LEFT</strong> of its parent in Postorder, it is a child node. Always try to fill the <em>Left child slot first</em>. If the left slot is taken, fill the <em>Right child slot</em>.
+        </div>
+
+        <ul style="padding-left: 20px;">
+            <li>Start with Root <strong>F</strong>.</li>
+            <li>Next in Preorder is <strong>B</strong>. In Postorder, <code>B</code> is left of <code>F</code> ➡️ <strong>B becomes Left child of F.</strong></li>
+            <li>Next is <strong>A</strong>. In Postorder, <code>A</code> is left of <code>B</code> ➡️ <strong>A becomes Left child of B.</strong></li>
+            <li>Next is <strong>D</strong>. In Postorder, <code>D</code> is right of <code>A</code> but left of <code>B</code>. Because <code>B</code>'s left child is already taken by <code>A</code> ➡️ <strong>D becomes Right child of B.</strong></li>
+            <li>Next is <strong>C</strong>. In Postorder, <code>C</code> is left of <code>D</code> ➡️ <strong>C becomes Left child of D.</strong></li>
+            <li>Next is <strong>E</strong>. In Postorder, <code>E</code> is left of <code>D</code>, but <code>D</code>'s left slot is taken by <code>C</code> ➡️ <strong>E becomes Right child of D.</strong></li>
+            <li>Next is <strong>G</strong>. In Postorder, <code>G</code> is left of <code>F</code>. <code>F</code>'s left is taken by <code>B</code> ➡️ <strong>G becomes Right child of F.</strong></li>
+            <li>Next is <strong>I</strong>. In Postorder, <code>I</code> is left of <code>G</code> ➡️ <strong>I becomes Left child of G.</strong></li>
+            <li>Next is <strong>H</strong>. In Postorder, <code>H</code> is left of <code>I</code> ➡️ <strong>H becomes Left child of I.</strong></li>
+        </ul>
+    </section>
+
+    <!-- Final Tree Visualization -->
+    <section class="card">
+        <h2>🌳 The Resulting Binary Tree</h2>
+        <p>Regardless of which method you use, you will construct this tree:</p>
+        
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <div class="node root" style="border-color: var(--primary); color: white; background: var(--primary);">F</div>
+                        <ul>
+                            <li>
+                                <div class="node">B</div>
+                                <ul>
+                                    <li><div class="node">A</div></li>
+                                    <li>
+                                        <div class="node">D</div>
+                                        <ul>
+                                            <li><div class="node">C</div></li>
+                                            <li><div class="node">E</div></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                <div class="node">G</div>
+                                <ul>
+                                    <li>
+                                        <div class="node">I</div>
+                                        <ul>
+                                            <li><div class="node">H</div></li>
+                                            <li><div class="node null-node"></div></li>
+                                        </ul>
+                                    </li>
+                                    <li><div class="node null-node"></div></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </section>
+
+    <!-- Proof of Rule 1 -->
+    <section class="card">
+        <h2>🤯 Proof: Why isn't it Unique? (Rule 1)</h2>
+        <p>To prove that standard Binary Trees can't be uniquely built from Pre/Postorder, look at nodes <strong>G</strong> and <strong>I</strong>. They only have <em>left</em> children. What happens if we move those children to the <em>right</em> side?</p>
+
+        <div class="split-view">
+            <div>
+                <h3 style="text-align: center; font-size: 1rem;">Original Tree (Left-leaning)</h3>
+                <div class="tree" style="transform: scale(0.8); transform-origin: top center;">
+                    <ul>
+                        <li>
+                            <div class="node" style="background:#e2e8f0; border-color:#cbd5e0;">...</div>
+                            <ul>
+                                <li>
+                                    <div class="node root" style="background:var(--primary); color:white;">G</div>
+                                    <ul>
+                                        <li>
+                                            <div class="node">I</div>
+                                            <ul>
+                                                <li><div class="node" style="border-color: var(--warning); color: var(--warning);">H</div></li>
+                                                <li><div class="node null-node"></div></li>
+                                            </ul>
+                                        </li>
+                                        <li><div class="node null-node"></div></li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div>
+                <h3 style="text-align: center; font-size: 1rem;">Modified Tree (Right-leaning)</h3>
+                <div class="tree" style="transform: scale(0.8); transform-origin: top center;">
+                    <ul>
+                        <li>
+                            <div class="node" style="background:#e2e8f0; border-color:#cbd5e0;">...</div>
+                            <ul>
+                                <li>
+                                    <div class="node root" style="background:var(--primary); color:white;">G</div>
+                                    <ul>
+                                        <li><div class="node null-node"></div></li>
+                                        <li>
+                                            <div class="node">I</div>
+                                            <ul>
+                                                <li><div class="node null-node"></div></li>
+                                                <li><div class="node" style="border-color: var(--warning); color: var(--warning);">H</div></li>
+                                            </ul>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <p style="margin-top: 20px;"><strong>The Mind-Blower:</strong> If you calculate the Preorder and Postorder of the <em>Modified Tree</em>, they are exactly the same as the original arrays! Therefore, multiple tree shapes produce the same exact sequences.</p>
+    </section>
+
+    <!-- Homework / Rule 2 -->
+    <section class="card">
+        <h2>✅ The Fix: Full Binary Trees (Homework)</h2>
+        <p>To fix the ambiguity, the tree must be a <strong>Full Binary Tree</strong> (every node must have 0 or 2 children). The instructor adds dummy nodes <strong>J</strong> and <strong>K</strong> to the tree to fill the empty spots.</p>
+        
+        <p>Here are the new arrays for the Full Binary Tree. The instructor challenges you to use the "Simple Trick" to build a tree from these new sequences to prove to yourself that it will result in <strong>one unique, exact shape.</strong></p>
+
+        <div class="array-container">
+            <div class="array-label">New Preorder</div>
+            <div class="array-boxes">
+                <div class="box root">F</div><div class="box">B</div><div class="box">A</div>
+                <div class="box">D</div><div class="box">C</div><div class="box">E</div>
+                <div class="box">G</div><div class="box">I</div><div class="box">H</div>
+                <div class="box" style="background: #fed7d7; border-color: #f56565; color: #c53030;">K</div>
+                <div class="box" style="background: #fed7d7; border-color: #f56565; color: #c53030;">J</div>
+            </div>
+        </div>
+
+        <div class="array-container">
+            <div class="array-label">New Postorder</div>
+            <div class="array-boxes">
+                <div class="box">A</div><div class="box">C</div><div class="box">E</div>
+                <div class="box">D</div><div class="box">B</div><div class="box">H</div>
+                <div class="box" style="background: #fed7d7; border-color: #f56565; color: #c53030;">K</div>
+                <div class="box">I</div>
+                <div class="box" style="background: #fed7d7; border-color: #f56565; color: #c53030;">J</div>
+                <div class="box">G</div><div class="box root">F</div>
+            </div>
+        </div>
+        <p style="text-align: center; margin-top: 30px; font-weight: bold; color: var(--text-muted);">Good luck with your studies! 🚀</p>
+    </section>
+
+</div>
+
+</body>
+</html>
