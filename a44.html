@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circular Queue Study Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code:wght@400;600&display=swap');
+
+        :root {
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --secondary: #0f172a;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --code-bg: #1e293b;
+            --code-text: #e2e8f0;
+            --highlight: #10b981;
+            --danger: #ef4444;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.7;
+        }
+
+        /* Vertical Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 0;
+            background: linear-gradient(135deg, var(--primary), #3b82f6);
+            color: white;
+            border-radius: 1rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 1rem;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        h2 {
+            color: var(--secondary);
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-light);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        h3 {
+            color: var(--primary);
+            font-size: 1.25rem;
+            margin: 1.5rem 0 0.75rem 0;
+        }
+
+        p, ul, ol {
+            margin-bottom: 1rem;
+        }
+
+        ul {
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight-box {
+            background-color: var(--primary-light);
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 0 0.5rem 0.5rem 0;
+            margin: 1.5rem 0;
+            font-weight: 600;
+        }
+
+        /* Code Styling */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 1rem 0;
+        }
+
+        code.inline {
+            background-color: #e2e8f0;
+            color: #b91c1c;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9em;
+        }
+
+        .comment { color: #64748b; }
+        .keyword { color: #c678dd; }
+        .function { color: #61afef; }
+        .string { color: #98c379; }
+
+        /* Interactive Visualizer */
+        .visualizer-card {
+            background-color: #0f172a;
+            color: white;
+            text-align: center;
+        }
+
+        .visualizer-card h2 {
+            color: white;
+            border-bottom-color: #334155;
+        }
+
+        .controls {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin: 1.5rem 0;
+        }
+
+        input[type="number"] {
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: none;
+            width: 100px;
+            font-size: 1rem;
+            text-align: center;
+            font-family: 'Fira Code', monospace;
+        }
+
+        button {
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            border: none;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn-enq { background-color: var(--highlight); color: white; }
+        .btn-enq:hover { background-color: #059669; }
+        
+        .btn-deq { background-color: var(--danger); color: white; }
+        .btn-deq:hover { background-color: #dc2626; }
+
+        .viz-status {
+            font-family: 'Fira Code', monospace;
+            font-size: 1.1rem;
+            margin-bottom: 2rem;
+            color: #94a3b8;
+        }
+
+        .viz-message {
+            min-height: 24px;
+            color: #fbbf24;
+            font-weight: bold;
+            margin-bottom: 1rem;
+        }
+
+        .circle-container {
+            position: relative;
+            width: 250px;
+            height: 250px;
+            margin: 0 auto;
+            border-radius: 50%;
+            border: 2px dashed #334155;
+        }
+
+        .array-node {
+            position: absolute;
+            width: 60px;
+            height: 60px;
+            background-color: #1e293b;
+            border: 2px solid #475569;
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fira Code', monospace;
+            font-size: 1.25rem;
+            font-weight: bold;
+            color: white;
+            transition: all 0.3s ease;
+            
+            /* Center the nodes and math will place them */
+            top: 50%;
+            left: 50%;
+            margin-top: -30px;
+            margin-left: -30px;
+        }
+
+        .array-node .index {
+            font-size: 0.7rem;
+            color: #94a3b8;
+            margin-top: -2px;
+        }
+
+        .pointer {
+            position: absolute;
+            font-size: 0.8rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+            opacity: 0;
+        }
+
+        .pointer.front {
+            background-color: var(--danger);
+            color: white;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+        .pointer.rear {
+            background-color: var(--highlight);
+            color: white;
+            bottom: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <header>
+        <h1>Circular Queue in C</h1>
+        <p>Complete In-Depth Breakdown | Using Arrays</p>
+    </header>
+
+    <section class="card">
+        <h2>🔄 1. The Problem with Linear Queues</h2>
+        <p>Before writing code, the instructor outlines exactly <strong>why</strong> we need Circular Queues. In standard Linear Queues implemented with arrays, we face a major memory waste issue.</p>
+        <ul>
+            <li><strong>FIFO Rule:</strong> Queues operate on First-In-First-Out. Insertions happen at the <code class="inline">rear</code>, deletions happen at the <code class="inline">front</code>.</li>
+            <li><strong>The Drawback:</strong> When <code class="inline">rear</code> reaches the last index of the array (<code class="inline">N-1</code>), the queue is declared full. However, if we have dequeued elements, indexes 0, 1, etc., are actually empty! In a linear queue, we cannot reuse this space.</li>
+            <li><strong>The Solution:</strong> Logically connect the last index back to index 0. If the rear reaches the end, it wraps around to the beginning, creating a <strong>Circular Queue</strong>.</li>
+        </ul>
+        <div class="highlight-box">
+            The Magic Formula: To achieve the wrap-around effect, never use rear++ or front++. Instead, use modulo arithmetic: <br>
+            <code class="inline" style="background: transparent; color: var(--primary); font-size: 1.1rem;">Next Position = (Current Position + 1) % N</code>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>🛠 2. Global Setup & Variables</h2>
+        <p>The instructor sets up the array and pointers globally so all functions can access them. Initially, both pointers are set to -1 to represent an empty queue.</p>
+<pre>
+<span class="comment">// Define max size of the Queue</span>
+<span class="keyword">#define</span> N 5  
+
+<span class="comment">// Create the array and pointers</span>
+<span class="keyword">int</span> queue[N];
+<span class="keyword">int</span> front = -1;
+<span class="keyword">int</span> rear = -1;
+</pre>
+    </section>
+
+    <!-- INTERACTIVE VISUALIZER IN THE FEED -->
+    <section class="card visualizer-card">
+        <h2>🎮 Interactive Visualizer</h2>
+        <p style="color: #cbd5e1;">Test the operations before diving into the code!</p>
+        
+        <div class="viz-status">
+            Size (N) = 5 &nbsp;|&nbsp; Front = <span id="f-val">-1</span> &nbsp;|&nbsp; Rear = <span id="r-val">-1</span>
+        </div>
+        <div class="viz-message" id="viz-msg"></div>
+
+        <div class="circle-container" id="circle-container">
+            <!-- Nodes will be injected here via JS -->
+        </div>
+
+        <div class="controls">
+            <input type="number" id="eq-val" placeholder="Value" value="10">
+            <button class="btn-enq" onclick="simEnqueue()">Enqueue()</button>
+            <button class="btn-deq" onclick="simDequeue()">Dequeue()</button>
+        </div>
+    </section>
+
+    <section class="card">
+        <h2>📥 3. The Enqueue Operation</h2>
+        <p>When inserting data (<code class="inline">x</code>) into the queue, we must check three specific conditions. The instructor explains them as follows:</p>
+        
+        <h3>Condition 1: Is the Queue Completely Empty?</h3>
+        <p>If both pointers are <code class="inline">-1</code>, it means we are inserting the very first element. We must move both pointers to <code class="inline">0</code>.</p>
+        
+        <h3>Condition 2: Is the Queue Full? (Overflow)</h3>
+        <p>Because it's circular, the queue is full if the <em>next</em> position of <code class="inline">rear</code> hits the <code class="inline">front</code> pointer.</p>
+        <p>Check: <code class="inline">if ((rear + 1) % N == front)</code></p>
+        
+        <h3>Condition 3: Normal Insertion (Wrap-Around)</h3>
+        <p>If it's not empty and not full, we increment <code class="inline">rear</code> using the modulo formula and insert the data.</p>
+
+<pre>
+<span class="keyword">void</span> <span class="function">enqueue</span>(<span class="keyword">int</span> x) {
+    <span class="comment">// Case 1: Queue is empty</span>
+    <span class="keyword">if</span> (front == -1 && rear == -1) {
+        front = 0;
+        rear = 0;
+        queue[rear] = x;
+    } 
+    <span class="comment">// Case 2: Queue is full</span>
+    <span class="keyword">else if</span> ((rear + 1) % N == front) {
+        <span class="function">printf</span>(<span class="string">"Queue is full\n"</span>);
+    } 
+    <span class="comment">// Case 3: Normal insertion / wrap-around</span>
+    <span class="keyword">else</span> {
+        rear = (rear + 1) % N;
+        queue[rear] = x;
+    }
+}
+</pre>
+    </section>
+
+    <section class="card">
+        <h2>📤 4. The Dequeue Operation</h2>
+        <p>Deleting data happens at the <code class="inline">front</code> pointer. Similar to insertion, there are three distinct conditions.</p>
+
+        <h3>Condition 1: Is the Queue Empty? (Underflow)</h3>
+        <p>Check: <code class="inline">if (front == -1 && rear == -1)</code>. If true, there is nothing to delete.</p>
+
+        <h3>Condition 2: Only One Element Left</h3>
+        <p>If <code class="inline">front == rear</code>, both pointers are pointing to the exact same index. This means only one item exists. After deleting it, the queue becomes empty again, so we must reset <code class="inline">front</code> and <code class="inline">rear</code> back to <code class="inline">-1</code>.</p>
+
+        <h3>Condition 3: Normal Deletion</h3>
+        <p>Print the element at the <code class="inline">front</code>, then move <code class="inline">front</code> to the next logical position using the modulo formula.</p>
+
+<pre>
+<span class="keyword">void</span> <span class="function">dequeue</span>() {
+    <span class="comment">// Case 1: Queue is empty</span>
+    <span class="keyword">if</span> (front == -1 && rear == -1) {
+        <span class="function">printf</span>(<span class="string">"Queue is empty\n"</span>);
+    } 
+    <span class="comment">// Case 2: Only one element exists</span>
+    <span class="keyword">else if</span> (front == rear) {
+        <span class="function">printf</span>(<span class="string">"Dequeued %d\n"</span>, queue[front]);
+        front = -1;
+        rear = -1;  <span class="comment">// Reset the queue</span>
+    } 
+    <span class="comment">// Case 3: Normal deletion / wrap-around</span>
+    <span class="keyword">else</span> {
+        <span class="function">printf</span>(<span class="string">"Dequeued %d\n"</span>, queue[front]);
+        front = (front + 1) % N;
+    }
+}
+</pre>
+    </section>
+
+    <section class="card">
+        <h2>👁️ 5. The Display Operation</h2>
+        <p>The instructor highlights a <strong>critical difference</strong> here. In a linear queue, a simple <code class="inline">for (i=front; i&lt;=rear; i++)</code> loop works. In a circular queue, <code class="inline">rear</code> might be numerically smaller than <code class="inline">front</code> (e.g., front is 3, rear wrapped around to 1). A standard <code class="inline">for</code> loop will fail.</p>
+        
+        <p><strong>The Strategy:</strong></p>
+        <ol>
+            <li>Check if empty.</li>
+            <li>Start a temporary variable <code class="inline">i</code> at <code class="inline">front</code>.</li>
+            <li>Use a <code class="inline">while (i != rear)</code> loop. Inside, print the element and increment circularly: <code class="inline">i = (i + 1) % N</code>.</li>
+            <li><strong>Crucial Step:</strong> The loop breaks the moment <code class="inline">i</code> hits <code class="inline">rear</code>. This means the last element is skipped! We must manually print <code class="inline">queue[rear]</code> outside the loop.</li>
+        </ol>
+
+<pre>
+<span class="keyword">void</span> <span class="function">display</span>() {
+    <span class="keyword">int</span> i = front; 
+    
+    <span class="keyword">if</span> (front == -1 && rear == -1) {
+        <span class="function">printf</span>(<span class="string">"Queue is empty\n"</span>);
+    } 
+    <span class="keyword">else</span> {
+        <span class="function">printf</span>(<span class="string">"Queue is: "</span>);
+        <span class="comment">// Loop until i reaches rear</span>
+        <span class="keyword">while</span> (i != rear) {
+            <span class="function">printf</span>(<span class="string">"%d "</span>, queue[i]);
+            i = (i + 1) % N; <span class="comment">// Move circularly</span>
+        }
+        <span class="comment">// Print the final element at rear</span>
+        <span class="function">printf</span>(<span class="string">"%d\n"</span>, queue[rear]);
+    }
+}
+</pre>
+    </section>
+
+    <section class="card">
+        <h2>🫣 6. The Peek Operation</h2>
+        <p>The <code class="inline">peek()</code> function is incredibly simple. It operates exactly like a linear queue. It just looks at the <code class="inline">front</code> of the queue and prints it without removing it.</p>
+<pre>
+<span class="keyword">void</span> <span class="function">peek</span>() {
+    <span class="keyword">if</span> (front == -1 && rear == -1) {
+        <span class="function">printf</span>(<span class="string">"Queue is empty\n"</span>);
+    } 
+    <span class="keyword">else</span> {
+        <span class="function">printf</span>(<span class="string">"Front element is %d\n"</span>, queue[front]);
+    }
+}
+</pre>
+    </section>
+
+</div>
+
+<script>
+    // --- Interactive Visualizer Logic ---
+    const N = 5;
+    let simQueue = [null, null, null, null, null];
+    let sFront = -1;
+    let sRear = -1;
+
+    const container = document.getElementById('circle-container');
+    const msgBox = document.getElementById('viz-msg');
+    const fVal = document.getElementById('f-val');
+    const rVal = document.getElementById('r-val');
+
+    // Radius of the circular layout
+    const R = 90;
+
+    // Initialize the circular nodes in UI
+    function initVisualizer() {
+        container.innerHTML = '';
+        for (let i = 0; i < N; i++) {
+            // Calculate angle: start at top (-90 deg), space by 360/N
+            let angle = (i * (360 / N)) - 90;
+            let rad = angle * (Math.PI / 180);
+            
+            let x = Math.cos(rad) * R;
+            let y = Math.sin(rad) * R;
+
+            let node = document.createElement('div');
+            node.className = 'array-node';
+            node.id = `node-${i}`;
+            node.style.transform = `translate(${x}px, ${y}px)`;
+            
+            node.innerHTML = `
+                <span class="val" id="val-${i}">-</span>
+                <span class="index">${i}</span>
+                <div class="pointer front" id="pf-${i}">F</div>
+                <div class="pointer rear" id="pr-${i}">R</div>
+            `;
+            container.appendChild(node);
+        }
+        renderState();
+    }
+
+    function renderState() {
+        // Update labels
+        fVal.innerText = sFront;
+        rVal.innerText = sRear;
+
+        for (let i = 0; i < N; i++) {
+            // Update values
+            let valSpan = document.getElementById(`val-${i}`);
+            valSpan.innerText = simQueue[i] !== null ? simQueue[i] : '-';
+            
+            // Highlight nodes with data
+            let node = document.getElementById(`node-${i}`);
+            if (simQueue[i] !== null) {
+                node.style.backgroundColor = '#3b82f6';
+                node.style.borderColor = '#60a5fa';
+            } else {
+                node.style.backgroundColor = '#1e293b';
+                node.style.borderColor = '#475569';
+            }
+
+            // Update Pointers
+            document.getElementById(`pf-${i}`).style.opacity = (i === sFront) ? '1' : '0';
+            document.getElementById(`pr-${i}`).style.opacity = (i === sRear) ? '1' : '0';
+        }
+    }
+
+    function showMsg(text, isError=false) {
+        msgBox.innerText = text;
+        msgBox.style.color = isError ? '#ef4444' : '#fbbf24';
+        setTimeout(() => msgBox.innerText = '', 2500);
+    }
+
+    // Logic mimicking the C Code strictly
+    function simEnqueue() {
+        let input = document.getElementById('eq-val');
+        let val = input.value ? parseInt(input.value) : Math.floor(Math.random()*100);
+
+        if ((sRear + 1) % N === sFront) {
+            showMsg("Overflow: Queue is Full!", true);
+            return;
+        }
+
+        if (sFront === -1 && sRear === -1) {
+            sFront = 0;
+            sRear = 0;
+        } else {
+            sRear = (sRear + 1) % N;
+        }
+        
+        simQueue[sRear] = val;
+        showMsg(`Enqueued ${val}`);
+        
+        // auto update input for user convenience
+        input.value = val + 5; 
+        renderState();
+    }
+
+    function simDequeue() {
+        if (sFront === -1 && sRear === -1) {
+            showMsg("Underflow: Queue is Empty!", true);
+            return;
+        }
+
+        let deletedVal = simQueue[sFront];
+        simQueue[sFront] = null; // clear visual
+
+        if (sFront === sRear) {
+            sFront = -1;
+            sRear = -1;
+        } else {
+            sFront = (sFront + 1) % N;
+        }
+
+        showMsg(`Dequeued ${deletedVal}`);
+        renderState();
+    }
+
+    // Run on load
+    window.onload = initVisualizer;
+</script>
+
+</body>
+</html>
