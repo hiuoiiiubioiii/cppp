@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Notes: Introduction to Queues</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap');
+
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --secondary: #ec4899;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border: #e2e8f0;
+            --garbage: #ef4444;
+            --highlight: #dbeafe;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Continuous Feed Layout */
+        #feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border-left: 5px solid var(--primary);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.6s ease-out forwards;
+        }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            color: var(--text-main);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin: 20px 0 10px 0;
+            color: var(--primary);
+        }
+
+        .card ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        .card li {
+            margin-bottom: 8px;
+        }
+
+        .highlight-box {
+            background-color: var(--highlight);
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid var(--primary);
+        }
+
+        .warning-box {
+            background-color: #fee2e2;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border-left: 4px solid var(--garbage);
+        }
+
+        code {
+            font-family: 'Fira Code', monospace;
+            background-color: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--secondary);
+        }
+
+        /* --- VISUALIZATIONS --- */
+        
+        /* 1. Logical Representation (The Tube) */
+        .visual-tube {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 30px 0;
+            padding: 20px;
+        }
+        .tube-body {
+            display: flex;
+            width: 300px;
+            height: 80px;
+            border-top: 4px solid var(--text-main);
+            border-bottom: 4px solid var(--text-main);
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 20px;
+            position: relative;
+        }
+        .tube-label {
+            font-weight: bold;
+            color: var(--primary);
+        }
+        .tube-arrow {
+            font-size: 2rem;
+            color: var(--secondary);
+        }
+
+        /* 2. Queue Array Simulation */
+        .simulation-step {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8fafc;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+        }
+        .sim-title {
+            font-weight: bold;
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+        .array-container {
+            display: flex;
+            gap: 5px;
+            justify-content: center;
+            margin-bottom: 30px;
+            position: relative;
+        }
+        .array-cell {
+            width: 50px;
+            height: 50px;
+            border: 2px solid var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: 'Fira Code', monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            position: relative;
+            background-color: white;
+        }
+        .cell-index {
+            position: absolute;
+            top: -25px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+        }
+        .garbage {
+            color: var(--garbage);
+            text-decoration: line-through;
+            background-color: #fef2f2;
+        }
+        .pointer {
+            position: absolute;
+            font-size: 0.9rem;
+            font-weight: bold;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .ptr-front {
+            color: var(--primary);
+            bottom: -45px;
+        }
+        .ptr-rear {
+            color: var(--secondary);
+            top: -55px;
+        }
+        .ptr-arrow-up::before { content: '↑'; font-size: 1.2rem; }
+        .ptr-arrow-down::after { content: '↓'; font-size: 1.2rem; }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        .app-card {
+            background: #f1f5f9;
+            padding: 15px;
+            border-radius: 8px;
+            display: flex;
+            align-items: flex-start;
+            gap: 15px;
+        }
+        .app-icon {
+            font-size: 2rem;
+        }
+    </style>
+</head>
+<body>
+
+<div id="feed-container">
+    <header>
+        <h1>Introduction to Queues</h1>
+        <p>Complete Audio-Visual Breakdown • Scroll to Learn</p>
+    </header>
+
+    <!-- SECTION 1 -->
+    <section class="card" style="animation-delay: 0.1s;">
+        <h2>1. What is a Queue?</h2>
+        <p>A Data Structure is a way of storing and organizing data in a computer. We have discussed Arrays, Linked Lists, and Stacks. Now, we introduce the <strong>Queue</strong>.</p>
+        
+        <div class="highlight-box">
+            <ul>
+                <li><strong>Linear Data Structure:</strong> Elements are arranged in a sequential order.</li>
+                <li><strong>ADT (Abstract Data Type):</strong> In this lesson, we focus on <em>what</em> a queue is and <em>what operations</em> it can perform, rather than how it is coded under the hood (which comes later via Arrays/Linked Lists).</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section class="card" style="animation-delay: 0.2s;">
+        <h2>2. The Core Principle: FIFO</h2>
+        <p><strong>Real-Life Analogy:</strong> Imagine a movie ticket counter. The first person to stand in the line gets their ticket first. If you arrive after 5 people, you must stand at the 6th position.</p>
+        
+        <div class="visual-tube" style="flex-direction: column; gap: 10px;">
+            <div style="font-size: 1.5rem; letter-spacing: 5px; font-weight: bold; color: var(--primary);">F I F O</div>
+            <p style="font-family: 'Fira Code'; background: var(--border); padding: 5px 10px; border-radius: 4px;">First In, First Out</p>
+        </div>
+
+        <p><strong>Note:</strong> The instructor notes this can also be called <strong>LILO (Last In, Last Out)</strong>. The last element added will be the last one to be removed. This is the exact opposite of a Stack (LIFO).</p>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section class="card" style="animation-delay: 0.3s;">
+        <h2>3. Rules & Terminology</h2>
+        <p>Unlike a Stack (which has only one open end), a Queue follows strict rules based on <strong>two open ends</strong>.</p>
+        
+        <ul>
+            <li><strong>Insertion (Adding data):</strong> Always happens at one specific end called the <strong>Rear</strong> (or tail). Operation: <code>enqueue()</code>.</li>
+            <li><strong>Deletion (Removing data):</strong> Always happens at the other specific end called the <strong>Front</strong> (or head). Operation: <code>dequeue()</code>.</li>
+        </ul>
+
+        <div class="visual-tube">
+            <div class="tube-label">DEQUEUE<br>← FRONT</div>
+            <div class="tube-body">
+                <span>[ Data ]</span>
+                <span>[ Data ]</span>
+            </div>
+            <div class="tube-label" style="color: var(--secondary);">REAR ←<br>ENQUEUE</div>
+        </div>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section class="card" style="animation-delay: 0.4s;">
+        <h2>4. Fundamental Operations</h2>
+        <p>To implement a Queue, we must maintain <strong>two pointers/variables</strong>: <code>Front</code> and <code>Rear</code>. Here are the 5 primary operations:</p>
+        
+        <ul>
+            <li><code>Enqueue(data)</code>: Requires an argument. Inserts data at the Rear.</li>
+            <li><code>Dequeue()</code>: Requires no argument. Always removes the element currently at the Front.</li>
+            <li><code>front()</code> or <code>peek()</code>: Returns the value of the element at the front <em>without</em> deleting it.</li>
+            <li><code>isFull()</code>: Returns True if the queue has reached max capacity.</li>
+            <li><code>isEmpty()</code>: Returns True if there are no elements in the queue.</li>
+        </ul>
+    </section>
+
+    <!-- SECTION 5 (THE SIMULATION) -->
+    <section class="card" style="animation-delay: 0.5s;">
+        <h2>5. Array Simulation (In-Depth)</h2>
+        <p>The instructor simulates a queue using an Array of <code>Size = 5</code>. Let's trace her exact steps on the whiteboard.</p>
+
+        <!-- Step 1 -->
+        <div class="simulation-step">
+            <div class="sim-title">Step 1: Initial Empty State (Underflow Condition)</div>
+            <p><strong>Rule:</strong> When empty, set pointers to <code>Front = -1</code> and <code>Rear = -1</code>.</p>
+            <div class="array-container" style="margin-top: 40px;">
+                <div class="array-cell"><span class="cell-index">0</span></div>
+                <div class="array-cell"><span class="cell-index">1</span></div>
+                <div class="array-cell"><span class="cell-index">2</span></div>
+                <div class="array-cell"><span class="cell-index">3</span></div>
+                <div class="array-cell"><span class="cell-index">4</span></div>
+                <div style="position: absolute; left: -60px; bottom: -20px; font-weight: bold; color: var(--primary);">Front = -1<br><span style="color: var(--secondary);">Rear = -1</span></div>
+            </div>
+        </div>
+
+        <!-- Step 2 -->
+        <div class="simulation-step">
+            <div class="sim-title">Step 2: Enqueue(2), Enqueue(10), Enqueue(-1)</div>
+            <p>Because it was initially -1, we increment <strong>both</strong> to 0 for the first insert. After that, we only increment <code>Rear</code> to add 10 and -1.</p>
+            <div class="array-container" style="margin-top: 40px;">
+                <div class="array-cell">2
+                    <div class="pointer ptr-front ptr-arrow-up" style="left: 0;">Front=0</div>
+                </div>
+                <div class="array-cell">10<span class="cell-index">1</span></div>
+                <div class="array-cell">-1<span class="cell-index">2</span>
+                    <div class="pointer ptr-rear ptr-arrow-down" style="left: 0;">Rear=2</div>
+                </div>
+                <div class="array-cell"><span class="cell-index">3</span></div>
+                <div class="array-cell"><span class="cell-index">4</span></div>
+            </div>
+        </div>
+
+        <!-- Step 3 -->
+        <div class="simulation-step">
+            <div class="sim-title">Step 3: Dequeue()</div>
+            <p>Do NOT touch Rear. We remove the element at Front (2) and increment Front (Front+1). Index 0 is now <strong>garbage</strong>.</p>
+            <div class="array-container" style="margin-top: 40px;">
+                <div class="array-cell garbage">2<span class="cell-index">0</span></div>
+                <div class="array-cell">10<span class="cell-index">1</span>
+                    <div class="pointer ptr-front ptr-arrow-up" style="left: 0;">Front=1</div>
+                </div>
+                <div class="array-cell">-1<span class="cell-index">2</span>
+                    <div class="pointer ptr-rear ptr-arrow-down" style="left: 0;">Rear=2</div>
+                </div>
+                <div class="array-cell"><span class="cell-index">3</span></div>
+                <div class="array-cell"><span class="cell-index">4</span></div>
+            </div>
+        </div>
+
+        <!-- Step 4 -->
+        <div class="simulation-step">
+            <div class="sim-title">Step 4: Enqueue(0), Enqueue(1)</div>
+            <p>Increment Rear to 3 (insert 0), then increment Rear to 4 (insert 1).</p>
+            <div class="array-container" style="margin-top: 40px;">
+                <div class="array-cell garbage">2<span class="cell-index">0</span></div>
+                <div class="array-cell">10<span class="cell-index">1</span>
+                    <div class="pointer ptr-front ptr-arrow-up" style="left: 0;">Front=1</div>
+                </div>
+                <div class="array-cell">-1<span class="cell-index">2</span></div>
+                <div class="array-cell">0<span class="cell-index">3</span></div>
+                <div class="array-cell">1<span class="cell-index">4</span>
+                    <div class="pointer ptr-rear ptr-arrow-down" style="left: 0;">Rear=4</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Step 5 (The Drawback) -->
+        <div class="simulation-step">
+            <div class="sim-title">Step 5: Enqueue(5) -> 🚨 OVERFLOW</div>
+            <p>The system checks <code>isFull()</code>. Since <code>Rear == Size - 1</code> (4 == 4), the queue throws an OVERFLOW error.</p>
+            
+            <div class="warning-box">
+                <strong>Instructor's Critical Note on Linear Queues:</strong> 
+                Even though index 0 is currently empty (because we dequeued '2' earlier), we still get an OVERFLOW error because `Rear` has hit the wall of the array. This wasted space is the major drawback of a linear array queue. (This is solved later using a <em>Circular Queue</em>).
+            </div>
+        </div>
+
+        <!-- Step 6 -->
+        <div class="simulation-step">
+            <div class="sim-title">Step 6: Dequeue() until empty</div>
+            <p>If we call Dequeue 4 times, Front keeps moving right. When we delete the very last element (where <code>Front == Rear</code>), we must reset the queue back to empty: <code>Front = -1, Rear = -1</code>.</p>
+        </div>
+
+    </section>
+
+    <!-- SECTION 6 -->
+    <section class="card" style="animation-delay: 0.6s;">
+        <h2>6. Real-World Applications</h2>
+        <p>Queues are used heavily in computer science and daily life, specifically when serving requests on a single shared resource.</p>
+        
+        <div class="app-grid">
+            <div class="app-card">
+                <div class="app-icon">🖨️</div>
+                <div>
+                    <strong>Shared Resources (Printers):</strong>
+                    <p>If 5 PCs send a print command simultaneously, the printer creates a queue. The first command received is processed first (FIFO), while the others wait in the queue.</p>
+                </div>
+            </div>
+            
+            <div class="app-card">
+                <div class="app-icon">🎧</div>
+                <div>
+                    <strong>Customer Care Phone Lines:</strong>
+                    <p>When you hear "Please hold," you are placed in a queue. The person who has been on hold the longest gets the next available representative.</p>
+                </div>
+            </div>
+
+            <div class="app-card">
+                <div class="app-icon">💻</div>
+                <div>
+                    <strong>CPU Scheduling:</strong>
+                    <p>A CPU core executes one process at a time. The OS places waiting processes into a "Ready Queue." As soon as the CPU finishes a task, it fetches the next process from the front of the queue.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+</div>
+
+<!-- Simple script to trigger animations as user scrolls (Intersection Observer) -->
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.animationPlayState = 'running';
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.card').forEach(card => {
+            card.style.animationPlayState = 'paused';
+            observer.observe(card);
+        });
+    });
+</script>
+</body>
+</html>
