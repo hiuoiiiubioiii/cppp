@@ -1,0 +1,407 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insertion in Splay Trees - Study Notes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        /* Base Styles & Typography */
+        :root {
+            --bg-color: #f3f4f6;
+            --feed-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --primary: #3b82f6;
+            --primary-light: #eff6ff;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --border: #e5e7eb;
+            --code-bg: #1e1e1e;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            position: relative;
+        }
+
+        /* Timeline Line */
+        .feed-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 2rem;
+            width: 4px;
+            height: 100%;
+            background: var(--border);
+            border-radius: 4px;
+            z-index: 0;
+        }
+
+        /* Header */
+        .header-card {
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            padding: 3rem 2rem;
+            border-radius: 16px;
+            margin-bottom: 3rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            position: relative;
+            z-index: 1;
+        }
+        .header-card h1 { font-size: 2.5rem; font-weight: 700; margin-bottom: 0.5rem; }
+        .header-card p { font-size: 1.1rem; opacity: 0.9; }
+
+        /* Feed Items (Cards) */
+        .feed-item {
+            background: var(--feed-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2.5rem;
+            margin-left: 4rem; /* Make room for timeline */
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            position: relative;
+            z-index: 1;
+        }
+
+        /* Timeline Dots */
+        .feed-item::before {
+            content: '';
+            position: absolute;
+            top: 2rem;
+            left: -2.6rem;
+            width: 20px;
+            height: 20px;
+            background: var(--primary);
+            border: 4px solid var(--bg-color);
+            border-radius: 50%;
+            z-index: 2;
+        }
+
+        .feed-item h2 { color: var(--primary); margin-bottom: 1rem; display: flex; align-items: center; gap: 10px; }
+        .feed-item h3 { color: var(--text-main); margin-top: 1.5rem; margin-bottom: 0.5rem; font-size: 1.2rem;}
+        
+        .highlight-box {
+            background: var(--primary-light);
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        /* Tree Visualization Styles */
+        .tree-viz-container {
+            background: #f8fafc;
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            font-family: 'Fira Code', monospace;
+            font-size: 1.1rem;
+            white-space: pre;
+            overflow-x: auto;
+            text-align: center;
+            line-height: 1.8;
+        }
+
+        /* Code Blocks */
+        pre {
+            background: var(--code-bg);
+            color: #d4d4d4;
+            padding: 1.5rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            margin: 1rem 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+        .kw { color: #569cd6; } /* Keywords */
+        .fn { color: #dcdcaa; } /* Functions */
+        .cm { color: #6a9955; font-style: italic; } /* Comments */
+        .op { color: #c586c0; } /* Operators */
+        .vr { color: #9cdcfe; } /* Variables */
+
+        /* Tags */
+        .tag {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        .tag.insert { background: #d1fae5; color: #065f46; }
+        .tag.splay { background: #fee2e2; color: #991b1b; }
+        .tag.result { background: #e0e7ff; color: #3730a3; }
+
+        @media (max-width: 600px) {
+            .feed-container::before { left: 1rem; }
+            .feed-item { margin-left: 2rem; padding: 1.5rem; }
+            .feed-item::before { left: -1.6rem; width: 16px; height: 16px; }
+            .header-card { padding: 2rem 1.5rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+
+    <!-- Header -->
+    <header class="header-card">
+        <h1>Insertion in Splay Trees</h1>
+        <p>Complete breakdown combining instructor's verbal theory, whiteboard visual walkthroughs, and algorithmic pseudocode.</p>
+    </header>
+
+    <!-- Post 1: Core Concept -->
+    <article class="feed-item">
+        <h2>📌 1. The Core Concept: The Two-Step Rule</h2>
+        <p>The most important rule to remember for Splay Trees is that all basic operations rely on the standard Binary Search Tree (BST) logic, followed by one crucial extra step.</p>
+        
+        <div class="highlight-box">
+            <strong>Step 1:</strong> Perform the standard BST operation (in this case, normal BST insertion at a leaf node).<br>
+            <strong>Step 2:</strong> Perform the <strong>Splaying Operation</strong> on the newly inserted node.
+        </div>
+
+        <h3>What is Splaying?</h3>
+        <p>Splaying is the process of bringing a specific node to the <strong>Root</strong> of the tree using a series of specific rotations (Left and Right). We do this so that recently accessed or inserted elements are closer to the root, making future accesses much faster.</p>
+    </article>
+
+    <!-- Post 2: Visual Example Intro -->
+    <article class="feed-item">
+        <h2>🛠️ 2. Visual Walkthrough</h2>
+        <p>We are going to insert the following sequence of numbers into an initially empty tree: <br>
+        <strong>15, 10, 17, 7, 13, 16</strong>.</p>
+        <p>Follow along with the tree's state after every single operation.</p>
+    </article>
+
+    <!-- Post 3: Insert 15 & 10 -->
+    <article class="feed-item">
+        <h2><span class="tag insert">Insert 15</span> & <span class="tag insert">Insert 10</span></h2>
+        
+        <h3>🔹 Insert 15</h3>
+        <p><strong>BST Insert:</strong> The tree is empty, so 15 is inserted as the root.</p>
+        <p><strong>Splay(15):</strong> 15 is already the root. No rotations needed.</p>
+        <div class="tree-viz-container">
+  (15) Root
+        </div>
+
+        <hr style="border: none; border-top: 1px solid var(--border); margin: 2rem 0;">
+
+        <h3>🔹 Insert 10</h3>
+        <p><strong>BST Insert:</strong> 10 < 15, so 10 becomes the <strong>Left Child</strong> of 15.</p>
+        <p><strong>Splay(10):</strong> 10 needs to become the root. It only has a parent (15), no grandparent. This is a <strong>Zig (Left Child)</strong> situation.</p>
+        <p><em>Action:</em> Perform a <strong>Right Rotation</strong> on the parent (15). 15 is pulled down, 10 moves up.</p>
+        
+        <div class="tree-viz-container">
+<span style="color:var(--text-muted)">[BST Insert]</span>       <span style="color:var(--primary)">[Splayed Result]</span>
+     (15)                 <strong>(10)</strong>
+     /         ==>           \
+  <strong>(10)</strong>                       (15)
+        </div>
+    </article>
+
+    <!-- Post 4: Insert 17 -->
+    <article class="feed-item">
+        <h2><span class="tag insert">Insert 17</span></h2>
+        <p><strong>BST Insert:</strong> 17 > 10 (Go Right). 17 > 15 (Go Right). 17 becomes the <strong>Right Child</strong> of 15.</p>
+        <p><strong>Splay(17):</strong> 17 has a parent (15) and a grandparent (10). 17 is a Right Child, and 15 is a Right Child. This is a <strong>Zag-Zag (Right-Right)</strong> situation.</p>
+        <p><em>Action:</em> Two Left Rotations. First, <strong>Left Rotate Grandparent (10)</strong>. Then, <strong>Left Rotate Parent (15)</strong>.</p>
+        
+        <div class="tree-viz-container">
+<span style="color:var(--text-muted)">[BST Insert]</span>     <span style="color:var(--warning)">[Rotate GP(10)]</span>      <span style="color:var(--primary)">[Final Result]</span>
+   (10)                (15)                 <strong>(17)</strong>
+      \                /  \                 /
+      (15)   ==>    (10)  <strong>(17)</strong>    ==>     (15)
+         \                            /
+         <strong>(17)</strong>                       (10)
+        </div>
+    </article>
+
+    <!-- Post 5: Insert 7 -->
+    <article class="feed-item">
+        <h2><span class="tag insert">Insert 7</span></h2>
+        <p><strong>BST Insert:</strong> 7 < 17, 15, 10. Becomes <strong>Left Child</strong> of 10.</p>
+        <p><strong>Splay(7):</strong></p>
+        <ul>
+            <li><em>Part 1:</em> 7 is Left of 10, 10 is Left of 15. <strong>Zig-Zig (Left-Left)</strong>. <br>Action: Right Rotate GP(15), then Right Rotate Parent(10).</li>
+            <li><em>Part 2:</em> 7 is now Left Child of root (17). <strong>Zig</strong>. <br>Action: Right Rotate Root(17).</li>
+        </ul>
+        
+        <div class="tree-viz-container">
+<span style="color:var(--text-muted)">[BST Insert]</span>     <span style="color:var(--warning)">[After Zig-Zig]</span>      <span style="color:var(--primary)">[Final Result]</span>
+    (17)                (17)                <strong>(7)</strong>
+    /                   /                     \
+  (15)       ==>      <strong>(7)</strong>          ==>        (17)
+  /                     \                     /
+(10)                   (10)                 (10)
+/                         \                    \
+<strong>(7)</strong>                        (15)                 (15)
+        </div>
+    </article>
+
+    <!-- Post 6: Insert 13 -->
+    <article class="feed-item">
+        <h2><span class="tag insert">Insert 13</span></h2>
+        <p><strong>BST Insert:</strong> Traverse tree: >7, <17, >10, <15. Becomes <strong>Left Child</strong> of 15.</p>
+        <p><strong>Splay(13):</strong></p>
+        <ul>
+            <li><em>Part 1:</em> 13 is Left of 15. 15 is Right of 10. Opposite directions = <strong>Zig-Zag</strong>.<br>Action: Right Rotate Parent(15), Left Rotate GP(10).</li>
+            <li><em>Part 2:</em> 13 is Left of 17. 17 is Right of Root(7). <strong>Zig-Zag</strong>.<br>Action: Right Rotate Parent(17), Left Rotate GP(7).</li>
+        </ul>
+        
+        <div class="tree-viz-container">
+<span style="color:var(--primary)">[Final Result after Splaying 13]</span>
+
+               <strong>(13)</strong>
+              /    \
+            (7)    (17)
+              \    /
+             (10)(15)
+        </div>
+    </article>
+
+    <!-- Post 7: Insert 16 -->
+    <article class="feed-item">
+        <h2><span class="tag insert">Insert 16</span></h2>
+        <p><strong>BST Insert:</strong> >13, <17, >15. Becomes <strong>Right Child</strong> of 15.</p>
+        <p><strong>Splay(16):</strong></p>
+        <ul>
+            <li><em>Part 1:</em> 16 is Right of 15. 15 is Left of 17. <strong>Zag-Zig (Right-Left)</strong>.<br>Action: Left Rotate Parent(15), Right Rotate GP(17).</li>
+            <li><em>Part 2:</em> 16 is Right of Root(13). <strong>Zag</strong>.<br>Action: Left Rotate Root(13).</li>
+        </ul>
+        
+        <div class="tree-viz-container">
+<span style="color:var(--primary)">[Final Tree after all Insertions]</span>
+
+                <strong>(16)</strong>
+               /    \
+            (13)    (17)
+            /  \
+          (7)  (15)
+            \
+            (10)
+        </div>
+    </article>
+
+    <!-- Post 8: Algorithm - Insert -->
+    <article class="feed-item">
+        <h2>💻 3. Algorithm Breakdown: `Insert(T, n)`</h2>
+        <p>Here is the exact pseudocode written on the whiteboard. Let <code>T</code> be the tree, and <code>n</code> be the new node.</p>
+        
+<pre><code><span class="cm">// T = Tree, n = New Node to be inserted</span>
+<span class="kw">function</span> <span class="fn">Insert</span>(T, n) {
+    <span class="kw">var</span> temp = T.root;       <span class="cm">// Pointer to traverse</span>
+    <span class="kw">var</span> y = <span class="kw">NULL</span>;            <span class="cm">// Trailing pointer (will be parent)</span>
+
+    <span class="cm">// Step 1: Standard BST Traversal</span>
+    <span class="kw">while</span> (temp != <span class="kw">NULL</span>) {
+        y = temp;
+        <span class="kw">if</span> (n->data < temp->data) {
+            temp = temp->left;
+        } <span class="kw">else</span> {
+            temp = temp->right;
+        }
+    }
+
+    <span class="cm">// Step 2: Attach new node</span>
+    n->parent = y;
+
+    <span class="cm">// Step 3: Handle empty tree vs left/right child</span>
+    <span class="kw">if</span> (y == <span class="kw">NULL</span>) {
+        T.root = n;
+    } <span class="kw">else if</span> (n->data < y->data) {
+        y->left = n;
+    } <span class="kw">else</span> {
+        y->right = n;
+    }
+
+    <span class="cm">// Step 4: The magic SPLAY operation!</span>
+    <span class="fn">Splay</span>(T, n);
+}</code></pre>
+    </article>
+
+    <!-- Post 9: Algorithm - Splay -->
+    <article class="feed-item">
+        <h2>💻 4. Algorithm Breakdown: `Splay(T, n)`</h2>
+        <p>This is the core logic that loops until the inserted node `n` becomes the root.</p>
+
+<pre><code><span class="kw">function</span> <span class="fn">Splay</span>(T, n) {
+    <span class="kw">while</span> (n->parent != <span class="kw">NULL</span>) {
+        
+        <span class="cm">// ZIG / ZAG: Parent is Root (No Grandparent)</span>
+        <span class="kw">if</span> (n->parent == T.root) {
+            <span class="kw">if</span> (n == n->parent->left) {
+                <span class="fn">right_rotation</span>(T, n->parent);
+            } <span class="kw">else</span> {
+                <span class="fn">left_rotation</span>(T, n->parent);
+            }
+        } 
+        <span class="kw">else</span> {
+            <span class="kw">var</span> p = n->parent;
+            <span class="kw">var</span> g = p->parent;
+
+            <span class="cm">// ZIG-ZIG (Left-Left)</span>
+            <span class="kw">if</span> (n == p->left <span class="op">&&</span> p == g->left) {
+                <span class="fn">right_rotation</span>(T, g);  <span class="cm">// Grandparent FIRST</span>
+                <span class="fn">right_rotation</span>(T, p);  <span class="cm">// Parent SECOND</span>
+            }
+            <span class="cm">// ZAG-ZAG (Right-Right)</span>
+            <span class="kw">else if</span> (n == p->right <span class="op">&&</span> p == g->right) {
+                <span class="fn">left_rotation</span>(T, g);   
+                <span class="fn">left_rotation</span>(T, p);   
+            }
+            <span class="cm">// ZIG-ZAG (Right-Left Triangle)</span>
+            <span class="kw">else if</span> (n == p->right <span class="op">&&</span> p == g->left) {
+                <span class="fn">left_rotation</span>(T, p);   <span class="cm">// Parent FIRST</span>
+                <span class="fn">right_rotation</span>(T, g);  <span class="cm">// Grandparent SECOND</span>
+            }
+            <span class="cm">// ZAG-ZIG (Left-Right Triangle)</span>
+            <span class="kw">else</span> { 
+                <span class="fn">right_rotation</span>(T, p);  
+                <span class="fn">left_rotation</span>(T, g);   
+            }
+        }
+    }
+}</code></pre>
+    </article>
+
+    <!-- Post 10: Algorithm - Rotations -->
+    <article class="feed-item">
+        <h2>🔁 5. Helper Functions: Rotations</h2>
+        <p>The fundamental left and right rotation logic as written on the board. <em>Note: In full C/C++ implementations, you must also carefully update `parent` pointers.</em></p>
+
+<pre><code><span class="cm">// Right Rotation on node x</span>
+<span class="kw">function</span> <span class="fn">right_rotation</span>(T, x) {
+    <span class="kw">var</span> y = x->left;        <span class="cm">// y is left child</span>
+    x->left = y->right;     <span class="cm">// y's right subtree becomes x's left</span>
+    y->right = x;           <span class="cm">// x drops down to become y's right child</span>
+    <span class="kw">return</span> y;               <span class="cm">// y is the new local root</span>
+}
+
+<span class="cm">// Left Rotation on node x</span>
+<span class="kw">function</span> <span class="fn">left_rotation</span>(T, x) {
+    <span class="kw">var</span> y = x->right;       <span class="cm">// y is right child</span>
+    x->right = y->left;     <span class="cm">// y's left subtree becomes x's right</span>
+    y->left = x;            <span class="cm">// x drops down to become y's left child</span>
+    <span class="kw">return</span> y;               <span class="cm">// y is the new local root</span>
+}</code></pre>
+    </article>
+
+</div>
+
+</body>
+</html>
