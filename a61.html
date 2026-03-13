@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVL Trees | Ultimate Study Feed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap');
+
+        :root {
+            --bg-color: #f3f4f6;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --card-bg: #ffffff;
+            --accent-blue: #3b82f6;
+            --accent-blue-light: #eff6ff;
+            --bf-good: #10b981;
+            --bf-bad: #ef4444;
+            --node-bg: #ffffff;
+            --node-border: #9ca3af;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Vertical Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-main);
+            letter-spacing: -0.05em;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Feed Cards */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            transition: transform 0.3s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            color: var(--accent-blue);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .rule-box {
+            background-color: var(--accent-blue-light);
+            border-left: 4px solid var(--accent-blue);
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+
+        .rule-box h4 {
+            color: var(--accent-blue);
+            margin-bottom: 0.5rem;
+        }
+
+        ul.styled-list {
+            list-style: none;
+        }
+
+        ul.styled-list li {
+            position: relative;
+            padding-left: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        ul.styled-list li::before {
+            content: '👉';
+            position: absolute;
+            left: 0;
+            top: 2px;
+            font-size: 0.9rem;
+        }
+
+        /* Balance Factor Badges */
+        .bf {
+            display: inline-block;
+            padding: 0.1rem 0.5rem;
+            border-radius: 12px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: white;
+        }
+        .bf.good { background-color: var(--bf-good); }
+        .bf.bad { background-color: var(--bf-bad); }
+
+        hr {
+            border: 0;
+            height: 1px;
+            background: #e5e7eb;
+            margin: 1.5rem 0;
+        }
+
+        /* -----------------------------
+           Tree Visualization Framework
+           Using CSS Grid for perfect layout
+        ------------------------------ */
+        .rotation-showcase {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+            padding: 1.5rem;
+            background: #f9fafb;
+            border-radius: 12px;
+            border: 1px dashed #e5e7eb;
+        }
+
+        .tree-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 40px);
+            grid-template-rows: repeat(3, 40px);
+            gap: 15px;
+            position: relative;
+        }
+
+        .node {
+            width: 40px;
+            height: 40px;
+            background-color: var(--node-bg);
+            border: 2px solid var(--node-border);
+            border-radius: 50%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: 800;
+            font-size: 1.1rem;
+            z-index: 2;
+            position: relative;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .node .bf-label {
+            position: absolute;
+            top: -10px;
+            right: -15px;
+            font-size: 0.7rem;
+            padding: 2px 5px;
+            border-radius: 8px;
+            color: white;
+        }
+
+        /* Grid Placements */
+        .pos-top-center { grid-column: 2; grid-row: 1; }
+        .pos-mid-left { grid-column: 1; grid-row: 2; }
+        .pos-mid-right { grid-column: 3; grid-row: 2; }
+        .pos-top-left { grid-column: 1; grid-row: 1; }
+        .pos-top-right { grid-column: 3; grid-row: 1; }
+        .pos-mid-center { grid-column: 2; grid-row: 2; }
+        .pos-bot-left { grid-column: 1; grid-row: 3; }
+        .pos-bot-center { grid-column: 2; grid-row: 3; }
+        .pos-bot-right { grid-column: 3; grid-row: 3; }
+
+        /* Lines connecting nodes (simulated with absolute lines) */
+        .line {
+            position: absolute;
+            background-color: var(--node-border);
+            z-index: 1;
+        }
+        .line.right-diag { width: 2px; height: 60px; transform: rotate(-45deg); transform-origin: top; }
+        .line.left-diag { width: 2px; height: 60px; transform: rotate(45deg); transform-origin: top; }
+
+        .arrow-step {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--accent-blue);
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        .arrow-step span { font-size: 2rem; line-height: 1; }
+
+        .tree-caption {
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: 10px;
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <header>
+        <h1>AVL Tree Study Notes</h1>
+        <p>Instructor Breakdown: Rules, Formulas, and Rotations</p>
+    </header>
+
+    <!-- Rule 1 -->
+    <article class="card">
+        <h2>📌 Rule 1: It is a Binary Search Tree (BST)</h2>
+        <p>Before you even think about balancing, an AVL tree is fundamentally a BST. You must follow these strict insertion rules:</p>
+        <br>
+        <ul class="styled-list">
+            <li><strong>Left Subtree:</strong> Every element here must be <em>less than</em> the parent node.</li>
+            <li><strong>Right Subtree:</strong> Every element here must be <em>greater than</em> the parent node.</li>
+            <li><strong>No Duplicates:</strong> As the instructor explicitly stated, duplicate elements are not allowed.</li>
+        </ul>
+        <div class="rule-box">
+            <h4>Alphabetical Data Example</h4>
+            <p>The instructor uses variables <strong>x, y, z</strong>. Because of alphabetical order, we assume <strong>x < y < z</strong>. Therefore, 'y' goes to the right of 'x', and 'x' goes to the left of 'y'.</p>
+        </div>
+    </article>
+
+    <!-- Rule 2 -->
+    <article class="card">
+        <h2>⚖️ Rule 2: The Balance Factor</h2>
+        <p>This is what makes an AVL tree self-balancing. For <strong>every single node</strong> in the tree, you must calculate its Balance Factor.</p>
+        
+        <div class="rule-box" style="background-color: #f3f4f6; border-left-color: #10b981;">
+            <h4 style="color: #10b981;">The Formula</h4>
+            <p style="font-family: monospace; font-size: 1.1rem;">Balance Factor = Height(Left Subtree) - Height(Right Subtree)</p>
+        </div>
+
+        <ul class="styled-list">
+            <li><strong>Balanced set:</strong> <span class="bf good">{-1, 0, 1}</span>. If a node results in one of these numbers, it is perfectly fine.</li>
+            <li><strong>Unbalanced set:</strong> <span class="bf bad">-2</span> or <span class="bf bad">2</span>. The moment you see these, you MUST stop and rotate.</li>
+        </ul>
+
+        <div class="rule-box" style="background-color: #fff1f2; border-left-color: #ef4444;">
+            <h4 style="color: #ef4444;">The Golden Rule of Insertion</h4>
+            <p>Insert <strong>one element at a time</strong>. After a single insertion, recalculate the Balance Factor for all nodes. If an imbalance occurs, you must fix that specific subtree immediately before inserting any more data.</p>
+        </div>
+    </article>
+
+    <!-- Case 1: RR -->
+    <article class="card">
+        <h2>🔄 Case 1: Right-Right (RR) Insertion</h2>
+        <p>Happens when you insert into the right subtree of the right child. The tree becomes a straight line slanting to the right.</p>
+        <p><strong>Instructor's Math:</strong> Node 'x' has a left height of 0, and a right height of 2. BF = 0 - 2 = <span class="bf bad">-2</span>.</p>
+        <p><strong>Solution:</strong> Perform a <strong>Left Rotation</strong> on 'x'. Pull 'x' down to the left.</p>
+
+        <div class="rotation-showcase">
+            <!-- Unbalanced RR -->
+            <div>
+                <div class="tree-grid">
+                    <div class="node pos-top-left">x <span class="bf-label bad">-2</span></div>
+                    <div class="line left-diag" style="top: 20px; left: 20px;"></div>
+                    <div class="node pos-mid-center">y <span class="bf-label good">-1</span></div>
+                    <div class="line left-diag" style="top: 60px; left: 60px;"></div>
+                    <div class="node pos-bot-right">z <span class="bf-label good">0</span></div>
+                </div>
+                <div class="tree-caption">Unbalanced RR</div>
+            </div>
+
+            <div class="arrow-step">
+                Left Rotation
+                <span>➔</span>
+            </div>
+
+            <!-- Balanced -->
+            <div>
+                <div class="tree-grid">
+                    <div class="node pos-top-center">y <span class="bf-label good">0</span></div>
+                    <div class="line right-diag" style="top: 20px; left: 60px;"></div>
+                    <div class="line left-diag" style="top: 20px; left: 60px;"></div>
+                    <div class="node pos-mid-left">x <span class="bf-label good">0</span></div>
+                    <div class="node pos-mid-right">z <span class="bf-label good">0</span></div>
+                </div>
+                <div class="tree-caption">Balanced</div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Case 2: LL -->
+    <article class="card">
+        <h2>🔄 Case 2: Left-Left (LL) Insertion</h2>
+        <p>Happens when you insert into the left subtree of the left child. The tree becomes a straight line slanting to the left.</p>
+        <p><strong>Instructor's Math:</strong> Node 'z' has a left height of 2, and a right height of 0. BF = 2 - 0 = <span class="bf bad">2</span>.</p>
+        <p><strong>Solution:</strong> Perform a <strong>Right Rotation</strong> on 'z'. Pull 'z' down to the right.</p>
+
+        <div class="rotation-showcase">
+            <!-- Unbalanced LL -->
+            <div>
+                <div class="tree-grid">
+                    <div class="node pos-top-right">z <span class="bf-label bad">2</span></div>
+                    <div class="line right-diag" style="top: 20px; left: 100px;"></div>
+                    <div class="node pos-mid-center">y <span class="bf-label good">1</span></div>
+                    <div class="line right-diag" style="top: 60px; left: 60px;"></div>
+                    <div class="node pos-bot-left">x <span class="bf-label good">0</span></div>
+                </div>
+                <div class="tree-caption">Unbalanced LL</div>
+            </div>
+
+            <div class="arrow-step">
+                Right Rotation
+                <span>➔</span>
+            </div>
+
+            <!-- Balanced -->
+            <div>
+                <div class="tree-grid">
+                    <div class="node pos-top-center">y <span class="bf-label good">0</span></div>
+                    <div class="line right-diag" style="top: 20px; left: 60px;"></div>
+                    <div class="line left-diag" style="top: 20px; left: 60px;"></div>
+                    <div class="node pos-mid-left">x <span class="bf-label good">0</span></div>
+                    <div class="node pos-mid-right">z <span class="bf-label good">0</span></div>
+                </div>
+                <div class="tree-caption">Balanced</div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Case 3: RL -->
+    <article class="card">
+        <h2>🛠️ Case 3: Right-Left (RL) Insertion</h2>
+        <p>Happens when you insert into the left subtree of the right child. This creates a "kink" in the tree, making it impossible to fix with just one rotation.</p>
+        <p><strong>Solution:</strong> A 2-step process. First, perform a <strong>Right Rotation</strong> on the bottom two nodes to straighten the line. Second, perform a <strong>Left Rotation</strong> on the root.</p>
+
+        <div class="rotation-showcase" style="gap: 2rem;">
+            <!-- Unbalanced RL -->
+            <div>
+                <div class="tree-grid">
+                    <div class="node pos-top-left">x <span class="bf-label bad">-2</span></div>
+                    <div class="line left-diag" style="top: 20px; left: 20px; height: 100px;"></div> <!-- long reach to Z -->
+                    <div class="node pos-bot-center">y <span class="bf-label good">0</span></div>
+                    <div class="line right-diag" style="top: 60px; left: 100px;"></div>
+                    <div class="node pos-mid-right">z <span class="bf-label good">1</span></div>
+                </div>
+                <div class="tree-caption">Unbalanced RL</div>
+            </div>
+
+            <div class="arrow-step">
+                1. Right Rot. (z)
+                <span>➔</span>
+            </div>
+
+            <!-- Intermediate RR -->
+            <div>
+                <div class="tree-grid">
+                    <div class="node pos-top-left">x <span class="bf-label bad">-2</span></div>
+                    <div class="line left-diag" style="top: 20px; left: 20px;"></div>
+                    <div class="node pos-mid-center">y <span class="bf-label good">-1</span></div>
+                    <div class="line left-diag" style="top: 60px; left: 60px;"></div>
+                    <div class="node pos-bot-right">z <span class="bf-label good">0</span></div>
+                </div>
+                <div class="tree-caption">Straightened (RR)</div>
+            </div>
+
+            <div class="arrow-step">
+                2. Left Rot. (x)
+                <span>➔</span>
+            </div>
+
+            <!-- Balanced -->
+            <div>
+                <div class="tree-grid">
+                    <div class="node pos-top-center">y <span class="bf-label good">0</span></div>
+                    <div class="line right-diag" style="top: 20px; left: 60px;"></div>
+                    <div class="line left-diag" style="top: 20px; left: 60px;"></div>
+                    <div class="node pos-mid-left">x <span class="bf-label good">0</span></div>
+                    <div class="node pos-mid-right">z <span class="bf-label good">0</span></div>
+                </div>
+                <div class="tree-caption">Balanced</div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Case 4: LR -->
+    <article class="card">
+        <h2>🛠️ Case 4: Left-Right (LR) Insertion</h2>
+        <p>Happens when you insert into the right subtree of the left child. Another "kink" scenario.</p>
+        <p><strong>Solution:</strong> A 2-step process. First, perform a <strong>Left Rotation</strong> on the bottom two nodes to straighten it. Second, perform a <strong>Right Rotation</strong> on the root.</p>
+
+        <div class="rotation-showcase" style="gap: 2rem;">
+            <!-- Unbalanced LR -->
+            <div>
+                <div class="tree-grid">
+                    <div class="node pos-top-right">z <span class="bf-label bad">2</span></div>
+                    <div class="line right-diag" style="top: 20px; left: 100px; height: 100px;"></div>
+                    <div class="node pos-mid-left">x <span class="bf-label good">-1</span></div>
+                    <div class="line left-diag" style="top: 60px; left: 20px;"></div>
+                    <div class="node pos-bot-center">y <span class="bf-label good">0</span></div>
+                </div>
+                <div class="tree-caption">Unbalanced LR</div>
+            </div>
+
+            <div class="arrow-step">
+                1. Left Rot. (x)
+                <span>➔</span>
+            </div>
+
+            <!-- Intermediate LL -->
+            <div>
+                <div class="tree-grid">
+                    <div class="node pos-top-right">z <span class="bf-label bad">2</span></div>
+                    <div class="line right-diag" style="top: 20px; left: 100px;"></div>
+                    <div class="node pos-mid-center">y <span class="bf-label good">1</span></div>
+                    <div class="line right-diag" style="top: 60px; left: 60px;"></div>
+                    <div class="node pos-bot-left">x <span class="bf-label good">0</span></div>
+                </div>
+                <div class="tree-caption">Straightened (LL)</div>
+            </div>
+
+            <div class="arrow-step">
+                2. Right Rot. (z)
+                <span>➔</span>
+            </div>
+
+            <!-- Balanced -->
+            <div>
+                <div class="tree-grid">
+                    <div class="node pos-top-center">y <span class="bf-label good">0</span></div>
+                    <div class="line right-diag" style="top: 20px; left: 60px;"></div>
+                    <div class="line left-diag" style="top: 20px; left: 60px;"></div>
+                    <div class="node pos-mid-left">x <span class="bf-label good">0</span></div>
+                    <div class="node pos-mid-right">z <span class="bf-label good">0</span></div>
+                </div>
+                <div class="tree-caption">Balanced</div>
+            </div>
+        </div>
+    </article>
+
+    <!-- Instructor Hack -->
+    <article class="card" style="background-color: var(--text-main); color: white;">
+        <h2 style="color: white;">🤫 The Instructor's Secret Exam Hack</h2>
+        <p style="color: #d1d5db;">Did you notice a pattern in all 4 cases above? If you ever get confused during an exam trying to rotate nodes in your head, remember this golden rule:</p>
+        <div style="background: rgba(255,255,255,0.1); padding: 1.5rem; border-radius: 8px; margin-top: 1rem; text-align: center;">
+            <h3 style="color: #60a5fa; margin-bottom: 0.5rem;">The Median Value ALWAYS Becomes the New Root.</h3>
+            <p>Out of (x, y, z), 'y' is the middle value alphabetically. Look at every single final, balanced tree above. <strong>'y' is always at the top</strong>, 'x' is on the left, and 'z' is on the right. Just find the median of the 3 nodes causing the imbalance, pop it to the top, and drop the other two down to the left and right!</p>
+        </div>
+    </article>
+
+</div>
+
+</body>
+</html>
