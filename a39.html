@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Expression Trees - Study Notes</title>
+    <!-- Import Mermaid.js for rendering tree diagrams -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --accent: #0056b3;
+            --accent-light: #e6f0ff;
+            --border-color: #e1e4e8;
+            --code-bg: #f6f8fa;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        /* Feed Layout Container */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px; /* Space between topics */
+            padding-bottom: 60px;
+        }
+
+        /* Individual Topic Cards */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .header-card {
+            background: linear-gradient(135deg, #0056b3, #007bff);
+            color: white;
+            text-align: center;
+        }
+
+        .header-card h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        .header-card p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        h2 {
+            color: var(--accent);
+            margin-bottom: 15px;
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--accent-light);
+            padding-bottom: 5px;
+        }
+
+        h3 {
+            margin-top: 20px;
+            margin-bottom: 10px;
+            color: #444;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul, ol {
+            margin-bottom: 15px;
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Inline Code/Math styling */
+        code, .math {
+            background-color: var(--code-bg);
+            color: #d73a49;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+            font-size: 0.95em;
+        }
+
+        .equation-block {
+            background-color: var(--code-bg);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-family: monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin: 20px 0;
+            border-left: 4px solid var(--accent);
+        }
+
+        /* Precedence Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background-color: var(--card-bg);
+        }
+
+        th, td {
+            border: 1px solid var(--border-color);
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--code-bg);
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        /* Visualization container */
+        .viz-container {
+            background-color: white;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+        }
+
+        .note-box {
+            background-color: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+
+        .highlight {
+            font-weight: bold;
+            color: var(--accent);
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+
+    <!-- Header -->
+    <div class="card header-card">
+        <h1>Binary Expression Trees</h1>
+        <p>Complete Video Breakdown & Step-by-Step Visualizations</p>
+    </div>
+
+    <!-- Section 1: Introduction -->
+    <div class="card">
+        <h2>1. What is an Expression Tree?</h2>
+        <p>An expression tree is a specific kind of binary tree used to represent mathematical or logical expressions. These expressions consist of <strong>operands</strong> (variables or constants) and <strong>operators</strong>.</p>
+        <div class="note-box">
+            <strong>The Golden Rules of the Tree Structure:</strong>
+            <ul>
+                <li><strong>Leaves (External Nodes):</strong> Must always contain <span class="highlight">Operands</span> (e.g., <code>a, b, c, x, y</code>).</li>
+                <li><strong>Internal Nodes:</strong> Must always contain <span class="highlight">Operators</span> (e.g., <code>+, -, *, /</code>).</li>
+            </ul>
+        </div>
+        <p>While a common method is to convert an infix expression to postfix first and use a stack, this lecture focuses on a <strong>direct method</strong>: building the tree directly from an Infix expression without brackets.</p>
+    </div>
+
+    <!-- Section 2: Precedence & Associativity -->
+    <div class="card">
+        <h2>2. Precedence and Associativity Rules</h2>
+        <p>To build the tree correctly, you must strictly follow the rules of Operator Precedence and Associativity. The instructor writes this exact table on the whiteboard:</p>
+        <table>
+            <thead>
+                <tr>
+                    <th>Operator</th>
+                    <th>Operation</th>
+                    <th>Precedence</th>
+                    <th>Associativity</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><code>^</code></td>
+                    <td>Power / Exponent</td>
+                    <td>Highest</td>
+                    <td>Right to Left (R-L)</td>
+                </tr>
+                <tr>
+                    <td><code>*</code> , <code>/</code></td>
+                    <td>Multiply / Divide</td>
+                    <td>Medium</td>
+                    <td>Left to Right (L-R)</td>
+                </tr>
+                <tr>
+                    <td><code>+</code> , <code>-</code></td>
+                    <td>Add / Subtract</td>
+                    <td>Lowest</td>
+                    <td>Left to Right (L-R)</td>
+                </tr>
+            </tbody>
+        </table>
+        <div class="note-box">
+            <strong>Crucial Concept: Finding the Root</strong><br>
+            How do you know which operator forms the root node? A tree is evaluated from the bottom (leaves) to the top (root). Therefore, <strong>the operator that is evaluated LAST in the mathematical equation becomes the root of the tree.</strong> Look for the operator with the <em>least precedence</em>.
+        </div>
+    </div>
+
+    <!-- Section 3: Step-by-Step Construction -->
+    <div class="card">
+        <h2>3. Step-by-Step Tree Construction</h2>
+        <p>We are going to construct a binary expression tree from the following Infix expression:</p>
+        <div class="equation-block">
+            a * b / c + e / f * g + k - x * y
+        </div>
+
+        <h3>Step 1: Find the Main Root</h3>
+        <p>Scan the equation for the lowest precedence operators. We find <code>+</code>, <code>+</code>, and <code>-</code>. Because associativity for these is Left-to-Right, the very last operation to be evaluated is the <code>-</code> at the far right. Therefore, <code>-</code> becomes our main root.</p>
+        <div class="viz-container">
+            <pre class="mermaid">
+            graph TD
+                Root(( - ))
+                Left["a * b / c + e / f * g + k"]
+                Right["x * y"]
+                Root --> Left
+                Root --> Right
+            </pre>
+        </div>
+
+        <h3>Step 2: Build the Right Subtree</h3>
+        <p>Looking at the right side <code>x * y</code>, there is only one operator: <code>*</code>. That becomes the node, with operands <code>x</code> and <code>y</code> as its leaves.</p>
+        
+        <h3>Step 3: Break Down the Left Subtree</h3>
+        <p>Now look at <code>a * b / c + e / f * g + k</code>. The lowest precedence operators are the two <code>+</code> signs. Because of Left-to-Right associativity, the <strong>second</strong> <code>+</code> is evaluated last. It becomes the root of this sub-tree.</p>
+        <div class="viz-container">
+            <pre class="mermaid">
+            graph TD
+                Root(( - ))
+                P1(( + ))
+                M1(( * ))
+                Left2["a * b / c + e / f * g"]
+                K(( k ))
+                X(( x ))
+                Y(( y ))
+                
+                Root --> P1
+                Root --> M1
+                P1 --> Left2
+                P1 --> K
+                M1 --> X
+                M1 --> Y
+            </pre>
+        </div>
+
+        <h3>Step 4: Continuing Left</h3>
+        <p>We are left with <code>a * b / c + e / f * g</code>. There is only one low-precedence operator here: the <code>+</code>. This splits our remaining equation down the middle.</p>
+        <div class="viz-container">
+            <pre class="mermaid">
+            graph TD
+                Root(( - ))
+                P1(( + ))
+                M1(( * ))
+                P2(( + ))
+                K(( k ))
+                Left3["a * b / c"]
+                Right3["e / f * g"]
+                X(( x ))
+                Y(( y ))
+                
+                Root --> P1
+                Root --> M1
+                P1 --> P2
+                P1 --> K
+                P2 --> Left3
+                P2 --> Right3
+                M1 --> X
+                M1 --> Y
+            </pre>
+        </div>
+
+        <h3>Step 5: Solving <code>a * b / c</code></h3>
+        <p>Here, <code>*</code> and <code>/</code> have equal precedence. Associativity is Left-to-Right. Therefore, the division (<code>/</code>) happens last. <code>/</code> is the parent node, <code>c</code> is the right leaf, and <code>a * b</code> forms a subtree on the left.</p>
+
+        <h3>Step 6: Solving <code>e / f * g</code></h3>
+        <p>Similarly, <code>/</code> and <code>*</code> tie. Left-to-Right associativity means the multiplication (<code>*</code>) happens last. <code>*</code> is the parent node, <code>g</code> is the right leaf, and <code>e / f</code> forms a subtree on the left.</p>
+        
+        <h3>The Final Tree Visualization</h3>
+        <p>Here is the completed Binary Expression Tree, exactly as drawn on the whiteboard by the instructor.</p>
+        <div class="viz-container">
+            <pre class="mermaid">
+            graph TD
+                classDef operator fill:#e6f0ff,stroke:#0056b3,stroke-width:2px;
+                classDef operand fill:#fff,stroke:#333,stroke-width:1px;
+
+                Root(( - )):::operator
+                P1(( + )):::operator
+                M1(( * )):::operator
+                P2(( + )):::operator
+                K(( k )):::operand
+                X(( x )):::operand
+                Y(( y )):::operand
+                D1(( / )):::operator
+                M2(( * )):::operator
+                M3(( * )):::operator
+                C(( c )):::operand
+                D2(( / )):::operator
+                G(( g )):::operand
+                A(( a )):::operand
+                B(( b )):::operand
+                E(( e )):::operand
+                F(( f )):::operand
+
+                Root --> P1
+                Root --> M1
+                P1 --> P2
+                P1 --> K
+                M1 --> X
+                M1 --> Y
+                P2 --> D1
+                P2 --> M2
+                D1 --> M3
+                D1 --> C
+                M3 --> A
+                M3 --> B
+                M2 --> D2
+                M2 --> G
+                D2 --> E
+                D2 --> F
+            </pre>
+        </div>
+    </div>
+
+    <!-- Section 4: Prefix and Postfix -->
+    <div class="card">
+        <h2>4. Deriving Prefix and Postfix Expressions</h2>
+        <p>Once you have constructed the binary expression tree, you don't need a complex algorithm to find the Prefix or Postfix notations. You simply perform basic tree traversals.</p>
+        
+        <ul>
+            <li><strong>Inorder Traversal (Left, Root, Right):</strong> Gives you the original Infix expression (use this to check your work!).</li>
+            <li><strong>Preorder Traversal (Root, Left, Right):</strong> Gives you the <strong>Prefix</strong> expression. (Root comes <em>Pre</em>/First)</li>
+            <li><strong>Postorder Traversal (Left, Right, Root):</strong> Gives you the <strong>Postfix</strong> expression. (Root comes <em>Post</em>/Last)</li>
+        </ul>
+
+        <h3>The Final Results:</h3>
+        <p>By tracing the completed tree above, the instructor derives the final answers:</p>
+        
+        <p><strong>Prefix Expression (Preorder):</strong></p>
+        <div class="equation-block" style="border-color: #28a745;">
+            - + + / * a b c * / e f g k * x y
+        </div>
+
+        <p><strong>Postfix Expression (Postorder):</strong></p>
+        <div class="equation-block" style="border-color: #ffc107;">
+            a b * c / e f / g * + k + x y * -
+        </div>
+
+        <div class="note-box">
+            <strong>Conclusion:</strong> We successfully built an expression tree directly from an un-bracketed infix expression and used it to find the prefix and postfix notations. In the next lecture, the instructor will cover the alternative method: converting to postfix first and using a Stack to build the tree.
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
