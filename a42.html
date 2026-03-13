@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queue Implementation Using Arrays</title>
+    <style>
+        /* --- CSS VARIABLES & RESET --- */
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --accent: #ec4899;
+            --code-bg: #0f172a;
+            --card-bg: #ffffff;
+            --border: #e2e8f0;
+            --front-color: #10b981;
+            --rear-color: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* --- VERTICAL FEED LAYOUT --- */
+        #feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+        }
+
+        .feed-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .feed-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        h2 {
+            font-size: 1.75rem;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin: 1.5rem 0 0.5rem 0;
+            color: var(--accent);
+        }
+
+        p {
+            margin-bottom: 1rem;
+            font-size: 1.05rem;
+        }
+
+        ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight {
+            background: var(--primary-light);
+            color: var(--primary);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* --- CODE BLOCKS --- */
+        pre {
+            background: var(--code-bg);
+            color: #f8f8f2;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1.5rem 0;
+            font-family: "Fira Code", Consolas, Monaco, monospace;
+            font-size: 0.95rem;
+        }
+
+        code .keyword { color: #ff79c6; }
+        code .function { color: #50fa7b; }
+        code .comment { color: #6272a4; }
+        code .string { color: #f1fa8c; }
+        code .number { color: #bd93f9; }
+
+        /* --- VISUALIZATIONS --- */
+        .visual-container {
+            margin: 2rem 0;
+            padding: 2rem;
+            background: var(--bg-color);
+            border-radius: 8px;
+            border: 2px dashed var(--border);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .array-box {
+            display: flex;
+            gap: 4px;
+            margin-bottom: 2rem;
+        }
+
+        .array-cell {
+            width: 60px;
+            height: 60px;
+            background: white;
+            border: 2px solid var(--text-main);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .array-cell.garbage {
+            color: var(--border);
+            background: #f1f5f9;
+            text-decoration: line-through;
+        }
+
+        .index-label {
+            position: absolute;
+            top: -25px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-weight: normal;
+        }
+
+        .pointer-row {
+            display: flex;
+            width: 100%;
+            max-width: 320px;
+            position: relative;
+            height: 40px;
+        }
+
+        .pointer {
+            position: absolute;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            font-weight: bold;
+            font-size: 0.9rem;
+            transition: left 0.5s ease-in-out;
+        }
+
+        .pointer::before {
+            content: '↑';
+            font-size: 1.5rem;
+            margin-bottom: -5px;
+        }
+
+        .ptr-front { color: var(--front-color); }
+        .ptr-rear { color: var(--rear-color); margin-top: 20px;} /* offset rear to prevent overlap */
+
+        .outside-ptr {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            font-family: monospace;
+            background: #e2e8f0;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <main id="feed-container">
+        
+        <!-- Header -->
+        <header style="text-align: center; margin-bottom: 1rem;">
+            <h1>Implementation of Queue Using Arrays</h1>
+            <p style="color: var(--text-muted); font-size: 1.2rem;">Complete Video Breakdown & Study Notes</p>
+        </header>
+
+        <!-- Card 1: Fundamentals -->
+        <section class="feed-card">
+            <h2>1. Queue Fundamentals</h2>
+            <p>A Queue is a linear data structure that follows a specific logical rule:</p>
+            <ul>
+                <li><strong>FIFO Rule:</strong> First In, First Out. The first element added is the first one to be removed.</li>
+                <li><strong>Insertion (<span class="highlight">Enqueue</span>):</strong> Happens exclusively at the <strong>Rear</strong> end.</li>
+                <li><strong>Deletion (<span class="highlight">Dequeue</span>):</strong> Happens exclusively at the <strong>Front</strong> end.</li>
+                <li><strong>Time Complexity:</strong> Both Enqueue and Dequeue operations must execute in <strong>O(1)</strong> time.</li>
+            </ul>
+        </section>
+
+        <!-- Card 2: Global Setup -->
+        <section class="feed-card">
+            <h2>2. Global Setup & Memory Allocation</h2>
+            <p>We use <strong>Static Memory Allocation</strong> via an array. To ensure all functions can access the queue without constantly passing variables, we declare the array and our pointers globally.</p>
+            
+            <pre><code><span class="keyword">#define</span> N <span class="number">5</span>          <span class="comment">// Macro: 'N' is replaced by 5 everywhere</span>
+
+<span class="keyword">int</span> queue[N];        <span class="comment">// Declare array of size 5</span>
+<span class="keyword">int</span> front = <span class="number">-1</span>;      <span class="comment">// Front pointer initialized to -1 (empty)</span>
+<span class="keyword">int</span> rear = <span class="number">-1</span>;       <span class="comment">// Rear pointer initialized to -1 (empty)</span></code></pre>
+            
+            <div class="visual-container">
+                <p><strong>Initial State (Empty Queue)</strong></p>
+                <br>
+                <div class="array-box">
+                    <div class="array-cell"><span class="index-label">0</span></div>
+                    <div class="array-cell"><span class="index-label">1</span></div>
+                    <div class="array-cell"><span class="index-label">2</span></div>
+                    <div class="array-cell"><span class="index-label">3</span></div>
+                    <div class="array-cell"><span class="index-label">4</span></div>
+                </div>
+                <div class="outside-ptr">
+                    <span>Front = -1</span> | <span>Rear = -1</span>
+                </div>
+                <p style="font-size: 0.9rem; color: var(--text-muted);">Pointers rest outside the array, indicating zero elements.</p>
+            </div>
+        </section>
+
+        <!-- Card 3: Enqueue -->
+        <section class="feed-card">
+            <h2>3. Enqueue Operation (Insertion)</h2>
+            <p>Inserting an element <code>x</code> happens at the <code>rear</code>. We must check 3 exact conditions:</p>
+            <ul>
+                <li><strong>Condition 1 (Overflow):</strong> <code>rear == N - 1</code>. If rear has reached the end of the array, we cannot insert.</li>
+                <li><strong>Condition 2 (First Element):</strong> <code>front == -1 && rear == -1</code>. If the queue is totally empty, we must move <strong>both</strong> pointers to index <code>0</code> before inserting.</li>
+                <li><strong>Condition 3 (Normal):</strong> Simply increment <code>rear++</code> and place the new value there.</li>
+            </ul>
+
+            <pre><code><span class="keyword">void</span> <span class="function">enqueue</span>(<span class="keyword">int</span> x) {
+    <span class="keyword">if</span> (rear == N - <span class="number">1</span>) {
+        <span class="function">printf</span>(<span class="string">"Overflow"</span>);
+    } 
+    <span class="keyword">else if</span> (front == <span class="number">-1</span> && rear == <span class="number">-1</span>) {
+        front = rear = <span class="number">0</span>;
+        queue[rear] = x;
+    } 
+    <span class="keyword">else</span> {
+        rear++;
+        queue[rear] = x;
+    }
+}</code></pre>
+
+            <div class="visual-container">
+                <p><strong>State after:</strong> <code>enqueue(2)</code>, <code>enqueue(5)</code>, <code>enqueue(-1)</code></p>
+                <br>
+                <div class="array-box">
+                    <div class="array-cell"><span class="index-label">0</span>2</div>
+                    <div class="array-cell"><span class="index-label">1</span>5</div>
+                    <div class="array-cell"><span class="index-label">2</span>-1</div>
+                    <div class="array-cell"><span class="index-label">3</span></div>
+                    <div class="array-cell"><span class="index-label">4</span></div>
+                </div>
+                <div class="pointer-row">
+                    <div class="pointer ptr-front" style="left: 5%;">Front</div>
+                    <div class="pointer ptr-rear" style="left: 45%;">Rear</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Card 4: Dequeue -->
+        <section class="feed-card">
+            <h2>4. Dequeue Operation (Deletion)</h2>
+            <p>Removing an element happens at the <code>front</code>. We must check 3 exact conditions:</p>
+            <ul>
+                <li><strong>Condition 1 (Underflow):</strong> <code>front == -1 && rear == -1</code>. The queue is empty, nothing to delete.</li>
+                <li><strong>Condition 2 (Only 1 element left):</strong> <code>front == rear</code>. Deleting this empties the queue entirely. We must reset both pointers to <code>-1</code>.</li>
+                <li><strong>Condition 3 (Normal):</strong> Print the value, then increment <code>front++</code>. (The old data remains in memory as "garbage" but the queue logically ignores it).</li>
+            </ul>
+
+            <pre><code><span class="keyword">void</span> <span class="function">dequeue</span>() {
+    <span class="keyword">if</span> (front == <span class="number">-1</span> && rear == <span class="number">-1</span>) {
+        <span class="function">printf</span>(<span class="string">"Underflow"</span>);
+    } 
+    <span class="keyword">else if</span> (front == rear) {
+        <span class="function">printf</span>(<span class="string">"Dequeued: %d"</span>, queue[front]);
+        front = rear = <span class="number">-1</span>;
+    } 
+    <span class="keyword">else</span> {
+        <span class="function">printf</span>(<span class="string">"Dequeued: %d"</span>, queue[front]);
+        front++;
+    }
+}</code></pre>
+
+            <div class="visual-container">
+                <p><strong>State after:</strong> <code>dequeue()</code> (Removes the '2')</p>
+                <br>
+                <div class="array-box">
+                    <div class="array-cell garbage"><span class="index-label">0</span>2</div>
+                    <div class="array-cell"><span class="index-label">1</span>5</div>
+                    <div class="array-cell"><span class="index-label">2</span>-1</div>
+                    <div class="array-cell"><span class="index-label">3</span></div>
+                    <div class="array-cell"><span class="index-label">4</span></div>
+                </div>
+                <div class="pointer-row">
+                    <div class="pointer ptr-front" style="left: 25%;">Front</div>
+                    <div class="pointer ptr-rear" style="left: 45%;">Rear</div>
+                </div>
+                <p style="font-size: 0.9rem; color: var(--text-muted); margin-top: 2rem; text-align: center;">Notice how '2' becomes crossed out (garbage). The Front pointer moves to index 1.</p>
+            </div>
+        </section>
+
+        <!-- Card 5: Display & Peek -->
+        <section class="feed-card">
+            <h2>5. Auxiliary Functions (Display & Peek)</h2>
+            
+            <h3>Display()</h3>
+            <p>We traverse the array starting from the <code>front</code> index up to the <code>rear</code> index.</p>
+            <pre><code><span class="keyword">void</span> <span class="function">display</span>() {
+    <span class="keyword">if</span> (front == <span class="number">-1</span> && rear == <span class="number">-1</span>) {
+        <span class="function">printf</span>(<span class="string">"Queue is empty"</span>);
+    } <span class="keyword">else</span> {
+        <span class="keyword">for</span>(<span class="keyword">int</span> i = front; i < rear + <span class="number">1</span>; i++) {
+            <span class="function">printf</span>(<span class="string">"%d "</span>, queue[i]);
+        }
+    }
+}</code></pre>
+
+            <h3>Peek()</h3>
+            <p>Returns the value at the front of the queue without removing it.</p>
+            <pre><code><span class="keyword">void</span> <span class="function">peek</span>() {
+    <span class="keyword">if</span> (front == <span class="number">-1</span> && rear == <span class="number">-1</span>) {
+        <span class="function">printf</span>(<span class="string">"Queue is empty"</span>);
+    } <span class="keyword">else</span> {
+        <span class="function">printf</span>(<span class="string">"%d"</span>, queue[front]);
+    }
+}</code></pre>
+        </section>
+
+        <!-- Card 6: The Drawback -->
+        <section class="feed-card" style="border-left: 6px solid #ef4444;">
+            <h2>6. The Major Drawback of Linear Arrays</h2>
+            <p>At the end of the lecture, a massive flaw is revealed. Imagine a scenario where you enqueue elements until the array is full, and then dequeue several elements.</p>
+            
+            <div class="visual-container">
+                <p><strong>The Wasted Space Problem</strong></p>
+                <br>
+                <div class="array-box">
+                    <div class="array-cell garbage"><span class="index-label">0</span>2</div>
+                    <div class="array-cell garbage"><span class="index-label">1</span>5</div>
+                    <div class="array-cell garbage"><span class="index-label">2</span>-1</div>
+                    <div class="array-cell"><span class="index-label">3</span>0</div>
+                    <div class="array-cell"><span class="index-label">4</span>7</div>
+                </div>
+                <div class="pointer-row">
+                    <div class="pointer ptr-front" style="left: 65%;">Front</div>
+                    <div class="pointer ptr-rear" style="left: 85%;">Rear</div>
+                </div>
+                <p style="font-size: 0.9rem; color: #ef4444; margin-top: 2rem; font-weight: bold; text-align: center;">
+                    If we try to enqueue now, the code checks: <code>if (rear == N - 1)</code>.<br> Since rear is at 4, it prints "Overflow"!
+                </p>
+            </div>
+            
+            <p>Even though indices 0, 1, and 2 are perfectly empty and available, we cannot insert data because the <code>rear</code> pointer is mathematically stuck at the end of the array. This is a severe waste of memory.</p>
+
+            <h3>The Solution Introduced: Circular Queue</h3>
+            <p>To fix this, we stop using <code>rear++</code>. Instead, we use the modulo operator formula:</p>
+            <p style="background: var(--primary-light); padding: 1rem; border-radius: 8px; font-family: monospace; font-size: 1.2rem; text-align: center; color: var(--primary); font-weight: bold;">
+                rear = (rear + 1) % N
+            </p>
+            <p>This formula forces the pointer to "wrap around" back to index 0 if it hits the end of the array, successfully utilizing the wasted spaces. This leads into the topic of Circular Queues!</p>
+        </section>
+
+    </main>
+
+    <!-- Scroll Animation Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const cards = document.querySelectorAll(".feed-card");
+
+            const observerOptions = {
+                root: null,
+                rootMargin: "0px",
+                threshold: 0.15
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add("visible");
+                        observer.unobserve(entry.target); // Animate only once
+                    }
+                });
+            }, observerOptions);
+
+            cards.forEach(card => {
+                observer.observe(card);
+            });
+            
+            // Trigger first card immediately
+            if(cards.length > 0) {
+                cards[0].classList.add("visible");
+            }
+        });
+    </script>
+</body>
+</html>
