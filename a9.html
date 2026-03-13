@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Array vs Linked List | Vertical Study Feed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&display=swap');
+
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --primary-blue: #3b82f6;
+            --primary-blue-light: #eff6ff;
+            --primary-green: #10b981;
+            --primary-green-light: #ecfdf5;
+            --warning-red: #ef4444;
+            --warning-red-light: #fef2f2;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Feed Layout Container */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #111827;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-top: 5px solid var(--text-muted);
+        }
+
+        .card.array-card { border-top-color: var(--primary-blue); }
+        .card.ll-card { border-top-color: var(--primary-green); }
+
+        .card h2 {
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 0.5rem;
+        }
+
+        .card h3 {
+            font-size: 1.25rem;
+            margin-top: 1.5rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Typography & Utilities */
+        p { margin-bottom: 1rem; }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+        strong { font-weight: 600; color: #111827; }
+        .highlight { background-color: #fef08a; padding: 0.1rem 0.3rem; border-radius: 4px; }
+        
+        .code-block {
+            font-family: 'Fira Code', monospace;
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        /* --- VISUALIZATIONS --- */
+        .visual-wrapper {
+            padding: 2rem 1rem;
+            background-color: #f8fafc;
+            border: 1px dashed var(--border-color);
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        /* Array Visualization */
+        .array-diagram { display: flex; align-items: flex-end;}
+        .array-cell {
+            width: 60px;
+            height: 60px;
+            border: 2px solid var(--primary-blue);
+            border-right: none;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.5rem;
+            font-weight: 700;
+            background-color: var(--primary-blue-light);
+            position: relative;
+        }
+        .array-cell:last-child { border-right: 2px solid var(--primary-blue); }
+        .array-cell.empty { background-color: var(--warning-red-light); border-color: var(--warning-red); color: var(--warning-red);}
+        .array-cell.empty:last-child { border-right: 2px solid var(--warning-red); }
+        
+        .cell-index {
+            position: absolute;
+            top: -25px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: 'Fira Code', monospace;
+        }
+        .cell-address {
+            position: absolute;
+            bottom: -25px;
+            font-size: 0.75rem;
+            color: var(--primary-blue);
+            font-family: 'Fira Code', monospace;
+        }
+
+        /* Linked List Visualization */
+        .ll-diagram { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap;}
+        .ll-node-wrapper { display: flex; flex-direction: column; align-items: center; gap: 0.5rem;}
+        .head-pointer {
+            background-color: #111827;
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+        }
+        .ll-node {
+            display: flex;
+            border: 2px solid var(--primary-green);
+            border-radius: 6px;
+            overflow: hidden;
+            background-color: var(--primary-green-light);
+        }
+        .ll-data {
+            padding: 0.75rem 1rem;
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-right: 2px solid var(--primary-green);
+        }
+        .ll-next {
+            padding: 0.75rem 0.5rem;
+            font-size: 0.8rem;
+            font-family: 'Fira Code', monospace;
+            display: flex;
+            align-items: center;
+            color: var(--text-muted);
+        }
+        .ll-address-label { font-size: 0.75rem; color: var(--primary-green); font-family: 'Fira Code', monospace;}
+        .arrow { font-size: 1.5rem; color: var(--text-muted); font-weight: bold;}
+
+        /* Grids for Comparison */
+        .comparison-grid {
+            display: grid;
+            grid-template-columns: 1fr 1px 1fr;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        .grid-divider { background-color: var(--border-color); }
+        
+        @media (max-width: 600px) {
+            .comparison-grid { grid-template-columns: 1fr; gap: 1rem; }
+            .grid-divider { display: none; }
+        }
+
+        /* Summary Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1.5rem;
+            font-size: 0.95rem;
+        }
+        th, td {
+            padding: 1rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+        th { background-color: #f8fafc; font-weight: 600; color: #111827;}
+        tr:hover { background-color: #f1f5f9; }
+
+        /* Badges */
+        .badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .badge.blue { background-color: #dbeafe; color: #1e40af; }
+        .badge.green { background-color: #d1fae5; color: #065f46; }
+        .badge.red { background-color: #fee2e2; color: #991b1b; }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+
+    <header>
+        <h1>Array vs. Linked List</h1>
+        <p>Comprehensive Study Notes & Visualizations from the Lecture</p>
+    </header>
+
+    <!-- INTRO -->
+    <div class="card">
+        <h2>🧐 Introduction: Which is Better?</h2>
+        <p>The instructor emphasizes a fundamental rule of data structures right at the start: <strong>We cannot universally say that an Array is better or a Linked List is better.</strong></p>
+        <p>The "best" choice depends entirely on your specific requirements:</p>
+        <ul>
+            <li>The <strong>size</strong> of the data you are dealing with.</li>
+            <li>Which <strong>operations</strong> you need to perform most frequently (e.g., Are you mostly reading data? Or are you constantly inserting/deleting data?).</li>
+        </ul>
+        <p>To decide, we must compare them across several different core factors.</p>
+    </div>
+
+    <!-- FACTOR 1 -->
+    <div class="card">
+        <h2>⏱️ Factor 1: Cost of Accessing an Element</h2>
+        
+        <div class="comparison-grid">
+            <!-- Array Side -->
+            <div>
+                <h3 style="color: var(--primary-blue)">🟦 Arrays</h3>
+                <p>Arrays allow for <strong>Random Access</strong> (or Direct Access). Because elements are stored in contiguous (consecutive) memory locations, the compiler can instantly calculate the exact address of any element.</p>
+                
+                <div class="visual-wrapper">
+                    <div class="array-diagram">
+                        <div class="array-cell"><span class="cell-index">0</span><span class="value">6</span><span class="cell-address">100</span></div>
+                        <div class="array-cell"><span class="cell-index">1</span><span class="value">7</span><span class="cell-address">104</span></div>
+                        <div class="array-cell"><span class="cell-index">2</span><span class="value">0</span><span class="cell-address">108</span></div>
+                        <div class="array-cell"><span class="cell-index">3</span><span class="value">1</span><span class="cell-address">112</span></div>
+                    </div>
+                </div>
+
+                <p><strong>The Math:</strong> Assuming base address = 100, and integer size = 4 bytes. To access index 2 (<code>a[2]</code>):</p>
+                <div class="code-block">
+                    Formula = Base_Address + (Index * Size)<br>
+                    a[2] = 100 + (2 * 4)<br>
+                    a[2] = 108
+                </div>
+                <p><strong>Time Complexity: <span class="badge blue">O(1)</span></strong></p>
+            </div>
+
+            <div class="grid-divider"></div>
+
+            <!-- Linked List Side -->
+            <div>
+                <h3 style="color: var(--primary-green)">🟩 Linked Lists</h3>
+                <p>Linked Lists only allow <strong>Sequential Access</strong>. Nodes are stored in random memory locations and linked via pointers. You cannot jump straight to an element.</p>
+                
+                <div class="visual-wrapper">
+                    <div class="ll-diagram">
+                        <div class="head-pointer">Head: 1000</div>
+                        <div class="arrow">→</div>
+                        <div class="ll-node-wrapper">
+                            <div class="ll-node"><div class="ll-data">6</div><div class="ll-next">2000</div></div>
+                            <span class="ll-address-label">1000</span>
+                        </div>
+                        <div class="arrow">→</div>
+                        <div class="ll-node-wrapper">
+                            <div class="ll-node"><div class="ll-data">7</div><div class="ll-next">Null</div></div>
+                            <span class="ll-address-label">2000</span>
+                        </div>
+                    </div>
+                </div>
+
+                <p>To access the 10th node, you must start at the <code>head</code> and traverse 9 preceding nodes. You are reliant on following the breadcrumb trail of pointers.</p>
+                <p><strong>Time Complexity: <span class="badge green">O(n)</span></strong></p>
+            </div>
+        </div>
+        <p style="text-align: center; margin-top: 1.5rem; font-size: 1.1rem;">
+            <strong>🏆 Winner for Accessing Data: <span style="color: var(--primary-blue)">Array</span></strong> 
+            <br><span style="font-size:0.9rem; color: var(--text-muted)">(Much faster if you read data frequently)</span>
+        </p>
+    </div>
+
+    <!-- FACTOR 2 -->
+    <div class="card">
+        <h2>💾 Factor 2: Memory Requirement vs. Utilization</h2>
+        <p><em>Note: The instructor emphasizes that Requirement and Utilization are two different concepts.</em></p>
+
+        <h3 style="color: var(--primary-blue)">🟦 Arrays: Fixed Size</h3>
+        <p>You must declare the maximum limit of the array at compile time. This leads to <strong>poor memory utilization</strong> if not filled.</p>
+        <div class="visual-wrapper">
+            <div class="array-diagram">
+                <div class="array-cell"><span class="cell-index">0</span>6</div>
+                <div class="array-cell"><span class="cell-index">1</span>7</div>
+                <div class="array-cell"><span class="cell-index">2</span>1</div>
+                <div class="array-cell empty"><span class="cell-index">3</span>-</div>
+                <div class="array-cell empty"><span class="cell-index">4</span>-</div>
+                <div class="array-cell empty"><span class="cell-index">5</span>-</div>
+                <div class="array-cell empty"><span class="cell-index">6</span>-</div>
+            </div>
+        </div>
+        <ul>
+            <li><strong>Utilization (Poor):</strong> In the visual above, size is 7, but only 3 elements are stored. <code>7 slots * 4 bytes = 28 bytes</code> allocated. 16 bytes are completely wasted.</li>
+            <li><strong>Requirement (Low):</strong> Despite wasted space, arrays only store data. No extra space is needed for pointers.</li>
+        </ul>
+
+        <h3 style="color: var(--primary-green)">🟩 Linked Lists: Dynamic Size</h3>
+        <p>Nodes are created at runtime exactly when needed. This leads to <strong>excellent memory utilization</strong> (no empty slots).</p>
+        <ul>
+            <li><strong>Utilization (Excellent):</strong> If you need 3 elements, you create exactly 3 nodes. 0 wasted space.</li>
+            <li><strong>Requirement (High):</strong> Every node requires space for Data AND a Pointer. 
+            <br>Example: <code>Integer (4 bytes) + Pointer (4 bytes) = 8 bytes per node</code>. 
+            <br>For 3 elements: <code>3 * 8 = 24 bytes</code>.</li>
+        </ul>
+
+        <div class="code-block" style="background-color: #3f3f46;">
+            <strong>💡 The "Complex Data" Scenario:</strong><br>
+            What if you are storing large objects (e.g., 16 bytes) instead of simple integers?<br>
+            - Array (size 7): 16 bytes * 7 slots = 112 bytes.<br>
+            - Linked List (3 elements): 3 nodes * (16b data + 4b pointer) = 60 bytes.<br>
+            <em>Conclusion: For large data types where you might not fill the array, Linked Lists save massive amounts of memory!</em>
+        </div>
+    </div>
+
+    <!-- FACTOR 3 -->
+    <div class="card">
+        <h2>⚡ Factor 3: Cost of Insertion & Deletion</h2>
+        <p>The time complexities for insertion and deletion are identical. The instructor breaks this down by location:</p>
+
+        <table style="margin-top: 0;">
+            <thead>
+                <tr>
+                    <th>Location</th>
+                    <th>Array (🟦)</th>
+                    <th>Linked List (🟩)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>At the Beginning</strong></td>
+                    <td>
+                        <span class="badge red">O(n)</span><br>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Must manually shift EVERY existing element one space to the right to make room.</span>
+                    </td>
+                    <td>
+                        <span class="badge green">O(1)</span><br>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Simply create a node, point it to the current head, and update the head pointer.</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>At the End</strong></td>
+                    <td>
+                        <span class="badge green">O(1)</span><br>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">If not full, you instantly know the next empty index and drop data directly in.</span>
+                    </td>
+                    <td>
+                        <span class="badge red">O(n)</span><br>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Must traverse the entire list sequentially to find the last node (pointing to Null).</span>
+                    </td>
+                </tr>
+                <tr>
+                    <td><strong>At i-th Position (Middle)</strong></td>
+                    <td>
+                        <span class="badge red">O(n)</span><br>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Must shift all elements to the right of the target. On average, n/2 shifts.</span>
+                    </td>
+                    <td>
+                        <span class="badge red">O(n)</span><br>
+                        <span style="font-size: 0.85rem; color: var(--text-muted);">Must traverse from the head to reach the i-th position. On average, n/2 traversals.</span>
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- FACTORS 4 & 5 -->
+    <div class="card">
+        <h2>🛠️ Factor 4 & 5: Ease of Use & Searching</h2>
+        
+        <div class="comparison-grid">
+            <div>
+                <h3>Factor 4: Ease of Use</h3>
+                <p><strong>Arrays</strong> are generally <span class="highlight">easier to use</span> and implement. You don't have to worry about manual memory allocation, managing pointers, or accidentally causing memory leaks by breaking a chain of addresses.</p>
+                <p><strong>Linked Lists</strong> are harder to implement because they require careful pointer manipulation and dynamic memory management.</p>
+            </div>
+            <div class="grid-divider"></div>
+            <div>
+                <h3>Factor 5: Searching</h3>
+                <p><strong>Arrays</strong> support <strong>Linear Search</strong>. Furthermore, if the array is sorted, it supports <strong>Binary Search</strong> because the math formula allows you to instantly access the exact middle element.</p>
+                <p><strong>Linked Lists</strong> ONLY support <strong>Linear Search</strong>. Even if sorted, you <em>cannot</em> perform Binary Search because you cannot directly jump to the middle node; you still must traverse from the head.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHEAT SHEET -->
+    <div class="card">
+        <h2>📋 Summary Cheat Sheet</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Feature</th>
+                    <th style="color: var(--primary-blue)">Array</th>
+                    <th style="color: var(--primary-green)">Linked List</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Size</strong></td>
+                    <td>Fixed (Compile-time)</td>
+                    <td>Dynamic (Run-time)</td>
+                </tr>
+                <tr>
+                    <td><strong>Memory Allocation</strong></td>
+                    <td>Contiguous (consecutive blocks)</td>
+                    <td>Random (linked via pointers)</td>
+                </tr>
+                <tr>
+                    <td><strong>Accessing Elements</strong></td>
+                    <td><strong>O(1)</strong> (Random access)</td>
+                    <td>O(n) (Sequential access only)</td>
+                </tr>
+                <tr>
+                    <td><strong>Memory Utilization</strong></td>
+                    <td>Inefficient (Prone to wasted space)</td>
+                    <td><strong>Highly Efficient</strong> (No wasted space)</td>
+                </tr>
+                <tr>
+                    <td><strong>Memory Requirement</strong></td>
+                    <td><strong>Less</strong> (Data only)</td>
+                    <td>More (Data + Pointers)</td>
+                </tr>
+                <tr>
+                    <td><strong>Insert/Delete at Beginning</strong></td>
+                    <td>O(n)</td>
+                    <td><strong>O(1)</strong></td>
+                </tr>
+                <tr>
+                    <td><strong>Insert/Delete at End</strong></td>
+                    <td><strong>O(1)</strong></td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td><strong>Insert/Delete in Middle</strong></td>
+                    <td>O(n)</td>
+                    <td>O(n)</td>
+                </tr>
+                <tr>
+                    <td><strong>Searching Algorithms</strong></td>
+                    <td>Linear & <strong>Binary Search</strong></td>
+                    <td>Linear Search only</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+</body>
+</html>
