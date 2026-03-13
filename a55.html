@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Notes: Construct a Binary Tree</title>
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --root-color: #ef4444; /* Red for roots */
+            --left-color: #d97706; /* Orange for left subtrees */
+            --right-color: #059669; /* Green for right subtrees */
+            --border-radius: 16px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 2rem 1rem;
+        }
+
+        /* The Vertical Feed Container */
+        .feed-container {
+            max-width: 750px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem; /* Spacing between cards */
+        }
+
+        /* Individual Content Cards */
+        .card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .header-card {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+        }
+
+        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        h2 { font-size: 1.4rem; border-bottom: 2px solid var(--primary-light); padding-bottom: 0.5rem; margin-bottom: 1rem; color: var(--primary); }
+        h3 { font-size: 1.2rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: var(--text-main); }
+        p { margin-bottom: 1rem; color: var(--text-muted); }
+        
+        ul, ol { margin-left: 1.5rem; margin-bottom: 1rem; color: var(--text-muted); }
+        li { margin-bottom: 0.5rem; }
+
+        /* Data Visualization Boxes */
+        .data-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 1rem;
+            margin-bottom: 1rem;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .data-label {
+            font-family: sans-serif;
+            font-weight: bold;
+            display: inline-block;
+            width: 100px;
+            color: var(--primary);
+        }
+
+        /* Highlight tags */
+        .hl-root { background: #fee2e2; color: var(--root-color); font-weight: bold; padding: 0.1rem 0.4rem; border-radius: 4px; border: 1px solid #f87171;}
+        .hl-left { background: #fef3c7; color: var(--left-color); font-weight: bold; padding: 0.1rem 0.4rem; border-radius: 4px; border: 1px solid #fbbf24;}
+        .hl-right { background: #d1fae5; color: var(--right-color); font-weight: bold; padding: 0.1rem 0.4rem; border-radius: 4px; border: 1px solid #34d399;}
+
+        .step-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        /* SVG Tree Canvas */
+        .tree-canvas {
+            width: 100%;
+            height: auto;
+            max-height: 280px;
+            background: #ffffff;
+            border: 2px dashed #cbd5e1;
+            border-radius: var(--border-radius);
+            margin-top: 1rem;
+            display: block;
+        }
+
+        /* Callout Box for Tips */
+        .callout {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin-top: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <main class="feed-container">
+
+        <!-- HEADER -->
+        <section class="card header-card">
+            <h1>🌳 Construct a Binary Tree</h1>
+            <p style="color: #bfdbfe; margin:0;">In-depth Lecture Notes • Pre-order & In-order Traversals</p>
+        </section>
+
+        <!-- INITIAL SETUP -->
+        <section class="card">
+            <h2>1. Initial Setup & Given Data</h2>
+            <p>To construct a binary tree, you must be given two sets of traversal data. Here is the data written on the whiteboard:</p>
+            
+            <div class="data-box">
+                <span class="data-label">Pre-order:</span> 1, 2, 4, 8, 9, 10, 11, 5, 3, 6, 7 <br><br>
+                <span class="data-label">In-order:</span> 8, 4, 10, 9, 11, 2, 5, 1, 6, 3, 7
+            </div>
+
+            <h3>The "Golden Rules" (Memorize These)</h3>
+            <ul>
+                <li><strong>Pre-order Formula:</strong> <code>(Root, Left, Right)</code><br> <em>Why it matters:</em> Scanning this array from left-to-right will <strong>always</strong> reveal the <span class="hl-root">Root</span> of whatever subtree you are currently working on.</li>
+                <li><strong>In-order Formula:</strong> <code>(Left, Root, Right)</code><br> <em>Why it matters:</em> Once you find the root, locate it in this array. Everything to the left is the <span class="hl-left">Left Subtree</span>, and everything to the right is the <span class="hl-right">Right Subtree</span>.</li>
+            </ul>
+        </section>
+
+        <!-- STEP 1 -->
+        <section class="card">
+            <span class="step-badge">Step 1</span>
+            <h2>Finding the Main Root</h2>
+            <p><strong>Logic:</strong> In Pre-order traversal, the absolute root of the entire tree is traversed first. We look at the first item in the Pre-order array.</p>
+            
+            <div class="data-box">
+                <span class="data-label">Pre-order:</span> <span class="hl-root">1</span>, 2, 4, 8, 9, 10, 11, 5, 3, 6, 7
+            </div>
+            
+            <p><strong>Action:</strong> <span class="hl-root">1</span> is our main root. Now, we locate 1 in the In-order array to split the rest of the numbers into left and right sides of the tree.</p>
+
+            <div class="data-box">
+                <span class="data-label">In-order:</span> <span class="hl-left">8, 4, 10, 9, 11, 2, 5</span>, <span class="hl-root">1</span>, <span class="hl-right">6, 3, 7</span>
+            </div>
+
+            <!-- Visualization Step 1 -->
+            <svg class="tree-canvas" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+                <!-- Root 1 -->
+                <circle cx="200" cy="30" r="16" fill="#ef4444" />
+                <text x="200" y="35" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">1</text>
+                
+                <!-- Helper text -->
+                <text x="100" y="100" text-anchor="middle" fill="#d97706" font-weight="bold" font-family="sans-serif">[8,4,10,9,11,2,5]</text>
+                <text x="300" y="100" text-anchor="middle" fill="#059669" font-weight="bold" font-family="sans-serif">[6,3,7]</text>
+                
+                <!-- Placeholder arrows -->
+                <line x1="185" y1="45" x2="130" y2="75" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4"/>
+                <line x1="215" y1="45" x2="270" y2="75" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4"/>
+            </svg>
+        </section>
+
+        <!-- STEP 2 -->
+        <section class="card">
+            <span class="step-badge">Step 2</span>
+            <h2>Building the Left Subtree (Root '2')</h2>
+            <p><strong>Logic:</strong> We isolate the left elements <span class="hl-left">8, 4, 10, 9, 11, 2, 5</span>. Which one is the root of this sub-group? We scan the original Pre-order list from left to right. The first number from this group that appears is our new root.</p>
+
+            <div class="data-box">
+                <span class="data-label">Pre-order:</span> 1, <span class="hl-root">2</span>, 4, 8, 9, 10, 11, 5... (2 appears first)
+            </div>
+
+            <p><strong>Action:</strong> <span class="hl-root">2</span> is the root of the left subtree. We find 2 in our isolated In-order sequence to split it again.</p>
+
+            <div class="data-box">
+                <span class="data-label">In-order:</span> <span class="hl-left">8, 4, 10, 9, 11</span>, <span class="hl-root">2</span>, <span class="hl-right">5</span>
+            </div>
+
+            <p><em>Observation:</em> Because <strong>5</strong> is completely alone on the right side of 2, 5 becomes the direct right child of 2.</p>
+
+            <!-- Visualization Step 2 -->
+            <svg class="tree-canvas" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+                <line x1="200" y1="30" x2="120" y2="80" stroke="#94a3b8" stroke-width="2"/>
+                
+                <circle cx="200" cy="30" r="16" fill="#333" />
+                <text x="200" y="35" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">1</text>
+                
+                <circle cx="120" cy="80" r="16" fill="#ef4444" />
+                <text x="120" y="85" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">2</text>
+                
+                <line x1="120" y1="80" x2="170" y2="130" stroke="#94a3b8" stroke-width="2"/>
+                <circle cx="170" cy="130" r="16" fill="#059669" />
+                <text x="170" y="135" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">5</text>
+
+                <line x1="120" y1="80" x2="70" y2="120" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4"/>
+                <text x="70" y="140" text-anchor="middle" fill="#d97706" font-weight="bold" font-family="sans-serif">[8,4,10,9,11]</text>
+            </svg>
+        </section>
+
+        <!-- STEP 3 -->
+        <section class="card">
+            <span class="step-badge">Step 3</span>
+            <h2>Continuing the Left Subtree (Root '4')</h2>
+            <p><strong>Logic:</strong> We now look at the remaining left elements: <span class="hl-left">8, 4, 10, 9, 11</span>. Scanning the Pre-order array again, which of these appears first?</p>
+
+            <div class="data-box">
+                <span class="data-label">Pre-order:</span> ...2, <span class="hl-root">4</span>, 8, 9... (4 appears first)
+            </div>
+
+            <p><strong>Action:</strong> <span class="hl-root">4</span> is the root. Find it in the In-order sequence.</p>
+
+            <div class="data-box">
+                <span class="data-label">In-order:</span> <span class="hl-left">8</span>, <span class="hl-root">4</span>, <span class="hl-right">10, 9, 11</span>
+            </div>
+
+            <p><em>Observation:</em> Because <strong>8</strong> is completely alone on the left side of 4, 8 becomes the direct left child of 4.</p>
+
+            <!-- Visualization Step 3 -->
+            <svg class="tree-canvas" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+                <line x1="200" y1="30" x2="120" y2="80" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="120" y1="80" x2="170" y2="130" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="120" y1="80" x2="70" y2="130" stroke="#94a3b8" stroke-width="2"/>
+                
+                <circle cx="200" cy="30" r="16" fill="#333" />
+                <text x="200" y="35" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">1</text>
+                <circle cx="120" cy="80" r="16" fill="#333" />
+                <text x="120" y="85" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">2</text>
+                <circle cx="170" cy="130" r="16" fill="#333" />
+                <text x="170" y="135" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">5</text>
+
+                <!-- New Nodes -->
+                <circle cx="70" cy="130" r="16" fill="#ef4444" />
+                <text x="70" y="135" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">4</text>
+                
+                <line x1="70" y1="130" x2="30" y2="180" stroke="#94a3b8" stroke-width="2"/>
+                <circle cx="30" cy="180" r="16" fill="#d97706" />
+                <text x="30" y="185" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">8</text>
+
+                <line x1="70" y1="130" x2="110" y2="170" stroke="#cbd5e1" stroke-width="2" stroke-dasharray="4"/>
+                <text x="110" y="190" text-anchor="middle" fill="#059669" font-weight="bold" font-family="sans-serif">[10,9,11]</text>
+            </svg>
+        </section>
+
+        <!-- STEP 4 -->
+        <section class="card">
+            <span class="step-badge">Step 4</span>
+            <h2>Finishing the Left Subtree (Root '9')</h2>
+            <p><strong>Logic:</strong> We have three elements left to place on the left side of the main tree: <span class="hl-right">10, 9, 11</span> (These are to the right of 4). Which one is the root?</p>
+
+            <div class="data-box">
+                <span class="data-label">Pre-order:</span> ...8, <span class="hl-root">9</span>, 10, 11... (9 appears first)
+            </div>
+
+            <p><strong>Action:</strong> <span class="hl-root">9</span> is the root. Find it in the In-order sequence.</p>
+
+            <div class="data-box">
+                <span class="data-label">In-order:</span> <span class="hl-left">10</span>, <span class="hl-root">9</span>, <span class="hl-right">11</span>
+            </div>
+
+            <p><em>Observation:</em> 10 is alone on the left (left child of 9), and 11 is alone on the right (right child of 9). <strong>The entire left side of the main tree is now complete!</strong></p>
+
+            <!-- Visualization Step 4 -->
+            <svg class="tree-canvas" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+                <!-- Existing Edges -->
+                <line x1="200" y1="30" x2="120" y2="80" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="120" y1="80" x2="170" y2="130" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="120" y1="80" x2="70" y2="130" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="70" y1="130" x2="30" y2="180" stroke="#94a3b8" stroke-width="2"/>
+                
+                <!-- Existing Nodes -->
+                <circle cx="200" cy="30" r="16" fill="#333" />
+                <text x="200" y="35" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">1</text>
+                <circle cx="120" cy="80" r="16" fill="#333" />
+                <text x="120" y="85" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">2</text>
+                <circle cx="170" cy="130" r="16" fill="#333" />
+                <text x="170" y="135" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">5</text>
+                <circle cx="70" cy="130" r="16" fill="#333" />
+                <text x="70" y="135" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">4</text>
+                <circle cx="30" cy="180" r="16" fill="#333" />
+                <text x="30" y="185" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">8</text>
+
+                <!-- New Structure -->
+                <line x1="70" y1="130" x2="110" y2="180" stroke="#94a3b8" stroke-width="2"/>
+                <circle cx="110" cy="180" r="16" fill="#ef4444" />
+                <text x="110" y="185" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">9</text>
+
+                <line x1="110" y1="180" x2="80" y2="230" stroke="#94a3b8" stroke-width="2"/>
+                <circle cx="80" cy="230" r="16" fill="#d97706" />
+                <text x="80" y="235" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">10</text>
+
+                <line x1="110" y1="180" x2="140" y2="230" stroke="#94a3b8" stroke-width="2"/>
+                <circle cx="140" cy="230" r="16" fill="#059669" />
+                <text x="140" y="235" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">11</text>
+            </svg>
+        </section>
+
+        <!-- STEP 5 -->
+        <section class="card">
+            <span class="step-badge">Step 5</span>
+            <h2>Building the Right Subtree (Root '3')</h2>
+            <p><strong>Logic:</strong> We return all the way to Step 1, where we separated the main Right Subtree elements: <span class="hl-right">6, 3, 7</span>. Scanning the Pre-order array for these numbers, which appears first?</p>
+
+            <div class="data-box">
+                <span class="data-label">Pre-order:</span> ... <span class="hl-root">3</span>, 6, 7 (3 appears first)
+            </div>
+
+            <p><strong>Action:</strong> <span class="hl-root">3</span> is the root of the right side. Find it in the In-order sequence.</p>
+
+            <div class="data-box">
+                <span class="data-label">In-order:</span> <span class="hl-left">6</span>, <span class="hl-root">3</span>, <span class="hl-right">7</span>
+            </div>
+
+            <p><em>Observation:</em> 6 is alone on the left (left child of 3), and 7 is alone on the right (right child of 3). The tree is fully constructed!</p>
+
+            <!-- Final Visualization -->
+            <svg class="tree-canvas" viewBox="0 0 400 250" xmlns="http://www.w3.org/2000/svg">
+                <!-- Left Side Edges -->
+                <line x1="200" y1="30" x2="120" y2="80" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="120" y1="80" x2="170" y2="130" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="120" y1="80" x2="70" y2="130" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="70" y1="130" x2="30" y2="180" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="70" y1="130" x2="110" y2="180" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="110" y1="180" x2="80" y2="230" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="110" y1="180" x2="140" y2="230" stroke="#94a3b8" stroke-width="2"/>
+
+                <!-- Right Side Edges -->
+                <line x1="200" y1="30" x2="280" y2="80" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="280" y1="80" x2="240" y2="130" stroke="#94a3b8" stroke-width="2"/>
+                <line x1="280" y1="80" x2="320" y2="130" stroke="#94a3b8" stroke-width="2"/>
+
+                <!-- Left Side Nodes -->
+                <circle cx="200" cy="30" r="16" fill="#333" />
+                <text x="200" y="35" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">1</text>
+                <circle cx="120" cy="80" r="16" fill="#333" />
+                <text x="120" y="85" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">2</text>
+                <circle cx="170" cy="130" r="16" fill="#333" />
+                <text x="170" y="135" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">5</text>
+                <circle cx="70" cy="130" r="16" fill="#333" />
+                <text x="70" y="135" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">4</text>
+                <circle cx="30" cy="180" r="16" fill="#333" />
+                <text x="30" y="185" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">8</text>
+                <circle cx="110" cy="180" r="16" fill="#333" />
+                <text x="110" y="185" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">9</text>
+                <circle cx="80" cy="230" r="16" fill="#333" />
+                <text x="80" y="235" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">10</text>
+                <circle cx="140" cy="230" r="16" fill="#333" />
+                <text x="140" y="235" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">11</text>
+
+                <!-- Right Side Nodes (New) -->
+                <circle cx="280" cy="80" r="16" fill="#ef4444" />
+                <text x="280" y="85" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">3</text>
+                <circle cx="240" cy="130" r="16" fill="#d97706" />
+                <text x="240" y="135" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">6</text>
+                <circle cx="320" cy="130" r="16" fill="#059669" />
+                <text x="320" y="135" text-anchor="middle" fill="#fff" font-weight="bold" font-family="sans-serif">7</text>
+            </svg>
+        </section>
+
+        <!-- VERIFICATION -->
+        <section class="card">
+            <h2>✅ The Verification Trick</h2>
+            <p>At the end of the video, the instructor provides a highly valuable exam tip to guarantee your answer is 100% correct.</p>
+            
+            <div class="callout">
+                <strong>How to verify your work:</strong>
+                <p style="margin-top: 10px; margin-bottom: 0;">Once you finish drawing your tree, pretend the original question doesn't exist. Manually calculate the Pre-order and In-order traversals based purely on <em>your</em> drawing. If your calculated sequences match the ones given in the original question, your tree is completely accurate!</p>
+            </div>
+        </section>
+
+    </main>
+
+</body>
+</html>
