@@ -1,0 +1,383 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deletion from Linked List | Study Feed</title>
+    
+    <!-- Tailwind CSS for Layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Highlight.js for Syntax Highlighting -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/styles/atom-one-dark.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/highlight.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.8.0/languages/c.min.js"></script>
+
+    <style>
+        /* Custom Styling for Visualizations */
+        body { background-color: #f8fafc; color: #0f172a; }
+        
+        .node-container { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+        
+        .ll-node {
+            display: flex;
+            border: 2px solid #1e293b;
+            border-radius: 6px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1);
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        
+        .node-data { padding: 0.75rem 1rem; background: #e0f2fe; font-weight: 700; border-right: 2px solid #1e293b; font-size: 1.1rem;}
+        .node-addr { padding: 0.75rem 1rem; color: #64748b; font-family: monospace; font-size: 0.9rem;}
+        
+        .arrow { color: #94a3b8; font-weight: bold; font-size: 1.5rem; display: flex; align-items: center;}
+        
+        .pointer-label {
+            position: absolute;
+            top: -30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #ef4444;
+            background: #fee2e2;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border: 1px solid #fca5a5;
+        }
+        .pointer-label-bottom {
+            top: auto;
+            bottom: -30px;
+            color: #8b5cf6;
+            background: #ede9fe;
+            border-color: #c4b5fd;
+        }
+        
+        .node-deleted {
+            opacity: 0.3;
+            border-style: dashed;
+            filter: grayscale(100%);
+            transform: scale(0.95);
+        }
+        .node-deleted .node-data { background: #f1f5f9; text-decoration: line-through; color: #ef4444;}
+        
+        .cross-line {
+            position: absolute;
+            width: 100%;
+            height: 2px;
+            background-color: red;
+            top: 50%;
+            transform: rotate(15deg);
+            z-index: 10;
+        }
+
+        /* Feed Animation */
+        .feed-item {
+            opacity: 0;
+            transform: translateY(30px);
+            transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .feed-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    </style>
+</head>
+<body class="antialiased font-sans pb-32">
+
+    <!-- Header -->
+    <header class="bg-slate-900 text-white pt-20 pb-16 px-6 text-center shadow-lg sticky top-0 z-50">
+        <div class="max-w-3xl mx-auto">
+            <span class="bg-blue-500/20 text-blue-300 py-1 px-3 rounded-full text-xs font-bold tracking-wider uppercase mb-4 inline-block">Data Structures in C</span>
+            <h1 class="text-4xl md:text-5xl font-extrabold tracking-tight mb-4">Deletion from Linked List</h1>
+            <p class="text-slate-400 text-lg">Scroll down to learn the logic, memory management, and code for deleting nodes from the beginning, end, and specified positions.</p>
+        </div>
+    </header>
+
+    <!-- Main Feed Container -->
+    <main class="max-w-4xl mx-auto px-4 sm:px-6 mt-12 space-y-12" id="feed">
+
+        <!-- SETUP & PREREQUISITES -->
+        <article class="feed-item bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-slate-200">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4">0. The Setup & Prerequisites</h2>
+            <p class="text-slate-600 mb-6 leading-relaxed">Before we delete anything, we must define what a "Node" looks like in C and ensure we have a global pointer tracking the start of the list. Memory management is crucial here: when removing a node, we must use <code>free()</code> to prevent memory leaks.</p>
+            
+            <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 mb-6">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Memory Representation</h3>
+                <div class="node-container">
+                    <div class="flex flex-col items-center mr-2">
+                        <span class="text-red-500 font-bold font-mono bg-red-50 px-2 rounded mb-1">head (100)</span>
+                        <span class="text-red-500">↓</span>
+                    </div>
+                    <div class="ll-node mt-4">
+                        <div class="node-data">5</div>
+                        <div class="node-addr">200</div>
+                    </div>
+                    <div class="arrow mt-4">→</div>
+                    <div class="ll-node mt-4">
+                        <div class="node-data">3</div>
+                        <div class="node-addr">300</div>
+                    </div>
+                    <div class="arrow mt-4">→</div>
+                    <div class="ll-node mt-4">
+                        <div class="node-data">9</div>
+                        <div class="node-addr">400</div>
+                    </div>
+                    <div class="arrow mt-4">→</div>
+                    <div class="ll-node mt-4">
+                        <div class="node-data">1</div>
+                        <div class="node-addr">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <pre><code class="language-c rounded-xl shadow-inner text-sm">struct node {
+    int data;
+    struct node *next;
+};
+struct node *head; // Global pointer holding address 100</code></pre>
+        </article>
+
+        <!-- DELETE FROM BEGINNING -->
+        <article class="feed-item bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-blue-500">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="bg-blue-100 text-blue-600 w-8 h-8 rounded-full flex items-center justify-center font-bold">1</div>
+                <h2 class="text-2xl font-bold text-slate-800">Delete from Beginning</h2>
+            </div>
+            
+            <p class="text-slate-600 mb-6 leading-relaxed"><strong>Goal:</strong> Remove the very first node and make the second node the new starting point. If we just move <code>head</code> immediately, we lose the address of the first node forever! We must use a <code>temp</code> pointer to hold it safely.</p>
+            
+            <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 mb-6">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Visual Execution</h3>
+                <div class="node-container pt-8 pb-4">
+                    <!-- Deleted Node -->
+                    <div class="ll-node node-deleted">
+                        <div class="pointer-label text-gray-500 bg-gray-100 border-gray-300">temp</div>
+                        <div class="node-data">5</div>
+                        <div class="node-addr">200</div>
+                        <div class="cross-line"></div>
+                    </div>
+                    <div class="arrow text-red-300">⤬</div>
+                    <!-- New Head -->
+                    <div class="ll-node border-blue-500 transform scale-105">
+                        <div class="pointer-label">head</div>
+                        <div class="node-data">3</div>
+                        <div class="node-addr">300</div>
+                    </div>
+                    <div class="arrow">→</div>
+                    <div class="ll-node">
+                        <div class="node-data">9</div>
+                        <div class="node-addr">...</div>
+                    </div>
+                </div>
+                <p class="text-center text-sm text-slate-500 mt-2 italic">head shifts to 200. temp uses free(temp) to erase node 5.</p>
+            </div>
+
+            <pre><code class="language-c rounded-xl shadow-inner text-sm">void DeleteFromBeg() {
+    struct node *temp;
+    
+    // Edge case: List is empty
+    if (head == 0) { 
+        printf("List is empty\n");
+    } else {
+        temp = head;         // Step 1: temp holds the first node
+        head = head->next;   // Step 2: head moves to the second node
+        free(temp);          // Step 3: Safely delete the original first node
+    }
+}</code></pre>
+        </article>
+
+        <!-- DELETE FROM END -->
+        <article class="feed-item bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-purple-500">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="bg-purple-100 text-purple-600 w-8 h-8 rounded-full flex items-center justify-center font-bold">2</div>
+                <h2 class="text-2xl font-bold text-slate-800">Delete from End</h2>
+            </div>
+            
+            <p class="text-slate-600 mb-6 leading-relaxed"><strong>Goal:</strong> Remove the last node. Since a singly linked list can only go forward, we cannot jump straight to the end. We must traverse the list using <strong>two pointers</strong>: <code>temp</code> to reach the last node, and <code>prevnode</code> to trail exactly one node behind it.</p>
+            
+            <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 mb-6 overflow-x-auto">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Visual Execution</h3>
+                <div class="node-container pt-8 pb-8 min-w-max">
+                    <div class="ll-node">
+                        <div class="node-data">5</div>
+                        <div class="node-addr">200</div>
+                    </div>
+                    <div class="arrow">→</div>
+                    <!-- Previous Node -->
+                    <div class="ll-node border-purple-500">
+                        <div class="pointer-label-bottom">prevnode</div>
+                        <div class="node-data">9</div>
+                        <div class="node-addr text-purple-600 font-bold">0</div>
+                    </div>
+                    <div class="arrow text-red-300">⤬</div>
+                    <!-- Last Node (Deleted) -->
+                    <div class="ll-node node-deleted">
+                        <div class="pointer-label text-gray-500 bg-gray-100 border-gray-300">temp</div>
+                        <div class="node-data">1</div>
+                        <div class="node-addr">0</div>
+                        <div class="cross-line"></div>
+                    </div>
+                </div>
+                <p class="text-center text-sm text-slate-500 mt-2 italic">prevnode stops at the 2nd to last node. Its next address is set to 0. temp is freed.</p>
+            </div>
+
+            <pre><code class="language-c rounded-xl shadow-inner text-sm">void DeleteFromEnd() {
+    struct node *temp, *prevnode;
+    temp = head;
+    
+    // Step 1: Traverse the list to find the last & 2nd-to-last nodes
+    while (temp->next != 0) { 
+        prevnode = temp;      // prevnode catches up to temp
+        temp = temp->next;    // temp moves one step forward
+    }
+    
+    // Step 2: Edge Case (Only 1 node exists)
+    if (temp == head) {
+        head = 0; 
+    } else {
+        // Step 3: Sever the tie to the last node
+        prevnode->next = 0; 
+    }
+    
+    // Step 4: Free the garbage memory
+    free(temp);
+}</code></pre>
+        </article>
+
+        <!-- DELETE FROM SPECIFIED POSITION -->
+        <article class="feed-item bg-white p-8 md:p-10 rounded-2xl shadow-sm border border-slate-200 border-l-4 border-l-emerald-500">
+            <div class="flex items-center gap-3 mb-4">
+                <div class="bg-emerald-100 text-emerald-600 w-8 h-8 rounded-full flex items-center justify-center font-bold">3</div>
+                <h2 class="text-2xl font-bold text-slate-800">Delete from Specified Position</h2>
+            </div>
+            
+            <p class="text-slate-600 mb-6 leading-relaxed"><strong>Goal:</strong> User inputs a position (e.g., <code>pos = 3</code>). To delete node 3, node 2 needs to completely bypass node 3 and link directly to node 4. <br><br><strong>Crucial Rule:</strong> We must stop our loop at <code>pos - 1</code> so we have access to the node <em>before</em> the deletion target.</p>
+            
+            <div class="bg-slate-50 p-6 rounded-xl border border-slate-100 mb-6 overflow-x-auto">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-widest mb-4">Visual Execution (Target: Pos 3)</h3>
+                <div class="node-container pt-8 pb-10 min-w-max relative">
+                    <!-- Pos 1 -->
+                    <div class="ll-node"><div class="node-data">5</div><div class="node-addr">200</div></div>
+                    <div class="arrow">→</div>
+                    <!-- Pos 2 (temp) -->
+                    <div class="ll-node border-emerald-500 transform scale-105">
+                        <div class="pointer-label-bottom">temp (stops here)</div>
+                        <div class="node-data">3</div>
+                        <div class="node-addr text-emerald-600 font-bold bg-emerald-50">400</div>
+                    </div>
+                    
+                    <div class="arrow text-red-300">⤬</div>
+                    <!-- Pos 3 (nextnode - Target) -->
+                    <div class="ll-node node-deleted transform -translate-y-4">
+                        <div class="pointer-label text-gray-500 bg-gray-100 border-gray-300">nextnode</div>
+                        <div class="node-data">9</div>
+                        <div class="node-addr">400</div>
+                        <div class="cross-line"></div>
+                    </div>
+                    <div class="arrow text-red-300">⤬</div>
+                    
+                    <!-- Pos 4 -->
+                    <div class="ll-node border-emerald-500"><div class="node-data">1</div><div class="node-addr">0</div></div>
+
+                    <!-- Bypassing SVG Arrow -->
+                    <svg class="absolute top-10 left-[26%] w-[45%] h-12 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 200 50" preserveAspectRatio="none">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" stroke-dasharray="5,5" d="M10,10 Q100,50 190,10"></path>
+                        <polygon points="180,5 190,10 180,15" fill="currentColor"></polygon>
+                    </svg>
+                </div>
+            </div>
+
+            <pre><code class="language-c rounded-xl shadow-inner text-sm">void DeleteFromPos() {
+    struct node *temp, *nextnode;
+    int pos, i = 1;
+    
+    temp = head;
+    printf("Enter Position: ");
+    scanf("%d", &pos);
+    
+    // Step 1: Traverse to the node directly BEFORE the target (pos - 1)
+    while (i < pos - 1) {
+        temp = temp->next;
+        i++;
+    }
+    
+    // Step 2: Target the node to be deleted
+    nextnode = temp->next;
+    
+    // Step 3: Re-link to completely bypass the target node
+    temp->next = nextnode->next; 
+    
+    // Step 4: Free the target node memory
+    free(nextnode);
+}</code></pre>
+        </article>
+
+        <!-- TIME COMPLEXITY -->
+        <article class="feed-item bg-slate-900 p-8 md:p-10 rounded-2xl shadow-2xl border border-slate-700 text-white">
+            <h2 class="text-2xl font-bold mb-6 flex items-center gap-3">
+                <span>⏱️</span> Time Complexity Summary
+            </h2>
+            <div class="grid md:grid-cols-3 gap-6">
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-600">
+                    <h3 class="text-blue-400 font-bold mb-1">From Beginning</h3>
+                    <div class="text-3xl font-extrabold mb-3">O(1)</div>
+                    <p class="text-sm text-slate-400">Best case scenario. No traversal required. We instantly update the <code>head</code> pointer.</p>
+                </div>
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-600">
+                    <h3 class="text-purple-400 font-bold mb-1">From End</h3>
+                    <div class="text-3xl font-extrabold mb-3">O(n)</div>
+                    <p class="text-sm text-slate-400">Worst case scenario. We must start at <code>head</code> and step through every single node to find the end.</p>
+                </div>
+                <div class="bg-slate-800 p-5 rounded-xl border border-slate-600">
+                    <h3 class="text-emerald-400 font-bold mb-1">From Position</h3>
+                    <div class="text-3xl font-extrabold mb-3">O(n)</div>
+                    <p class="text-sm text-slate-400">Depends on the index inputted, but Big O always evaluates the worst case (deleting near the end).</p>
+                </div>
+            </div>
+        </article>
+        
+        <div class="text-center pb-10 text-slate-400">
+            <p>End of Lesson • Keep Coding</p>
+        </div>
+
+    </main>
+
+    <!-- Scripts -->
+    <script>
+        // Initialize Highlight.js for C syntax
+        document.addEventListener('DOMContentLoaded', (event) => {
+            document.querySelectorAll('pre code').forEach((el) => {
+                hljs.highlightElement(el);
+            });
+        });
+
+        // Intersection Observer for scroll-feed animations
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.15
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target); // Optional: only animate once
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feed-item').forEach((element, index) => {
+            // Add slight staggered delay to initial load items
+            if(index < 2) {
+                element.style.transitionDelay = `${index * 150}ms`;
+            }
+            observer.observe(element);
+        });
+    </script>
+</body>
+</html>
