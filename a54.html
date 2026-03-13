@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree Traversals - Lecture Notes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .code-font { font-family: 'Fira Code', monospace; }
+        
+        /* Custom styling for the Tree Nodes to match whiteboard */
+        .node-box {
+            display: inline-flex;
+            border: 2px solid #ef4444; /* red-500 to match her marker */
+            border-radius: 4px;
+            background: white;
+            font-size: 0.875rem;
+            color: #1f2937;
+        }
+        .node-left, .node-right {
+            padding: 4px 8px;
+            color: #6b7280;
+        }
+        .node-left { border-right: 2px solid #ef4444; }
+        .node-right { border-left: 2px solid #ef4444; }
+        .node-data {
+            padding: 4px 12px;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .node-address {
+            font-size: 0.75rem;
+            color: #6b7280;
+            text-align: center;
+            margin-top: 2px;
+        }
+
+        /* Connecting lines for the tree visualization */
+        .tree-line-v { width: 2px; height: 20px; background-color: #d1d5db; margin: 0 auto; }
+        .tree-line-h { height: 2px; background-color: #d1d5db; }
+        
+        /* Smooth scrolling */
+        html { scroll-behavior: smooth; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <!-- Header -->
+    <header class="bg-indigo-600 text-white py-12 px-6 shadow-md sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto">
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">Binary Tree Traversals (Recursive Approach)</h1>
+            <p class="text-indigo-100 text-lg">In-depth Lecture Notes & Visualizations • Scroll to learn</p>
+        </div>
+    </header>
+
+    <main class="max-w-4xl mx-auto py-10 px-6 space-y-16">
+
+        <!-- SECTION 1: Introduction & The Tree -->
+        <section class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-2xl font-bold mb-6 text-indigo-600 border-b pb-2">1. The Setup: Understanding Our Tree</h2>
+            <p class="mb-6 text-lg leading-relaxed">
+                Before writing traversal code, we must understand the structure we are working with. The instructor assumes you have already written the code to `create()` this tree. Each node is a struct containing a left pointer, the data, and a right pointer.
+            </p>
+
+            <!-- Whiteboard Tree Visualization -->
+            <div class="bg-slate-50 p-6 rounded-xl border-2 border-dashed border-slate-200 overflow-x-auto">
+                <h3 class="text-sm font-bold text-slate-400 uppercase tracking-wider mb-6 text-center">Whiteboard Visualization</h3>
+                
+                <div class="flex flex-col items-center min-w-[600px]">
+                    <!-- Level 0 (Root) -->
+                    <div class="flex flex-col items-center">
+                        <div class="node-box">
+                            <div class="node-left">300</div>
+                            <div class="node-data">4</div>
+                            <div class="node-right">250</div>
+                        </div>
+                        <div class="node-address">100 (Root)</div>
+                    </div>
+
+                    <!-- Connectors L0 to L1 -->
+                    <div class="flex w-64 justify-between mt-2">
+                        <div class="w-1/2 border-t-2 border-l-2 border-slate-300 h-6 rounded-tl-lg"></div>
+                        <div class="w-1/2 border-t-2 border-r-2 border-slate-300 h-6 rounded-tr-lg"></div>
+                    </div>
+
+                    <!-- Level 1 -->
+                    <div class="flex w-[400px] justify-between">
+                        <!-- Left Subtree -->
+                        <div class="flex flex-col items-center">
+                            <div class="node-box">
+                                <div class="node-left">400</div>
+                                <div class="node-data">5</div>
+                                <div class="node-right">800</div>
+                            </div>
+                            <div class="node-address">300</div>
+
+                            <!-- Connectors L1 to L2 -->
+                            <div class="flex w-40 justify-between mt-2">
+                                <div class="w-1/2 border-t-2 border-l-2 border-slate-300 h-6 rounded-tl-lg"></div>
+                                <div class="w-1/2 border-t-2 border-r-2 border-slate-300 h-6 rounded-tr-lg"></div>
+                            </div>
+
+                            <!-- Level 2 (Left Side) -->
+                            <div class="flex w-[240px] justify-between">
+                                <div class="flex flex-col items-center">
+                                    <div class="node-box">
+                                        <div class="node-left">0</div>
+                                        <div class="node-data">7</div>
+                                        <div class="node-right">0</div>
+                                    </div>
+                                    <div class="node-address">400</div>
+                                </div>
+                                <div class="flex flex-col items-center">
+                                    <div class="node-box">
+                                        <div class="node-left">0</div>
+                                        <div class="node-data">8</div>
+                                        <div class="node-right">0</div>
+                                    </div>
+                                    <div class="node-address">800</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Right Subtree -->
+                        <div class="flex flex-col items-center">
+                            <div class="node-box">
+                                <div class="node-left">0</div>
+                                <div class="node-data">10</div>
+                                <div class="node-right">010</div>
+                            </div>
+                            <div class="node-address">250</div>
+
+                            <!-- Connectors L1 to L2 (Right only) -->
+                            <div class="flex w-24 justify-end mt-2">
+                                <div class="w-1/2 border-t-2 border-r-2 border-slate-300 h-6 rounded-tr-lg"></div>
+                            </div>
+
+                            <!-- Level 2 (Right Side) -->
+                            <div class="flex w-[120px] justify-end">
+                                <div class="flex flex-col items-center">
+                                    <div class="node-box">
+                                        <div class="node-left">0</div>
+                                        <div class="node-data">1</div>
+                                        <div class="node-right">0</div>
+                                    </div>
+                                    <div class="node-address">010</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 bg-yellow-50 border-l-4 border-yellow-400 p-4 rounded text-yellow-800">
+                <strong>Instructor Note:</strong> In C, the pointer `root` is our starting point. Throughout the program, `root` simply holds the memory address `100`. Notice that leaf nodes have `0` (NULL) for their left and right pointers.
+            </div>
+        </section>
+
+
+        <!-- SECTION 2: Goals & Expected Outputs -->
+        <section class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-2xl font-bold mb-6 text-indigo-600 border-b pb-2">2. Traversal Formulas & Expected Output</h2>
+            <p class="mb-4 text-lg">Before coding, the instructor lists the expected outputs so we can verify our code works. Memorize these formulas:</p>
+            
+            <div class="grid md:grid-cols-3 gap-4">
+                <div class="bg-blue-50 p-4 rounded-xl border border-blue-100">
+                    <h3 class="font-bold text-blue-800 mb-2">Inorder</h3>
+                    <p class="code-font text-sm text-blue-600 mb-2">Left → Root → Right</p>
+                    <p class="font-bold">7, 5, 8, 4, 10, 1</p>
+                </div>
+                <div class="bg-green-50 p-4 rounded-xl border border-green-100">
+                    <h3 class="font-bold text-green-800 mb-2">Preorder</h3>
+                    <p class="code-font text-sm text-green-600 mb-2">Root → Left → Right</p>
+                    <p class="font-bold">4, 5, 7, 8, 10, 1</p>
+                </div>
+                <div class="bg-purple-50 p-4 rounded-xl border border-purple-100">
+                    <h3 class="font-bold text-purple-800 mb-2">Postorder</h3>
+                    <p class="code-font text-sm text-purple-600 mb-2">Left → Right → Root</p>
+                    <p class="font-bold">7, 8, 5, 1, 10, 4</p>
+                </div>
+            </div>
+        </section>
+
+
+        <!-- SECTION 3: The Code -->
+        <section class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-2xl font-bold mb-6 text-indigo-600 border-b pb-2">3. Writing the Preorder Code</h2>
+            <p class="text-lg mb-4">We are using a recursive approach. A recursive function must have a base condition to terminate, otherwise it will result in an infinite loop.</p>
+            
+            <div class="bg-slate-900 text-slate-100 p-6 rounded-xl overflow-x-auto shadow-inner mb-6">
+<pre class="code-font leading-loose"><span class="text-slate-400">// Main function starting the traversal</span>
+<span class="text-blue-400">void</span> <span class="text-yellow-300">main</span>() {
+    <span class="text-blue-400">struct</span> node *root;
+    <span class="text-slate-400">// ... tree creation logic ...</span>
+    printf(<span class="text-green-300">"Preorder is : "</span>);
+    <span class="text-yellow-300">preorder</span>(root); <span class="text-slate-400">// Passes address 100</span>
+}
+
+<span class="text-slate-400">// The Recursive Function (Numbered for the Dry Run)</span>
+<span class="text-blue-400">void</span> <span class="text-yellow-300">preorder</span>(<span class="text-blue-400">struct</span> node *root) {
+<span class="text-slate-500">1.</span>  <span class="text-pink-400">if</span> (root == <span class="text-purple-300">0</span>)            <span class="text-slate-400">// Base/Termination condition</span>
+<span class="text-slate-500">2.</span>      <span class="text-pink-400">return</span>; 
+<span class="text-slate-500">3.</span>  printf(<span class="text-green-300">"%d, "</span>, root->data); <span class="text-slate-400">// Process ROOT</span>
+<span class="text-slate-500">4.</span>  <span class="text-yellow-300">preorder</span>(root->left);       <span class="text-slate-400">// Process LEFT</span>
+<span class="text-slate-500">5.</span>  <span class="text-yellow-300">preorder</span>(root->right);      <span class="text-slate-400">// Process RIGHT</span>
+}</pre>
+            </div>
+            <p class="text-lg text-slate-700">
+                <strong>Why line 1 & 2?</strong> When we reach a leaf node (like 7 at address 400), it has no left child. Its `left` pointer is `0`. The function calls `preorder(0)`. If we didn't have line 1, line 3 would try to print `0->data`, which causes a segmentation fault (crash).
+            </p>
+        </section>
+
+
+        <!-- SECTION 4: THE DRY RUN (Core content) -->
+        <section class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-2xl font-bold mb-2 text-indigo-600">4. The Ultimate Dry Run (Stack Trace)</h2>
+            <p class="text-lg mb-8 text-slate-600 border-b pb-6">This is the most critical part of the lecture. Every time a function is called, memory is allocated in the <strong>Stack</strong>. When a function hits <code>return</code>, that stack frame is destroyed, and we resume the previous function exactly where we left off.</p>
+
+            <div class="space-y-6 relative border-l-4 border-indigo-200 ml-4 pl-8">
+                
+                <!-- Step 1 -->
+                <div class="relative">
+                    <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-indigo-500 rounded-full border-4 border-white shadow"></div>
+                    <div class="bg-slate-50 border border-slate-200 p-5 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-center border-b pb-2 mb-3">
+                            <h3 class="font-bold text-lg text-indigo-800">Call 1: preorder(100)</h3>
+                            <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-1 rounded">Stack Frame 1 Created</span>
+                        </div>
+                        <p class="code-font text-sm mb-2">root = 100</p>
+                        <ul class="list-none space-y-1 text-slate-700 code-font text-sm">
+                            <li class="text-slate-400">1. if(100 == 0) -> False</li>
+                            <li class="text-green-600 font-bold bg-green-50 p-1 rounded inline-block">3. printf(100->data) -> OUTPUT: 4</li>
+                            <li class="font-bold text-blue-600 mt-1">4. preorder(100->left) -> Calls preorder(300)</li>
+                            <li class="text-slate-400 italic">...Frame pauses here at line 4...</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Step 2 -->
+                <div class="relative">
+                    <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-indigo-500 rounded-full border-4 border-white shadow"></div>
+                    <div class="bg-slate-50 border border-slate-200 p-5 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-center border-b pb-2 mb-3">
+                            <h3 class="font-bold text-lg text-indigo-800">Call 2: preorder(300)</h3>
+                            <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-1 rounded">Stack Frame 2 Created</span>
+                        </div>
+                        <p class="code-font text-sm mb-2">root = 300</p>
+                        <ul class="list-none space-y-1 text-slate-700 code-font text-sm">
+                            <li class="text-slate-400">1. if(300 == 0) -> False</li>
+                            <li class="text-green-600 font-bold bg-green-50 p-1 rounded inline-block">3. printf(300->data) -> OUTPUT: 5</li>
+                            <li class="font-bold text-blue-600 mt-1">4. preorder(300->left) -> Calls preorder(400)</li>
+                            <li class="text-slate-400 italic">...Frame pauses here at line 4...</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Step 3 -->
+                <div class="relative">
+                    <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-indigo-500 rounded-full border-4 border-white shadow"></div>
+                    <div class="bg-slate-50 border border-slate-200 p-5 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-center border-b pb-2 mb-3">
+                            <h3 class="font-bold text-lg text-indigo-800">Call 3: preorder(400)</h3>
+                            <span class="bg-indigo-100 text-indigo-800 text-xs font-bold px-2 py-1 rounded">Stack Frame 3 Created</span>
+                        </div>
+                        <p class="code-font text-sm mb-2">root = 400</p>
+                        <ul class="list-none space-y-1 text-slate-700 code-font text-sm">
+                            <li class="text-slate-400">1. if(400 == 0) -> False</li>
+                            <li class="text-green-600 font-bold bg-green-50 p-1 rounded inline-block">3. printf(400->data) -> OUTPUT: 7</li>
+                            <li class="font-bold text-blue-600 mt-1">4. preorder(400->left) -> Calls preorder(0)</li>
+                        </ul>
+                        
+                        <!-- Base Case mini block -->
+                        <div class="mt-4 bg-red-50 p-3 rounded border border-red-100 ml-4">
+                            <p class="text-sm font-bold text-red-800 mb-1">Base Case Hit! Call: preorder(0)</p>
+                            <p class="text-sm code-font text-slate-600">1. if(0 == 0) -> True! <br>2. return; (Frame destroyed instantly)</p>
+                        </div>
+
+                        <ul class="list-none space-y-1 text-slate-700 code-font text-sm mt-3">
+                            <li class="font-bold text-blue-600">5. preorder(400->right) -> Calls preorder(0)</li>
+                            <li class="text-slate-500 text-xs ml-4">(Base case hit again, returns instantly)</li>
+                        </ul>
+                        <div class="mt-3 bg-slate-200 text-slate-700 text-xs font-bold px-2 py-1 rounded inline-block">Line 5 finished. Stack Frame 3 Destroyed.</div>
+                    </div>
+                </div>
+
+                <!-- Step 4 -->
+                <div class="relative">
+                    <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-blue-400 rounded-full border-4 border-white shadow"></div>
+                    <div class="bg-blue-50 border border-blue-200 p-5 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-center border-b border-blue-200 pb-2 mb-3">
+                            <h3 class="font-bold text-lg text-blue-900">Back to Frame 2: preorder(300)</h3>
+                            <span class="bg-blue-200 text-blue-800 text-xs font-bold px-2 py-1 rounded">Resume</span>
+                        </div>
+                        <p class="text-sm text-slate-700 mb-2">Frame 2 was paused at line 4. It now moves to line 5.</p>
+                        <ul class="list-none space-y-1 text-slate-700 code-font text-sm">
+                            <li class="font-bold text-blue-600">5. preorder(300->right) -> Calls preorder(800)</li>
+                        </ul>
+
+                        <!-- Call 800 Mini Block -->
+                        <div class="mt-4 bg-white p-3 rounded border border-slate-200 ml-4 shadow-sm">
+                            <p class="text-sm font-bold text-indigo-800 mb-1">Call: preorder(800)</p>
+                            <p class="text-sm code-font text-slate-600 mb-1">root = 800</p>
+                            <p class="text-sm code-font text-green-600 font-bold bg-green-50 p-1 rounded inline-block">3. printf(800->data) -> OUTPUT: 8</p>
+                            <p class="text-xs text-slate-500 mt-1">Lines 4 & 5 call preorder(0) and return. Frame destroyed.</p>
+                        </div>
+
+                        <div class="mt-3 bg-slate-200 text-slate-700 text-xs font-bold px-2 py-1 rounded inline-block">Line 5 finished. Stack Frame 2 Destroyed.</div>
+                    </div>
+                </div>
+
+                <!-- Step 5 -->
+                <div class="relative">
+                    <div class="absolute -left-11 mt-1.5 w-6 h-6 bg-blue-400 rounded-full border-4 border-white shadow"></div>
+                    <div class="bg-blue-50 border border-blue-200 p-5 rounded-xl shadow-sm">
+                        <div class="flex justify-between items-center border-b border-blue-200 pb-2 mb-3">
+                            <h3 class="font-bold text-lg text-blue-900">Back to Frame 1: preorder(100)</h3>
+                            <span class="bg-blue-200 text-blue-800 text-xs font-bold px-2 py-1 rounded">Resume</span>
+                        </div>
+                        <p class="text-sm text-slate-700 mb-2">The entire left sub-tree is done! Frame 1 was paused at line 4. It now moves to line 5.</p>
+                        <ul class="list-none space-y-1 text-slate-700 code-font text-sm">
+                            <li class="font-bold text-blue-600">5. preorder(100->right) -> Calls preorder(250)</li>
+                        </ul>
+
+                        <!-- Right sub-tree rapid execution -->
+                        <div class="mt-4 bg-white p-3 rounded border border-slate-200 ml-4 shadow-sm space-y-3">
+                            <div>
+                                <p class="text-sm font-bold text-indigo-800 mb-1">Call: preorder(250)</p>
+                                <p class="text-sm code-font text-green-600 font-bold bg-green-50 p-1 inline-block">3. printf -> OUTPUT: 10</p>
+                                <p class="text-xs text-slate-500 mt-1">Line 4 is left(0). Returns. Line 5 is right(010).</p>
+                            </div>
+                            <div class="border-l-2 border-indigo-200 pl-3">
+                                <p class="text-sm font-bold text-indigo-800 mb-1">Call: preorder(010)</p>
+                                <p class="text-sm code-font text-green-600 font-bold bg-green-50 p-1 inline-block">3. printf -> OUTPUT: 1</p>
+                                <p class="text-xs text-slate-500 mt-1">Left and Right are 0. Frame destroyed.</p>
+                            </div>
+                        </div>
+
+                        <div class="mt-3 bg-indigo-600 text-white text-xs font-bold px-3 py-2 rounded inline-block shadow">Frame 1 Destroyed. Recursion Complete!</div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Final Output Check -->
+            <div class="mt-10 bg-slate-900 text-white p-6 rounded-xl text-center shadow-lg">
+                <h3 class="text-slate-400 font-bold uppercase tracking-wider text-sm mb-2">Final Console Output</h3>
+                <p class="code-font text-2xl text-green-400 font-bold tracking-widest">4, 5, 7, 8, 10, 1</p>
+                <p class="text-slate-300 mt-2 text-sm">(Matches our expected Preorder formula!)</p>
+            </div>
+        </section>
+
+
+        <!-- SECTION 5: Inorder & Postorder -->
+        <section class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-2xl font-bold mb-6 text-indigo-600 border-b pb-2">5. Coding Inorder & Postorder</h2>
+            <p class="text-lg mb-6 leading-relaxed">
+                Because we understand the recursive stack, changing the traversal order is incredibly simple. All we do is move the <code>printf</code> statement to match the formula.
+            </p>
+
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Inorder Code -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                    <div class="bg-slate-100 p-3 border-b border-slate-200">
+                        <h3 class="font-bold text-slate-800">Inorder <span class="text-slate-500 font-normal text-sm ml-2">(Left → Root → Right)</span></h3>
+                    </div>
+                    <div class="bg-slate-900 text-slate-100 p-4 overflow-x-auto h-full">
+<pre class="code-font text-sm leading-loose"><span class="text-blue-400">void</span> <span class="text-yellow-300">inorder</span>(<span class="text-blue-400">struct</span> node *root) {
+  <span class="text-pink-400">if</span> (root == <span class="text-purple-300">0</span>) <span class="text-pink-400">return</span>; 
+
+  <span class="text-yellow-300">inorder</span>(root->left);
+
+  <span class="text-slate-400">// Root is printed in the middle</span>
+  <span class="bg-indigo-900 px-1 rounded">printf(<span class="text-green-300">"%d, "</span>, root->data);</span>
+    
+  <span class="text-yellow-300">inorder</span>(root->right);
+}</pre>
+                    </div>
+                </div>
+
+                <!-- Postorder Code -->
+                <div class="border border-slate-200 rounded-xl overflow-hidden">
+                    <div class="bg-slate-100 p-3 border-b border-slate-200">
+                        <h3 class="font-bold text-slate-800">Postorder <span class="text-slate-500 font-normal text-sm ml-2">(Left → Right → Root)</span></h3>
+                    </div>
+                    <div class="bg-slate-900 text-slate-100 p-4 overflow-x-auto h-full">
+<pre class="code-font text-sm leading-loose"><span class="text-blue-400">void</span> <span class="text-yellow-300">postorder</span>(<span class="text-blue-400">struct</span> node *root) {
+  <span class="text-pink-400">if</span> (root == <span class="text-purple-300">0</span>) <span class="text-pink-400">return</span>; 
+
+  <span class="text-yellow-300">postorder</span>(root->left);
+  <span class="text-yellow-300">postorder</span>(root->right);
+
+  <span class="text-slate-400">// Root is printed at the end</span>
+  <span class="bg-indigo-900 px-1 rounded">printf(<span class="text-green-300">"%d, "</span>, root->data);</span>
+}</pre>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-8 text-center text-slate-500 italic">
+                End of Lesson. Next up: Binary Search Trees.
+            </div>
+        </section>
+
+    </main>
+
+</body>
+</html>
