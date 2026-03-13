@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doubly Circular Linked List - Study Feed</title>
+    <style>
+        :root {
+            --primary: #2A5C82;
+            --secondary: #5CA4D4;
+            --accent: #FF6B6B;
+            --bg-color: #F0F4F8;
+            --card-bg: #FFFFFF;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --code-bg: #1E1E1E;
+            --code-text: #D4D4D4;
+            --keyword: #569CD6;
+            --string: #CE9178;
+            --comment: #6A9955;
+            --audio-note-bg: #FFF3CD;
+            --audio-note-border: #FFE69C;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Top Sticky Header */
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 1rem 2rem;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 0.9rem;
+            opacity: 0.8;
+        }
+
+        /* Vertical Feed Container */
+        .feed-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Individual Feed Cards */
+        .feed-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            padding: 2rem;
+            position: relative;
+            border-top: 4px solid var(--secondary);
+        }
+
+        .feed-card h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            font-size: 1.4rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feed-card p {
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+
+        /* Instructor Audio Notes */
+        .audio-note {
+            background-color: var(--audio-note-bg);
+            border-left: 4px solid var(--accent);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+            font-size: 0.95rem;
+        }
+
+        .audio-note strong {
+            display: block;
+            color: #856404;
+            margin-bottom: 0.5rem;
+            font-size: 1rem;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            margin: 1rem 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .kw { color: var(--keyword); font-weight: bold; }
+        .str { color: var(--string); }
+        .cmt { color: var(--comment); font-style: italic; }
+        .hl { background-color: rgba(255, 255, 0, 0.2); display: block; } /* Highlight line */
+
+        /* Visualizations */
+        .visualization-box {
+            background: #FAFAFA;
+            border: 2px dashed #CCC;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: auto;
+        }
+
+        /* Node Styling */
+        .list-container {
+            display: flex;
+            align-items: center;
+            gap: 2rem;
+            position: relative;
+            margin-top: 2rem;
+        }
+
+        .node-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .node-address {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: #eee;
+            padding: 2px 6px;
+            border-radius: 4px;
+        }
+
+        .node {
+            display: flex;
+            border: 2px solid var(--primary);
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .node-part {
+            padding: 10px 15px;
+            text-align: center;
+            font-size: 0.9rem;
+            font-family: monospace;
+        }
+
+        .prev, .next { background-color: #E1F0FA; color: var(--primary); }
+        .data { background-color: white; border-left: 2px solid var(--primary); border-right: 2px solid var(--primary); font-weight: bold; font-size: 1.1rem; }
+
+        .pointer-tag {
+            background-color: var(--accent);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+            text-transform: uppercase;
+        }
+
+        /* Circular Links CSS Drawing */
+        .circular-links {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+        }
+        
+        .top-link {
+            position: absolute;
+            top: -30px;
+            left: 40px;
+            right: 40px;
+            height: 30px;
+            border-top: 2px dashed var(--accent);
+            border-left: 2px dashed var(--accent);
+            border-right: 2px dashed var(--accent);
+            border-radius: 10px 10px 0 0;
+        }
+        .top-link::after {
+            content: "◀ prev (circular)";
+            position: absolute;
+            top: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: var(--accent);
+            background: #FAFAFA;
+            padding: 0 5px;
+        }
+
+        .bottom-link {
+            position: absolute;
+            bottom: -30px;
+            left: 40px;
+            right: 40px;
+            height: 30px;
+            border-bottom: 2px dashed var(--primary);
+            border-left: 2px dashed var(--primary);
+            border-right: 2px dashed var(--primary);
+            border-radius: 0 0 10px 10px;
+        }
+        .bottom-link::after {
+            content: "next (circular) ▶";
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 0.75rem;
+            color: var(--primary);
+            background: #FAFAFA;
+            padding: 0 5px;
+        }
+
+        /* Checklists */
+        .checklist {
+            list-style: none;
+            margin: 1rem 0;
+        }
+        .checklist li {
+            padding: 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 1px solid #eee;
+        }
+        .checklist li::before {
+            content: "✅";
+            font-size: 1.2rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Doubly Circular Linked List (DCLL)</h1>
+        <p>Continuous Study Feed • Code & Visualizations • Scroll to Learn</p>
+    </header>
+
+    <main class="feed-container">
+
+        <!-- Feed Item 1: Concept Overview -->
+        <article class="feed-card">
+            <h2>🧠 1. The Core Concept</h2>
+            <p>Before writing a single line of code, we must understand the two defining rules of a Doubly Circular Linked List.</p>
+            <ul class="checklist">
+                <li><strong>Doubly:</strong> Every node remembers who is behind it (<code>prev</code>) and who is in front of it (<code>next</code>).</li>
+                <li><strong>Circular:</strong> There are <strong>no NULL pointers</strong>. The list loops infinitely. The last node's <code>next</code> points to the first node, and the first node's <code>prev</code> points to the last node.</li>
+            </ul>
+
+            <div class="visualization-box">
+                <p style="margin-bottom: 15px; color: var(--text-muted); font-weight: bold;">Final Target Structure (3 Nodes)</p>
+                <div class="list-container">
+                    <div class="circular-links">
+                        <div class="top-link"></div>
+                        <div class="bottom-link"></div>
+                    </div>
+                    
+                    <div class="node-wrapper">
+                        <div class="pointer-tag">Head</div>
+                        <div class="node">
+                            <div class="node-part prev">600</div>
+                            <div class="node-part data">7</div>
+                            <div class="node-part next">300</div>
+                        </div>
+                        <div class="node-address">Node 1 (Addr: 500)</div>
+                    </div>
+
+                    <div class="node-wrapper" style="margin-top: 25px;">
+                        <div class="node">
+                            <div class="node-part prev">500</div>
+                            <div class="node-part data">6</div>
+                            <div class="node-part next">600</div>
+                        </div>
+                        <div class="node-address">Node 2 (Addr: 300)</div>
+                    </div>
+
+                    <div class="node-wrapper">
+                        <div class="pointer-tag" style="background-color: var(--secondary);">Tail</div>
+                        <div class="node">
+                            <div class="node-part prev">300</div>
+                            <div class="node-part data">-1</div>
+                            <div class="node-part next">500</div>
+                        </div>
+                        <div class="node-address">Node 3 (Addr: 600)</div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Feed Item 2: Defining Structure -->
+        <article class="feed-card">
+            <h2>🏗️ 2. Defining the Node Structure</h2>
+            <p>We must tell the C compiler exactly what one of these "blocks" looks like. We do this globally, outside of our functions.</p>
+
+<pre>
+<span class="kw">struct</span> node {
+    <span class="kw">int</span> data;
+    <span class="kw">struct</span> node *next;
+    <span class="kw">struct</span> node *prev;
+};
+
+<span class="cmt">// Global pointers to keep track of our list</span>
+<span class="kw">struct</span> node *head, *tail; 
+</pre>
+
+            <div class="audio-note">
+                <strong>🎙️ Instructor Audio Note: Memory Allocation</strong>
+                "How much memory does this node take? The <code>int data</code> takes 4 bytes. The two pointers take 4 bytes each (on a 32-bit compiler). So, one complete node is a <strong>12-byte block</strong> of memory."
+            </div>
+        </article>
+
+        <!-- Feed Item 3: Creating list & 1st node -->
+        <article class="feed-card">
+            <h2>✨ 3. Creating the List (The First Node)</h2>
+            <p>When the list is completely empty (<code>head == 0</code>), creating the first node requires special logic. Because the list is circular, a single node must point to itself.</p>
+
+<pre>
+<span class="kw">void</span> createDCLL() {
+    <span class="kw">struct</span> node *newnode; 
+    head = 0; <span class="cmt">// Initialize head to NULL</span>
+    <span class="kw">int</span> choice = 1;
+
+    <span class="kw">while</span>(choice == 1) {
+        <span class="cmt">// 1. Allocate memory dynamically & Typecast</span>
+        newnode = (<span class="kw">struct</span> node*)malloc(<span class="kw">sizeof</span>(<span class="kw">struct</span> node));
+        
+        printf(<span class="str">"Enter data: "</span>);
+        scanf(<span class="str">"%d"</span>, &newnode->data);
+
+        <span class="hl"><span class="cmt">        // 2. CHECK IF LIST IS EMPTY</span></span>
+        <span class="kw">if</span>(head == 0) {
+            head = tail = newnode;
+            
+            <span class="cmt">// Node points to ITSELF to maintain circle</span>
+            head->next = head; 
+            head->prev = head; 
+        }
+</pre>
+
+            <div class="audio-note">
+                <strong>🎙️ Instructor Audio Note: Typecasting Malloc</strong>
+                "<code>malloc</code> allocates the memory and returns a generic <code>void</code> pointer. We must typecast it using <code>(struct node*)</code> so the compiler knows how to divide those 12 bytes into our data, next, and prev compartments."
+            </div>
+
+            <div class="visualization-box">
+                <p style="margin-bottom: 15px; color: var(--text-muted); font-weight: bold;">State: List has exactly 1 node</p>
+                <div class="list-container">
+                    <div class="circular-links">
+                        <div class="top-link"></div>
+                        <div class="bottom-link"></div>
+                    </div>
+                    <div class="node-wrapper">
+                        <div style="display: flex; gap: 5px;">
+                            <div class="pointer-tag">Head</div>
+                            <div class="pointer-tag" style="background-color: var(--secondary);">Tail</div>
+                        </div>
+                        <div class="node">
+                            <div class="node-part prev">500</div>
+                            <div class="node-part data">7</div>
+                            <div class="node-part next">500</div>
+                        </div>
+                        <div class="node-address">Node 1 (Addr: 500)</div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Feed Item 4: Inserting more nodes -->
+        <article class="feed-card">
+            <h2>🔗 4. Inserting Subsequent Nodes</h2>
+            <p>If <code>head</code> is not 0, nodes already exist. We must attach the <code>newnode</code> to the end of the list and carefully rewire the circular links. We must make <strong>5 pointer updates</strong>.</p>
+
+<pre>
+        <span class="kw">else</span> {
+            <span class="cmt">// 1. Old tail's next points to new node</span>
+            tail->next = newnode; 
+            
+            <span class="cmt">// 2. New node's prev points back to old tail</span>
+            newnode->prev = tail; 
+            
+            <span class="cmt">// 3. New node's next wraps around to the first node</span>
+            newnode->next = head; 
+            
+            <span class="cmt">// 4. First node's prev wraps around to the new node</span>
+            head->prev = newnode; 
+            
+            <span class="cmt">// 5. Update tail to officially be the new node</span>
+            tail = newnode; 
+        }
+        
+        printf(<span class="str">"Continue? (1/0): "</span>);
+        scanf(<span class="str">"%d"</span>, &choice);
+    } <span class="cmt">// End While</span>
+} <span class="cmt">// End Function</span>
+</pre>
+
+            <div class="audio-note">
+                <strong>🎙️ Instructor Audio Note: Why do we use a tail pointer?</strong>
+                "Why use <code>tail</code> to insert? Because <code>head</code> must <em>always</em> point to the first node. If we move <code>head</code>, we lose our starting point! Keeping a <code>tail</code> pointer gives us direct, instant access to the last node. This makes insertion an O(1) operation."
+            </div>
+        </article>
+
+        <!-- Feed Item 5: Traversal and Display -->
+        <article class="feed-card">
+            <h2>🖥️ 5. Displaying the List (Traversal)</h2>
+            <p>Traversing a circular list is a trap for beginners. Because there is no <code>NULL</code> pointer, an standard <code>while(temp != NULL)</code> loop will run infinitely!</p>
+
+<pre>
+<span class="kw">void</span> display() {
+    <span class="kw">struct</span> node *temp;
+    temp = head; <span class="cmt">// Start at the beginning</span>
+
+    <span class="kw">if</span>(head == 0) {
+        printf(<span class="str">"List is empty"</span>);
+    } 
+    <span class="kw">else</span> {
+        <span class="hl"><span class="cmt">        // 🛑 Method 1: The Standard While Loop</span></span>
+        <span class="kw">while</span>(temp != tail) {
+            printf(<span class="str">"%d "</span>, temp->data);
+            temp = temp->next;
+        }
+        <span class="cmt">// We must print the last node outside the loop!</span>
+        printf(<span class="str">"%d"</span>, temp->data); 
+    }
+}
+</pre>
+
+            <div class="audio-note">
+                <strong>🎙️ Instructor Audio Note: A Cleaner Alternative</strong>
+                "The code above is a bit clunky because we have to manually print the last node outside the loop. If you want cleaner code, use a <strong>do-while loop</strong> instead! It guarantees the loop runs at least once, and stops perfectly when we loop back to the head."
+            </div>
+
+<pre>
+        <span class="hl"><span class="cmt">        // 🟢 Method 2: The Pro-Tip Do-While Loop</span></span>
+        <span class="kw">do</span> {
+            printf(<span class="str">"%d "</span>, temp->data);
+            temp = temp->next;
+        } <span class="kw">while</span> (temp != head);
+</pre>
+        </article>
+
+        <!-- Feed Item 6: Summary Checklist -->
+        <article class="feed-card" style="margin-bottom: 4rem;">
+            <h2>✅ Summary Cheat Sheet</h2>
+            <p>Review these golden rules before your exam:</p>
+            <ul class="checklist">
+                <li>A Doubly Circular Linked List has <strong>NO NULL pointers</strong> anywhere.</li>
+                <li><code>tail->next</code> will <strong>always</strong> equal <code>head</code>.</li>
+                <li><code>head->prev</code> will <strong>always</strong> equal <code>tail</code>.</li>
+                <li>When inserting the very first node, <code>head</code>, <code>tail</code>, <code>next</code>, and <code>prev</code> all point to that exact same single node.</li>
+            </ul>
+        </article>
+
+    </main>
+
+</body>
+</html>
