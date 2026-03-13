@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Expression Trees from Postfix | Study Notes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+        .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar for a seamless feed experience */
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+        
+        /* Tree Visualization Styling */
+        .tree-container {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1.5rem;
+            overflow-x: auto;
+            line-height: 1.2;
+            box-shadow: inset 0 2px 4px 0 rgba(0, 0, 0, 0.06);
+        }
+        
+        /* Stack Visualization Styling */
+        .stack-box {
+            border: 3px solid #475569;
+            border-top: none;
+            border-radius: 0 0 8px 8px;
+            width: 120px;
+            min-height: 150px;
+            display: flex;
+            flex-direction: column-reverse; /* Bottom to top */
+            padding: 4px;
+            background: white;
+        }
+        .stack-item {
+            background: #3b82f6;
+            color: white;
+            text-align: center;
+            padding: 8px;
+            margin-top: 4px;
+            border-radius: 4px;
+            font-weight: 600;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+        }
+        .stack-item.subtree {
+            background: #10b981; /* Green for subtree pointers */
+        }
+    </style>
+</head>
+<body class="antialiased pb-20">
+
+    <!-- Header -->
+    <header class="bg-white shadow-sm sticky top-0 z-50">
+        <div class="max-w-4xl mx-auto px-4 py-4 md:py-6 flex flex-col md:flex-row items-center justify-between">
+            <div>
+                <h1 class="text-2xl md:text-3xl font-bold text-gray-900">Binary Expression Trees</h1>
+                <p class="text-blue-600 font-medium mt-1">Constructing from Postfix Expressions</p>
+            </div>
+            <div class="mt-4 md:mt-0 text-sm text-gray-500 bg-gray-100 px-4 py-2 rounded-full font-medium">
+                Scroll to learn ↓
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Vertical Feed -->
+    <main class="max-w-4xl mx-auto px-4 mt-8 space-y-8">
+
+        <!-- Feed Item 1: Introduction -->
+        <article class="bg-white rounded-xl shadow-sm p-6 md:p-8 border border-gray-100">
+            <h2 class="text-xl font-bold mb-4 flex items-center text-gray-800">
+                <span class="bg-blue-100 text-blue-700 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">1</span>
+                Why Postfix? (The Context)
+            </h2>
+            <div class="prose max-w-none text-gray-600 space-y-4">
+                <p>In programming, constructing an expression tree from an <strong>Infix expression</strong> (e.g., <code>a + b * c</code>) is highly complex. The computer has to account for mathematical rules like <strong>BODMAS/PEMDAS (Operator Precedence)</strong> and <strong>Associativity</strong>.</p>
+                <p><strong>The Solution:</strong> Convert the Infix expression to a <strong>Postfix expression</strong> first. Postfix natively ignores precedence rules and parentheses, allowing us to build the tree purely by reading left-to-right using a Stack data structure.</p>
+                <div class="bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg mt-4 text-blue-800">
+                    <strong>Rule of Thumb for Binary Expression Trees:</strong><br>
+                    • <strong>Leaf Nodes</strong> (bottom) are always <strong>Operands</strong> (variables like a, b, c).<br>
+                    • <strong>Internal Nodes</strong> (branches) are always <strong>Operators</strong> (+, -, *, /).
+                </div>
+            </div>
+        </article>
+
+        <!-- Feed Item 2: The Algorithm -->
+        <article class="bg-white rounded-xl shadow-sm p-6 md:p-8 border border-gray-100">
+            <h2 class="text-xl font-bold mb-4 flex items-center text-gray-800">
+                <span class="bg-blue-100 text-blue-700 w-8 h-8 rounded-full flex items-center justify-center mr-3 text-sm">2</span>
+                The Algorithm & Golden Rules
+            </h2>
+            <p class="text-gray-600 mb-6">We read the Postfix string strictly from <strong>Left to Right</strong>. We use a <strong>Stack</strong> to temporarily hold <em>pointers</em> to the tree nodes we create.</p>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <div class="bg-gray-50 p-6 rounded-lg border border-gray-200">
+                    <h3 class="font-bold text-gray-800 mb-2">Rule 1: If it's an OPERAND (a, b, c...)</h3>
+                    <ul class="list-disc pl-5 text-gray-600 space-y-2">
+                        <li>Create a new tree node containing that operand.</li>
+                        <li><strong>Push</strong> the pointer of this new node into the stack.</li>
+                    </ul>
+                </div>
+                <div class="bg-red-50 p-6 rounded-lg border border-red-100">
+                    <h3 class="font-bold text-red-800 mb-2">Rule 2: If it's an OPERATOR (+, -, *, /)</h3>
+                    <ul class="list-disc pl-5 text-red-700 space-y-2">
+                        <li><strong>Pop</strong> two pointers from the stack.</li>
+                        <li class="font-bold bg-white p-2 rounded text-red-600 shadow-sm">⚠️ CRITICAL: Top popped item = RIGHT child. Next popped item = LEFT child.</li>
+                        <li>Create a node for the operator. Attach the left and right children.</li>
+                        <li><strong>Push</strong> the pointer of this new Subtree back into the stack.</li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- Feed Item 3: Main Example Introduction -->
+        <article class="bg-gray-800 rounded-xl shadow-lg p-6 md:p-8 text-white">
+            <h2 class="text-xl font-bold mb-4">The Whiteboard Example</h2>
+            <p class="text-gray-300 mb-4">The instructor writes the following expressions. We will only use the Postfix version.</p>
+            <div class="bg-gray-900 p-4 rounded-lg font-mono text-sm md:text-base space-y-2">
+                <div><span class="text-gray-500">Infix:</span>   a * b / c + e / f * g + k - x * y</div>
+                <div><span class="text-green-400">Postfix:</span> a b * c / e f / g * + k + x y * -</div>
+            </div>
+        </article>
+
+        <!-- Feed Item 4: Step-by-Step Visualization (Phase 1) -->
+        <article class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gray-50 p-4 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-800">Phase 1: Processing <code class="text-blue-600">a b * c /</code></h2>
+            </div>
+            <div class="p-6 md:p-8 flex flex-col md:flex-row gap-8">
+                <div class="flex-1 space-y-4">
+                    <p class="text-gray-600"><strong>1. Scan <code>a</code>:</strong> Operand. Create node, push to stack.</p>
+                    <p class="text-gray-600"><strong>2. Scan <code>b</code>:</strong> Operand. Create node, push to stack.</p>
+                    <p class="text-gray-600"><strong>3. Scan <code>*</code>:</strong> Operator. Pop <code>b</code> (Right), Pop <code>a</code> (Left). Create <code>*</code>, attach, push subtree.</p>
+                    <p class="text-gray-600"><strong>4. Scan <code>c</code>:</strong> Operand. Create node, push.</p>
+                    <p class="text-gray-600"><strong>5. Scan <code>/</code>:</strong> Operator. Pop <code>c</code> (Right), Pop <code>*</code> subtree (Left). Attach, push to stack.</p>
+                </div>
+                
+                <div class="flex items-end gap-6 border-l-2 border-gray-100 pl-6">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 mb-2 text-center uppercase tracking-wider">Stack</p>
+                        <div class="stack-box">
+                            <div class="stack-item subtree" title="Pointer to the root (/) of the tree">Ptr: [/]</div>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 mb-2 text-center uppercase tracking-wider">Subtree Created</p>
+                        <pre class="tree-container code-font text-sm">
+      [/]
+     /   \
+   [*]   [c]
+   / \
+ [a] [b]
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Feed Item 5: Step-by-Step Visualization (Phase 2) -->
+        <article class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gray-50 p-4 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-800">Phase 2: Processing <code class="text-blue-600">e f / g *</code></h2>
+            </div>
+            <div class="p-6 md:p-8 flex flex-col md:flex-row gap-8">
+                <div class="flex-1 space-y-4">
+                    <p class="text-gray-600"><strong>6. Scan <code>e</code>:</strong> Push <code>e</code>.</p>
+                    <p class="text-gray-600"><strong>7. Scan <code>f</code>:</strong> Push <code>f</code>.</p>
+                    <p class="text-gray-600"><strong>8. Scan <code>/</code>:</strong> Pop <code>f</code> (Right), Pop <code>e</code> (Left). Create <code>/</code>, push subtree.</p>
+                    <p class="text-gray-600"><strong>9. Scan <code>g</code>:</strong> Push <code>g</code>.</p>
+                    <p class="text-gray-600"><strong>10. Scan <code>*</code>:</strong> Pop <code>g</code> (Right), Pop <code>/</code> subtree (Left). Create <code>*</code>, push subtree.</p>
+                </div>
+                
+                <div class="flex items-end gap-6 border-l-2 border-gray-100 pl-6">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 mb-2 text-center uppercase tracking-wider">Stack (2 Items)</p>
+                        <div class="stack-box">
+                            <div class="stack-item subtree">Ptr: [*]</div>
+                            <div class="stack-item subtree bg-gray-400">Ptr: [/]</div>
+                        </div>
+                        <p class="text-xs text-gray-400 mt-2 w-24 text-center">Stack holds pointers to both disconnected subtrees.</p>
+                    </div>
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 mb-2 text-center uppercase tracking-wider">New Subtree Created</p>
+                        <pre class="tree-container code-font text-sm">
+      [*]
+     /   \
+   [/]   [g]
+   / \
+ [e] [f]
+                        </pre>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Feed Item 6: Step-by-Step Visualization (Phase 3) -->
+        <article class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gray-50 p-4 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-800">Phase 3: Processing <code class="text-blue-600">+ k +</code> (Merging Trees)</h2>
+            </div>
+            <div class="p-6 md:p-8">
+                <div class="space-y-4 mb-8">
+                    <p class="text-gray-600"><strong>11. Scan <code>+</code>:</strong> Operator! Pop Phase 2 tree (Right), Pop Phase 1 tree (Left). Join them with <code>+</code> and push massive tree pointer back to stack.</p>
+                    <p class="text-gray-600"><strong>12. Scan <code>k</code>:</strong> Push <code>k</code>.</p>
+                    <p class="text-gray-600"><strong>13. Scan <code>+</code>:</strong> Pop <code>k</code> (Right), Pop massive tree (Left). Join with new <code>+</code> at the root.</p>
+                </div>
+                
+                <div class="flex flex-col items-center border-t-2 border-dashed border-gray-200 pt-6">
+                    <p class="text-xs font-bold text-gray-400 mb-4 uppercase tracking-wider">Current Combined Tree</p>
+                    <pre class="tree-container code-font text-sm md:text-base w-full overflow-x-auto text-center">
+            [+]
+           /   \
+         [+]   [k]
+        /   \
+     [/]     [*]
+    /  \     /  \
+  [*]  [c] [/]  [g]
+  / \      / \
+[a] [b]  [e] [f]
+                    </pre>
+                </div>
+            </div>
+        </article>
+
+        <!-- Feed Item 7: Step-by-Step Visualization (Phase 4) -->
+        <article class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="bg-gray-50 p-4 border-b border-gray-200">
+                <h2 class="text-lg font-bold text-gray-800">Phase 4: Processing <code class="text-blue-600">x y * -</code> (The Finale)</h2>
+            </div>
+            <div class="p-6 md:p-8 flex flex-col md:flex-row gap-8">
+                <div class="flex-1 space-y-4">
+                    <p class="text-gray-600"><strong>14. Scan <code>x</code>:</strong> Push <code>x</code>.</p>
+                    <p class="text-gray-600"><strong>15. Scan <code>y</code>:</strong> Push <code>y</code>.</p>
+                    <p class="text-gray-600"><strong>16. Scan <code>*</code>:</strong> Pop <code>y</code> (R), Pop <code>x</code> (L). Create <code>*</code> tree.</p>
+                    <p class="text-gray-600"><strong>17. Scan <code>-</code>:</strong> Final Operator! Pop <code>*</code> subtree (Right), Pop the massive combined tree (Left). Attach them to a new <code>-</code> root node.</p>
+                </div>
+                
+                <div class="flex items-end justify-center border-l-2 border-gray-100 pl-6 min-w-[150px]">
+                    <div>
+                        <p class="text-xs font-bold text-gray-400 mb-2 text-center uppercase tracking-wider">Final Stack</p>
+                        <div class="stack-box">
+                            <div class="stack-item subtree" title="Pointer to the final root node (-)">Ptr: [-]</div>
+                        </div>
+                        <p class="text-xs text-green-600 font-bold mt-2 text-center">1 item remaining. Success!</p>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Feed Item 8: The Final Output -->
+        <article class="bg-gray-900 rounded-xl shadow-2xl p-6 md:p-8 text-white mb-20 border border-gray-700">
+            <h2 class="text-2xl font-bold mb-2 flex items-center">
+                🎉 Final Binary Expression Tree
+            </h2>
+            <p class="text-gray-400 mb-8">We have reached the end of the postfix string. The single pointer left in the stack is the Root Node of our complete tree.</p>
+            
+            <div class="w-full flex justify-center">
+                <pre class="text-green-400 code-font text-sm md:text-base leading-tight overflow-x-auto pb-4">
+                      [-]
+                     /   \
+                  [+]     [*]
+                 /   \    / \
+               [+]   [k] [x][y]
+              /   \
+           [/]     [*]
+          /  \     /  \
+        [*]  [c] [/]  [g]
+        / \      / \
+      [a] [b]  [e] [f]
+                </pre>
+            </div>
+            <div class="mt-8 text-center text-gray-500 text-sm">
+                End of lesson. Notes generated from the whiteboard presentation.
+            </div>
+        </article>
+
+    </main>
+
+</body>
+</html>
