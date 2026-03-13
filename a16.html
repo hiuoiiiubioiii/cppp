@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doubly Linked List in C - Study Notes</title>
+    <style>
+        :root {
+            --bg-color: #f9fafb;
+            --text-color: #1f2937;
+            --card-bg: #ffffff;
+            --primary: #3b82f6;
+            --primary-light: #eff6ff;
+            --accent: #10b981;
+            --warning: #ef4444;
+            --warning-light: #fef2f2;
+            --code-bg: #1e293b;
+            --border: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+            padding-bottom: 4rem;
+        }
+
+        header {
+            text-align: center;
+            padding: 2rem 0;
+            border-bottom: 2px solid var(--border);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: #6b7280;
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+        }
+
+        .card h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin: 1.5rem 0 0.5rem 0;
+            color: #374151;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            margin: 1rem 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        code.inline {
+            background-color: #e2e8f0;
+            color: #b91c1c;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.9em;
+        }
+
+        /* Callouts */
+        .instructor-warning {
+            background-color: var(--warning-light);
+            border-left: 4px solid var(--warning);
+            padding: 1rem 1.5rem;
+            margin: 1.5rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .instructor-warning strong {
+            color: var(--warning);
+        }
+
+        /* Visualizations */
+        .visualization-box {
+            background-color: var(--bg-color);
+            border: 1px dashed var(--border);
+            border-radius: 8px;
+            padding: 2rem 1rem;
+            margin: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: auto;
+        }
+
+        .vis-title {
+            font-weight: bold;
+            color: #6b7280;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+        }
+
+        /* Node Styling */
+        .list-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .node-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .node {
+            display: flex;
+            border: 2px solid #1e293b;
+            border-radius: 6px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 2px 2px 0px #1e293b;
+        }
+
+        .node-part {
+            padding: 12px 15px;
+            text-align: center;
+            border-right: 2px solid #1e293b;
+            font-family: monospace;
+            font-size: 1rem;
+            min-width: 50px;
+        }
+
+        .node-part:last-child {
+            border-right: none;
+        }
+
+        .ptr { background-color: #f1f5f9; color: #475569; }
+        .data { background-color: #d1fae5; color: #065f46; font-weight: bold; font-size: 1.2rem; }
+        .null { color: var(--warning); font-weight: bold; }
+        
+        .address {
+            background: #1e293b;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-size: 0.8rem;
+        }
+
+        /* Pointers (Head/Temp) */
+        .global-ptr {
+            background: var(--primary);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+            margin-bottom: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .global-ptr::after {
+            content: '↓';
+            position: absolute;
+            bottom: -20px;
+            color: var(--primary);
+            font-size: 1.5rem;
+        }
+
+        .temp-ptr {
+            background: #8b5cf6;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+            margin-top: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+        .temp-ptr::before {
+            content: '↑';
+            position: absolute;
+            top: -20px;
+            color: #8b5cf6;
+            font-size: 1.5rem;
+        }
+
+        /* Links/Arrows */
+        .link-arrows {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #64748b;
+            font-weight: bold;
+            font-size: 1.2rem;
+            line-height: 0.8;
+            padding: 0 5px;
+        }
+
+        .code-annotation {
+            color: #10b981;
+            font-style: italic;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <header>
+            <h1>Doubly Linked List in C</h1>
+            <p>Complete In-Depth Breakdown & Visualizations</p>
+        </header>
+
+        <!-- Topic 1: Node Structure -->
+        <article class="card">
+            <h2>1. Defining the Node Structure</h2>
+            <p>Before writing functions, we must define what a "Node" looks like in our computer's memory. Unlike a singly linked list, a Doubly Linked List node has three distinct parts.</p>
+            
+            <div class="visualization-box">
+                <div class="vis-title">Blueprint of a Node</div>
+                <div class="node">
+                    <div class="node-part ptr">prev</div>
+                    <div class="node-part data">data</div>
+                    <div class="node-part ptr">next</div>
+                </div>
+            </div>
+
+            <p>We use a <code>struct</code> because a node contains different types of data grouped together. We also declare a global pointer called <code>head</code>.</p>
+
+<pre><code>struct node {
+    int data;               <span class="code-annotation">// Stores the actual value</span>
+    struct node *next;      <span class="code-annotation">// Pointer to the next node</span>
+    struct node *prev;      <span class="code-annotation">// Pointer to the previous node</span>
+};
+
+struct node *head = 0;      <span class="code-annotation">// Global pointer, initially NULL</span></code></pre>
+            
+            <div class="instructor-warning">
+                <strong>Instructor Note:</strong> <code>head</code> is declared globally (outside of any function) because we need both our <code>create()</code> function and our <code>display()</code> function to easily access the starting point of our list.
+            </div>
+        </article>
+
+        <!-- Topic 2: Creating the Node -->
+        <article class="card">
+            <h2>2. Allocating Memory & Taking Input</h2>
+            <p>To create a node, we must ask the computer for memory while the program is running using <code>malloc()</code>.</p>
+
+<pre><code>void create() {
+    struct node *newnode; 
+    
+    <span class="code-annotation">// 1. Allocate memory dynamically</span>
+    newnode = (struct node *)malloc(sizeof(struct node));
+
+    <span class="code-annotation">// 2. Populate the node</span>
+    printf("Enter data: ");
+    scanf("%d", &newnode->data);
+    newnode->prev = 0;
+    newnode->next = 0;</code></pre>
+
+            <div class="visualization-box">
+                <div class="vis-title">Memory State: After User enters '7'</div>
+                <div class="node-container">
+                    <div class="node">
+                        <div class="node-part ptr null">0</div>
+                        <div class="node-part data">7</div>
+                        <div class="node-part ptr null">0</div>
+                    </div>
+                    <div class="address">Address: 250</div>
+                </div>
+            </div>
+            <p>At this exact moment, the new node is floating alone in memory. It isn't connected to anything yet, so its <code>prev</code> and <code>next</code> pointers must point to <code>0</code> (NULL).</p>
+        </article>
+
+        <!-- Topic 3: Inserting First Node -->
+        <article class="card">
+            <h2>3. Case 1: Inserting the First Node</h2>
+            <p>How do we know if this is the very first node being created? The global <code>head</code> pointer will be <code>0</code>.</p>
+
+<pre><code>    if (head == 0) {
+        head = temp = newnode;
+    }</code></pre>
+
+            <div class="visualization-box">
+                <div class="vis-title">Memory State: First Node Inserted</div>
+                <div class="list-wrapper">
+                    <div class="node-container">
+                        <div class="global-ptr">head (250)</div>
+                        <div class="node">
+                            <div class="node-part ptr null">0</div>
+                            <div class="node-part data">7</div>
+                            <div class="node-part ptr null">0</div>
+                        </div>
+                        <div class="address">Address: 250</div>
+                        <div class="temp-ptr">temp (250)</div>
+                    </div>
+                </div>
+            </div>
+
+            <p><strong>Why do we need <code>temp</code>?</strong> <code>head</code> must <em>always</em> stay pointing at the first node. We use <code>temp</code> as a moving pointer to keep track of the <em>last</em> node in the list, so we know where to attach the next new node.</p>
+        </article>
+
+        <!-- Topic 4: Inserting Subsequent Nodes -->
+        <article class="card">
+            <h2>4. Case 2: Adding Subsequent Nodes</h2>
+            <p>What happens when the user wants to add another node (e.g., Data '1')? <code>head</code> is no longer 0, so we move to the <code>else</code> block.</p>
+            <p>We must update <strong>two links</strong> (forward and backward) and then move our <code>temp</code> pointer to the new end of the list.</p>
+
+<pre><code>    else {
+        temp->next = newnode;   <span class="code-annotation">// Link 1: Connect current last node forward</span>
+        newnode->prev = temp;   <span class="code-annotation">// Link 2: Connect new node backward</span>
+        temp = newnode;         <span class="code-annotation">// Move temp to the new end</span>
+    }</code></pre>
+
+            <div class="visualization-box">
+                <div class="vis-title">Memory State: Second Node (Data 1) Added</div>
+                <div class="list-wrapper" style="align-items: flex-start; padding-top: 40px;">
+                    
+                    <!-- Node 1 -->
+                    <div class="node-container">
+                        <div class="global-ptr" style="top: -50px; position: absolute;">head (250)</div>
+                        <div class="node">
+                            <div class="node-part ptr null">0</div>
+                            <div class="node-part data">7</div>
+                            <div class="node-part ptr">200</div>
+                        </div>
+                        <div class="address">Address: 250</div>
+                    </div>
+
+                    <!-- Arrows -->
+                    <div class="link-arrows" style="margin-top: 15px;">
+                        <span>⟶</span>
+                        <span>⟵</span>
+                    </div>
+
+                    <!-- Node 2 -->
+                    <div class="node-container">
+                        <div class="node">
+                            <div class="node-part ptr">250</div>
+                            <div class="node-part data">1</div>
+                            <div class="node-part ptr null">0</div>
+                        </div>
+                        <div class="address">Address: 200</div>
+                        <div class="temp-ptr">temp (200)</div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="instructor-warning">
+                <strong>Instructor Warning:</strong> Do not write <code>head->next = newnode</code> here! While it works for the 2nd node, it fails when you add a 3rd or 4th node because <code>head</code> is stuck at the beginning. This is why we <strong>must</strong> use <code>temp</code> to manage the end of the list.
+            </div>
+
+        </article>
+
+        <!-- Topic 5: Displaying the List -->
+        <article class="card">
+            <h2>5. Displaying the List</h2>
+            <p>Traversing a Doubly Linked List is exactly the same as traversing a Singly Linked List.</p>
+
+<pre><code>void display() {
+    struct node *temp;      
+    temp = head;            <span class="code-annotation">// Start at the beginning</span>
+    
+    while (temp != 0) {             <span class="code-annotation">// Keep going until we hit NULL</span>
+        printf("%d ", temp->data);  
+        temp = temp->next;          <span class="code-annotation">// Hop to the next node</span>
+    }
+}</code></pre>
+            <div class="instructor-warning">
+                <strong>Golden Rule:</strong> <em>Never</em> move the <code>head</code> pointer to traverse the list! If you write <code>head = head->next</code>, you lose the location of the first node, permanently losing your list in memory. Always use a local <code>temp</code> pointer for traveling.
+            </div>
+        </article>
+
+        <!-- Topic 6: The Complete Code -->
+        <article class="card">
+            <h2>6. The Complete C Program</h2>
+            <p>Here is the complete, interactive logic written by the instructor on the whiteboard, compiled into a single copyable program.</p>
+
+<pre><code>#include &lt;stdio.h&gt;
+#include &lt;stdlib.h&gt;
+
+struct node {
+    int data;
+    struct node *next;
+    struct node *prev;
+};
+
+struct node *head = 0;
+
+void create() {
+    struct node *newnode, *temp;
+    int choice = 1;
+    
+    while (choice == 1) { 
+        newnode = (struct node *)malloc(sizeof(struct node));
+        
+        printf("Enter data: ");
+        scanf("%d", &newnode->data);
+        newnode->prev = 0;
+        newnode->next = 0;
+        
+        if (head == 0) {
+            head = temp = newnode; 
+        } 
+        else {
+            temp->next = newnode;  
+            newnode->prev = temp;  
+            temp = newnode;        
+        }
+        
+        printf("Do you want to continue? (1 Yes, 0 No): ");
+        scanf("%d", &choice);
+    }
+}
+
+void display() {
+    struct node *temp;
+    temp = head; 
+    
+    printf("\nThe Doubly Linked List is: ");
+    while (temp != 0) {
+        printf("%d ", temp->data); 
+        temp = temp->next;         
+    }
+    printf("\n");
+}
+
+int main() { 
+    create();
+    display();
+    return 0;
+}</code></pre>
+        </article>
+        
+        <div style="text-align: center; padding: 2rem; color: #64748b;">
+            <p>End of Module • Keep coding! 💻</p>
+        </div>
+
+    </div>
+</body>
+</html>
