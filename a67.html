@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splay Trees - In-Depth Study Notes</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --primary: #3b82f6;
+            --secondary: #10b981;
+            --accent: #ef4444;
+            --whiteboard-bg: #ffffff;
+            --whiteboard-border: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 0 20px;
+        }
+
+        /* Feed Container */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 0;
+        }
+
+        /* Typography */
+        h1 { font-size: 2.5rem; margin-bottom: 10px; color: var(--primary); }
+        h2 { font-size: 1.8rem; margin: 40px 0 20px 0; color: var(--text-main); border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;}
+        h3 { font-size: 1.4rem; margin: 30px 0 15px 0; color: var(--text-main); }
+        p { margin-bottom: 1rem; font-size: 1.05rem; }
+        strong { color: #1e293b; }
+        ul { margin-left: 25px; margin-bottom: 1rem; font-size: 1.05rem; }
+        li { margin-bottom: 8px; }
+
+        /* Whiteboard Element - Captures what the instructor writes */
+        .whiteboard {
+            background-color: var(--whiteboard-bg);
+            border: 2px solid var(--whiteboard-border);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 25px 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            font-family: 'JetBrains Mono', monospace;
+            position: relative;
+        }
+        .whiteboard::before {
+            content: "Whiteboard";
+            position: absolute;
+            top: -12px;
+            left: 20px;
+            background: var(--primary);
+            color: white;
+            font-size: 0.8rem;
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+        }
+        .whiteboard-text {
+            color: #334155;
+            font-size: 1.1rem;
+        }
+        .wb-highlight { color: var(--accent); font-weight: bold; }
+
+        /* Visualizations */
+        .viz-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 30px 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        .tree-stage {
+            flex: 1;
+            min-width: 250px;
+            text-align: center;
+        }
+        .tree-stage h4 {
+            margin-bottom: 15px;
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        .viz-arrow {
+            font-size: 2rem;
+            color: var(--primary);
+            font-weight: bold;
+        }
+        svg {
+            width: 100%;
+            height: auto;
+            max-width: 250px;
+        }
+        .svg-node { fill: var(--primary); }
+        .svg-node-target { fill: var(--accent); }
+        .svg-text { fill: white; font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; }
+        .svg-line { stroke: #cbd5e1; stroke-width: 3; }
+
+        /* Callout Boxes */
+        .callout {
+            background-color: #f0fdf4;
+            border-left: 4px solid var(--secondary);
+            padding: 15px 20px;
+            margin: 25px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Footer / Homework */
+        .homework-box {
+            background-color: #eff6ff;
+            border: 2px dashed var(--primary);
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 50px;
+            text-align: center;
+        }
+
+        @media (max-width: 600px) {
+            .viz-container { flex-direction: column; }
+            .viz-arrow { transform: rotate(90deg); }
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <header>
+        <h1>Splay Trees</h1>
+        <p style="color: var(--text-muted); font-size: 1.2rem;">Complete Study Notes & Visual Breakdown</p>
+    </header>
+
+    <!-- SECTION 1 -->
+    <section>
+        <h2>1. Introduction to Splay Trees</h2>
+        <p>Splay trees are a fascinating variant of Binary Search Trees (BST). Before diving into Splay Trees, you must understand standard BSTs (where the left child is smaller, right child is greater).</p>
+
+        <div class="whiteboard">
+            <div class="whiteboard-text">
+                Splay trees<br><br>
+                Self-adjusted BST<br><br>
+                <span style="float: right; color: #94a3b8; font-size: 0.9rem;">AVL<br>RB<br>B-tree</span>
+            </div>
+        </div>
+
+        <p><strong>How are they different?</strong> Unlike AVL trees or Red-Black (RB) trees which are <em>strictly balanced</em>, Splay trees are <strong>roughly balanced</strong> (or self-adjusting). They don't enforce strict height rules after every insertion.</p>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section>
+        <h2>2. Time Complexity & Motivation</h2>
+        <p>Why do we need Splay Trees if AVL and Red-Black trees already exist?</p>
+
+        <div class="whiteboard">
+            <div class="whiteboard-text">
+                O(n) <span style="color: #94a3b8;">&lt;-- Worst case for standard BST (skewed)</span><br><br>
+                O(log n) <span style="color: #94a3b8;">&lt;-- Guaranteed by AVL / RB Trees</span>
+            </div>
+        </div>
+
+        <ul>
+            <li><strong>Standard BST:</strong> In the worst case (e.g., inserting data in already sorted order), the tree becomes a straight line (skewed). Finding an element takes <strong>O(n)</strong>.</li>
+            <li><strong>Strictly Balanced (AVL/RB):</strong> By strictly maintaining height, these guarantee <strong>O(log n)</strong> for search, insert, and delete.</li>
+        </ul>
+        <div class="callout">
+            <strong>The Big Question:</strong> Can we achieve <em>better</em> than O(log n) in practical, real-world situations? The answer is <strong>Yes</strong>, using Splay Trees!
+        </div>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section>
+        <h2>3. The Core Concept: Splaying</h2>
+        <p>The standard operations of a Splay Tree are exactly the same as a normal BST. However, they possess one extra, defining step.</p>
+
+        <div class="whiteboard">
+            <div class="whiteboard-text">
+                Operations: search, insert, delete<br><br>
+                Search + <span class="wb-highlight">splaying</span><br>
+                Insert + <span class="wb-highlight">splaying</span><br>
+                Delete + <span class="wb-highlight">splaying</span>
+            </div>
+        </div>
+
+        <p><strong>What is Splaying?</strong> Splaying is the process of rearranging the tree so that the element you just operated on (searched, inserted, or deleted) becomes the <strong>new root</strong> of the entire tree. We achieve this through specific rotations.</p>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section>
+        <h2>4. The Rotation Rules (How to Splay)</h2>
+        <p>To move our target node to the root, we analyze its relationship with its <strong>Parent</strong> and <strong>Grandparent</strong>. There are three primary cases.</p>
+
+        <!-- CASE 1 -->
+        <h3>Case 1: Child of the Root Node (Zig / Zag)</h3>
+        <p>If the node you are searching for is a direct child of the root (it has a parent, but no grandparent), you perform a single rotation.</p>
+        <ul>
+            <li>If it's a left child: Perform a Right Rotation (<strong>Zig</strong>)</li>
+            <li>If it's a right child: Perform a Left Rotation (<strong>Zag</strong>)</li>
+        </ul>
+
+        <div class="viz-container">
+            <div class="tree-stage">
+                <h4>Before (Search 7)</h4>
+                <svg viewBox="0 0 200 150">
+                    <line x1="100" y1="30" x2="50" y2="100" class="svg-line"/>
+                    <circle cx="100" cy="30" r="20" class="svg-node"/>
+                    <text x="100" y="35" class="svg-text" text-anchor="middle">10</text>
+                    <circle cx="50" cy="100" r="20" class="svg-node-target"/>
+                    <text x="50" y="105" class="svg-text" text-anchor="middle">7</text>
+                </svg>
+            </div>
+            <div class="viz-arrow">➔</div>
+            <div class="tree-stage">
+                <h4>After Zig (Right Rotate)</h4>
+                <svg viewBox="0 0 200 150">
+                    <line x1="100" y1="30" x2="150" y2="100" class="svg-line"/>
+                    <circle cx="100" cy="30" r="20" class="svg-node-target"/>
+                    <text x="100" y="35" class="svg-text" text-anchor="middle">7</text>
+                    <circle cx="150" cy="100" r="20" class="svg-node"/>
+                    <text x="150" y="105" class="svg-text" text-anchor="middle">10</text>
+                </svg>
+            </div>
+        </div>
+
+        <!-- CASE 2 -->
+        <h3>Case 2: "Same Side" (Zig-Zig / Zag-Zag)</h3>
+        <p>The target node has a Parent and Grandparent. Both the Target and Parent are <em>Left children</em>, OR both are <em>Right children</em> (it forms a straight line).</p>
+        <p><strong>Crucial Rule:</strong> First rotate the <em>Parent</em> over the Grandparent. Second, rotate the <em>Target</em> over the Parent.</p>
+
+        <div class="viz-container">
+            <div class="tree-stage">
+                <h4>Before (Search 1)</h4>
+                <svg viewBox="0 0 200 180">
+                    <line x1="140" y1="30" x2="90" y2="90" class="svg-line"/>
+                    <line x1="90" y1="90" x2="40" y2="150" class="svg-line"/>
+                    <circle cx="140" cy="30" r="18" class="svg-node"/>
+                    <text x="140" y="35" class="svg-text" text-anchor="middle">10</text>
+                    <circle cx="90" cy="90" r="18" class="svg-node"/>
+                    <text x="90" y="95" class="svg-text" text-anchor="middle">7</text>
+                    <circle cx="40" cy="150" r="18" class="svg-node-target"/>
+                    <text x="40" y="155" class="svg-text" text-anchor="middle">1</text>
+                </svg>
+            </div>
+            <div class="viz-arrow">➔</div>
+            <div class="tree-stage">
+                <h4>After Zig-Zig</h4>
+                <svg viewBox="0 0 200 180">
+                    <line x1="40" y1="30" x2="90" y2="90" class="svg-line"/>
+                    <line x1="90" y1="90" x2="140" y2="150" class="svg-line"/>
+                    <circle cx="40" cy="30" r="18" class="svg-node-target"/>
+                    <text x="40" y="35" class="svg-text" text-anchor="middle">1</text>
+                    <circle cx="90" cy="90" r="18" class="svg-node"/>
+                    <text x="90" y="95" class="svg-text" text-anchor="middle">7</text>
+                    <circle cx="140" cy="150" r="18" class="svg-node"/>
+                    <text x="140" y="155" class="svg-text" text-anchor="middle">10</text>
+                </svg>
+            </div>
+        </div>
+
+        <!-- CASE 3 -->
+        <h3>Case 3: "Opposite Sides" (Zig-Zag / Zag-Zig)</h3>
+        <p>The target node has a Parent and Grandparent. The Parent is a left child, but the Target is a right child (or vice versa). It forms a dog-leg or zigzag shape.</p>
+        <p><strong>Crucial Rule:</strong> First rotate the <em>Target</em> over the Parent. Second, rotate the <em>Target</em> over the Grandparent.</p>
+
+        <div class="viz-container">
+            <div class="tree-stage">
+                <h4>Before (Search 9)</h4>
+                <svg viewBox="0 0 200 180">
+                    <line x1="120" y1="30" x2="60" y2="90" class="svg-line"/>
+                    <line x1="60" y1="90" x2="100" y2="150" class="svg-line"/>
+                    <circle cx="120" cy="30" r="18" class="svg-node"/>
+                    <text x="120" y="35" class="svg-text" text-anchor="middle">10</text>
+                    <circle cx="60" cy="90" r="18" class="svg-node"/>
+                    <text x="60" y="95" class="svg-text" text-anchor="middle">7</text>
+                    <circle cx="100" cy="150" r="18" class="svg-node-target"/>
+                    <text x="100" y="155" class="svg-text" text-anchor="middle">9</text>
+                </svg>
+            </div>
+            <div class="viz-arrow">➔</div>
+            <div class="tree-stage">
+                <h4>After Zag-Zig</h4>
+                <svg viewBox="0 0 200 180">
+                    <line x1="100" y1="30" x2="50" y2="100" class="svg-line"/>
+                    <line x1="100" y1="30" x2="150" y2="100" class="svg-line"/>
+                    <circle cx="100" cy="30" r="18" class="svg-node-target"/>
+                    <text x="100" y="35" class="svg-text" text-anchor="middle">9</text>
+                    <circle cx="50" cy="100" r="18" class="svg-node"/>
+                    <text x="50" y="105" class="svg-text" text-anchor="middle">7</text>
+                    <circle cx="150" cy="100" r="18" class="svg-node"/>
+                    <text x="150" y="105" class="svg-text" text-anchor="middle">10</text>
+                </svg>
+            </div>
+        </div>
+
+    </section>
+
+    <!-- SECTION 5 -->
+    <section>
+        <h2>5. Advantages, Drawbacks & Applications</h2>
+        
+        <div class="whiteboard">
+            <div class="whiteboard-text">
+                - no extra info stored<br>
+                - fastest type of BST for many practical applications<br>
+                - easy implementation<br>
+                - better performance because frequently accessed nodes will move nearer to root<br>
+                - O(n) worst case, O(log n) amortized<br>
+                - <span class="wb-highlight">caches</span>
+            </div>
+        </div>
+
+        <p><strong>Advantages:</strong></p>
+        <ul>
+            <li><strong>Space Efficient:</strong> You don't need to store extra data in the nodes (like height integers in AVL, or color bits in Red-Black trees).</li>
+            <li><strong>Easy Implementation:</strong> It relies entirely on standard BST algorithms plus basic tree rotations.</li>
+            <li><strong>Locality of Reference:</strong> Data accessed recently is highly likely to be accessed again. Because splaying puts accessed data at the root, the next search for that same data takes <strong>O(1)</strong> time!</li>
+        </ul>
+
+        <p><strong>Drawbacks:</strong></p>
+        <ul>
+            <li>Because it is not strictly balanced, if data is inserted sequentially (1, 2, 3, 4...), the tree becomes a straight line, resulting in an <strong>O(n)</strong> worst-case time for a single operation. However, its <em>amortized</em> (average) time over multiple operations remains <strong>O(log n)</strong>.</li>
+        </ul>
+
+        <div class="callout">
+            <strong>Real-World Application: CACHES!</strong> Because frequently accessed items naturally bubble to the top of the tree (becoming the root), Splay Trees are perfect for implementing Cache Memory, network routers, and memory allocators.
+        </div>
+    </section>
+
+    <!-- SECTION 6 -->
+    <section>
+        <div class="homework-box">
+            <h3 style="margin-top: 0;">Instructor's Challenge / Homework</h3>
+            <p>At the end of the video, she points to a node structure: <strong>10 (root) &rarr; Right to 15 &rarr; Left to 13 &rarr; Right to 14.</strong></p>
+            <p><em>"Find 14. Which operations/rotations do you need to perform to make 14 the root?"</em></p>
+            
+            <hr style="border: 1px solid #bfdbfe; margin: 20px 0;">
+            
+            <p style="text-align: left; margin-bottom: 5px;"><strong>Solution Breakdown:</strong></p>
+            <ul style="text-align: left;">
+                <li>Target = <code>14</code>. Parent = <code>13</code>. Grandparent = <code>15</code>.</li>
+                <li><code>13</code> is a <em>Left</em> child. <code>14</code> is a <em>Right</em> child. They are on <strong>opposite sides</strong>.</li>
+                <li>This is <strong>Case 3 (Zig-Zag)</strong>.</li>
+                <li><strong>Step 1:</strong> Left Rotate (Zag) <code>14</code> over <code>13</code>.</li>
+                <li><strong>Step 2:</strong> Right Rotate (Zig) <code>14</code> over <code>15</code>.</li>
+                <li>Once <code>14</code> moves up, it will have <code>10</code> as its new parent. You repeat the process until <code>14</code> hits the root!</li>
+            </ul>
+        </div>
+    </section>
+
+</div>
+
+</body>
+</html>
