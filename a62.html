@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AVL Tree Construction | Vertical Study Feed</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --text-main: #333333;
+            --card-bg: #ffffff;
+            --primary: #2c3e50;
+            --accent: #3498db;
+            --danger: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --tree-bg: #1e1e1e;
+            --tree-text: #a6e22e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .feed-container {
+            max-width: 850px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--accent);
+        }
+
+        .card h2 {
+            color: var(--primary);
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 10px;
+        }
+
+        .rule-box {
+            background-color: rgba(52, 152, 219, 0.1);
+            border-left: 4px solid var(--accent);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .trick-box {
+            background-color: rgba(243, 156, 18, 0.1);
+            border-left: 4px solid var(--warning);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .alert-box {
+            background-color: rgba(231, 76, 60, 0.1);
+            border-left: 4px solid var(--danger);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        ul, ol {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        strong {
+            color: var(--primary);
+        }
+
+        .highlight {
+            background-color: #ffeaa7;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* Tree Visualization Styles */
+        .tree-container {
+            background-color: var(--tree-bg);
+            color: var(--tree-text);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1rem;
+            line-height: 1.2;
+            margin: 20px 0;
+            text-align: center;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        .node-crit { color: #ff4757; font-weight: bold; text-shadow: 0 0 5px #ff4757; }
+        .node-new { color: #1e90ff; font-weight: bold; text-shadow: 0 0 5px #1e90ff; }
+        .node-med { color: #ffa502; font-weight: bold; text-shadow: 0 0 5px #ffa502; }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: -10px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+        }
+
+        .legend span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        .footer {
+            text-align: center;
+            padding: 30px;
+            color: #7f8c8d;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+
+    <header>
+        <h1>📘 Mastering AVL Trees</h1>
+        <p>In-Depth Visual Breakdown & Study Notes | Vertical Feed Edition</p>
+        <p style="margin-top: 15px; font-weight: bold; background: rgba(255,255,255,0.2); padding: 10px; border-radius: 8px; display: inline-block;">
+            Target Insertion Sequence:<br>
+            14, 17, 11, 7, 53, 4, 13, 12, 8, 60, 19, 16, 20
+        </p>
+    </header>
+
+    <!-- SECTION 1 -->
+    <section class="card">
+        <h2>📌 1. Pre-Requisites & Core Rules</h2>
+        <p>Before inserting any nodes, the instructor explicitly states two golden rules you must constantly apply:</p>
+        
+        <div class="rule-box">
+            <h3>Rule 1: Binary Search Tree (BST) Property</h3>
+            <p>Every node to the <strong>Left</strong> must be <em>less than</em> the parent. Every node to the <strong>Right</strong> must be <em>greater than</em> the parent.</p>
+        </div>
+
+        <div class="rule-box">
+            <h3>Rule 2: The Balance Factor (BF) Rule</h3>
+            <p><strong>BF = Height of Left Subtree - Height of Right Subtree</strong></p>
+            <ul>
+                <li>A tree is <strong>Balanced</strong> if the BF of every node is <span class="highlight">-1, 0, or 1</span>.</li>
+                <li>If ANY node hits a BF of <span class="highlight">2 or -2</span>, it becomes a <strong>Critical Node</strong>. You must STOP and perform a rotation immediately.</li>
+            </ul>
+        </div>
+    </section>
+
+    <!-- SECTION 2 -->
+    <section class="card" style="border-top-color: var(--warning);">
+        <h2>💡 2. The Instructor's "Median Shortcut" Trick</h2>
+        <p>Instead of memorizing confusing LL, RR, LR, and RL rotation diagrams, the instructor uses a visual shortcut on the whiteboard. When an imbalance occurs, follow these steps:</p>
+        
+        <div class="trick-box">
+            <ol>
+                <li>Locate the <strong>Critical Node</strong> (the one with BF = 2 or -2).</li>
+                <li>Trace the path down towards the newly inserted node. Select exactly <strong>three nodes</strong>: The Critical Node, its Child on the path, and its Grandchild on the path.</li>
+                <li>Out of these three numbers, find the <strong>Median</strong> (the middle value).</li>
+                <li><strong>Pull the Median UP</strong> to become the new local root.</li>
+                <li>Drop the smaller number to its left, and the larger number to its right.</li>
+                <li>Re-attach any "orphan" subtrees using standard BST rules.</li>
+            </ol>
+        </div>
+    </section>
+
+    <!-- SECTION 3 -->
+    <section class="card">
+        <h2>🛠️ Phase 1: The Easy Insertions (14 to 53)</h2>
+        <p>We begin with an empty tree and insert the first five elements: <strong>14, 17, 11, 7, 53</strong>.</p>
+        <ul>
+            <li><strong>14:</strong> Becomes root. BF = 0.</li>
+            <li><strong>17:</strong> > 14. Goes Right. BF = 0.</li>
+            <li><strong>11:</strong> < 14. Goes Left. BF = 0.</li>
+            <li><strong>7:</strong> < 14, < 11. Goes Left of 11. BF = 1.</li>
+            <li><strong>53:</strong> > 14, > 17. Goes Right of 17. BF = -1.</li>
+        </ul>
+        <p>The instructor verbally calculates the BFs. Everything is currently between -1 and 1. The tree is balanced.</p>
+
+        <div class="tree-container">
+<pre>
+      14
+     /  \
+   11    17
+  /        \
+ 7          53
+</pre>
+        </div>
+    </section>
+
+    <!-- SECTION 4 -->
+    <section class="card">
+        <h2>⚠️ Phase 2: First Imbalance (Inserting 4)</h2>
+        <p>We insert <strong>4</strong>. It is < 14, < 11, < 7. It goes to the Left of 7.</p>
+        
+        <div class="alert-box">
+            <strong>Audio Calculation Check:</strong>
+            <br>BF of 4 = 0
+            <br>BF of 7 = 1 (Left height 1 - Right 0)
+            <br>BF of 11 = 2 (Left height 2 - Right 0) 👉 <span class="node-crit">UNBALANCED! Node 11 is Critical.</span>
+        </div>
+
+        <p><strong>Applying the Trick (LL Rotation):</strong></p>
+        <ul>
+            <li>Path nodes: <span class="node-crit">11</span> -> <span class="node-med">7</span> -> <span class="node-new">4</span></li>
+            <li>Median is <strong>7</strong>.</li>
+            <li>Pull <strong>7</strong> up to replace 11. 4 goes left, 11 goes right.</li>
+        </ul>
+
+        <div class="legend">
+            <span><div class="legend-color" style="background: #1e90ff;"></div> New Node</span>
+            <span><div class="legend-color" style="background: #ff4757;"></div> Critical Node</span>
+            <span><div class="legend-color" style="background: #ffa502;"></div> Median Node (Pulled up)</span>
+        </div>
+
+        <div class="tree-container">
+<pre>
+        14
+       /  \
+     <span class="node-med">7</span>     17
+    / \      \
+   <span class="node-new">4</span>   <span class="node-crit">11</span>     53
+</pre>
+        </div>
+    </section>
+
+    <!-- SECTION 5 -->
+    <section class="card">
+        <h2>⚠️ Phase 3: Second Imbalance (Inserting 13 & 12)</h2>
+        <p>First, insert <strong>13</strong>. It goes Right of 11. (Tree remains balanced).</p>
+        <p>Next, insert <strong>12</strong>. It goes Left of 13.</p>
+
+        <div class="alert-box">
+            <strong>Audio Calculation Check:</strong>
+            <br>BF of 11 = -2 (Left height 0 - Right height 2) 👉 <span class="node-crit">UNBALANCED! Node 11 is Critical.</span>
+        </div>
+
+        <p><strong>Applying the Trick (RL Rotation):</strong></p>
+        <ul>
+            <li>Path nodes: <span class="node-crit">11</span> -> 13 -> <span class="node-med">12</span></li>
+            <li>Median is <strong>12</strong>.</li>
+            <li>Pull <strong>12</strong> up. 11 goes left, 13 goes right.</li>
+        </ul>
+
+        <div class="tree-container">
+<pre>
+        14
+       /  \
+     7     17
+    / \      \
+   4   <span class="node-med">12</span>     53
+      /  \
+    <span class="node-crit">11</span>    13
+</pre>
+        </div>
+    </section>
+
+    <!-- SECTION 6 -->
+    <section class="card">
+        <h2>⚠️ Phase 4: Third Imbalance (Inserting 8) - Orphan Handling!</h2>
+        <p>Insert <strong>8</strong>. It goes Left of 11.</p>
+
+        <div class="alert-box">
+            <strong>Audio Calculation Check:</strong>
+            <br>The instructor traces up from the bottom.
+            <br>BF of 7 = 1 (Left path: 4) - 3 (Right path: 12->11->8) = 1 - 3 = -2. 👉 <span class="node-crit">UNBALANCED! Node 7 is Critical.</span>
+        </div>
+
+        <p><strong>Applying the Trick (RL Rotation):</strong></p>
+        <ul>
+            <li>Path nodes from Critical Node: <span class="node-crit">7</span> -> <span class="node-med">12</span> -> 11</li>
+            <li>Wait, look closely at the path top! The three nodes involved in the rotation are <strong>7, 12, 11</strong>.</li>
+            <li>Median is <strong>11</strong>.</li>
+            <li>Pull <strong>11</strong> up to replace 7.</li>
+            <li>7 goes left of 11. 12 goes right of 11.</li>
+            <li><strong>ORPHAN ALERT:</strong> Where does node <strong>8</strong> go? Since 11 moved up, 8 (which was left of 11) needs a new home. By BST rules, 8 is > 7 and < 11. It becomes the <strong>Right child of 7</strong>.</li>
+        </ul>
+
+        <div class="tree-container">
+<pre>
+          14
+         /  \
+       <span class="node-med">11</span>    17
+      /  \     \
+     <span class="node-crit">7</span>    12    53
+    / \     \
+   4   <span class="node-new">8</span>     13
+</pre>
+        </div>
+    </section>
+
+    <!-- SECTION 7 -->
+    <section class="card">
+        <h2>⚠️ Phase 5: Fourth Imbalance (Inserting 60)</h2>
+        <p>Insert <strong>60</strong>. It goes Right of 53.</p>
+
+        <div class="alert-box">
+            <strong>Audio Calculation Check:</strong>
+            <br>BF of 17 = 0 - 2 = -2. 👉 <span class="node-crit">UNBALANCED! Node 17 is Critical.</span>
+        </div>
+
+        <p><strong>Applying the Trick (RR Rotation):</strong></p>
+        <ul>
+            <li>Path nodes: <span class="node-crit">17</span> -> <span class="node-med">53</span> -> <span class="node-new">60</span></li>
+            <li>Median is <strong>53</strong>.</li>
+            <li>Pull <strong>53</strong> up. 17 goes left, 60 goes right.</li>
+        </ul>
+
+        <div class="tree-container">
+<pre>
+          14
+         /  \
+       11    <span class="node-med">53</span>
+      /  \  /  \
+     7   12 <span class="node-crit">17</span>  <span class="node-new">60</span>
+    / \   \
+   4   8   13
+</pre>
+        </div>
+    </section>
+
+    <!-- SECTION 8 -->
+    <section class="card" style="border-top-color: var(--success);">
+        <h2>🌟 Phase 6: The Final Stretch (19, 16, 20)</h2>
+        <p>Insert <strong>19</strong> (goes Right of 17). Balanced.</p>
+        <p>Insert <strong>16</strong> (goes Left of 17). Balanced.</p>
+        <p>Insert <strong>20</strong> (goes Right of 19).</p>
+
+        <div class="alert-box">
+            <strong>Audio Calculation Check:</strong>
+            <br>BF of 53 = 3 (Left path 17->19->20) - 1 (Right path 60) = 2. 👉 <span class="node-crit">UNBALANCED! Node 53 is Critical.</span>
+        </div>
+
+        <p><strong>Applying the Trick (LR Rotation) & Orphan Handling:</strong></p>
+        <ul>
+            <li>Path nodes from Critical Node: <span class="node-crit">53</span> -> 17 -> <span class="node-med">19</span></li>
+            <li>Median is <strong>19</strong>. Pull <strong>19</strong> up to replace 53.</li>
+            <li>17 goes left of 19. 53 goes right of 19.</li>
+            <li><strong>ORPHAN ALERT 1:</strong> Node 20 was right of 19. 20 is < 53, so it becomes the <strong>Left child of 53</strong>.</li>
+            <li><strong>ORPHAN ALERT 2:</strong> Node 16 remains safely attached to the left of 17.</li>
+            <li><strong>ORPHAN ALERT 3:</strong> Node 60 remains safely attached to the right of 53.</li>
+        </ul>
+
+        <div class="tree-container" style="font-size: 1.2rem; padding: 30px;">
+<pre>
+              14
+            /    \
+          /        \
+        11          <span class="node-med">19</span>
+       /  \        /  \
+      7    12    17    <span class="node-crit">53</span>
+     / \     \   /    /  \
+    4   8    13 16  <span class="node-new">20</span>   60
+</pre>
+        </div>
+        <p style="text-align: center; font-weight: bold; color: var(--success);">✅ The instructor verifies all final BFs. The AVL tree is perfectly balanced!</p>
+    </section>
+
+    <div class="footer">
+        <p>End of Study Guide • Scroll up to review the sequence.</p>
+    </div>
+
+</div>
+
+</body>
+</html>
