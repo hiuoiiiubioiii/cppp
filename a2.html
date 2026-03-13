@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Operations on Arrays in C - Study Feed</title>
+    <style>
+        /* Base Reset & Variables */
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+            --accent-light: #eff6ff;
+            --danger: #ef4444;
+            --danger-light: #fef2f2;
+            --success: #10b981;
+            --code-bg: #1e293b;
+            --code-text: #f8fafc;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        .header-card {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--accent), #1d4ed8);
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+        }
+
+        .header-card h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.02), 0 1px 3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .card h2 {
+            color: var(--accent);
+            font-size: 1.8rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid var(--accent-light);
+            padding-bottom: 10px;
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin: 24px 0 12px 0;
+            color: #0f172a;
+        }
+
+        p {
+            margin-bottom: 16px;
+        }
+
+        ul {
+            margin-left: 24px;
+            margin-bottom: 16px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Pro-tip / Warning boxes */
+        .callout {
+            padding: 16px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+        .callout.warning {
+            background-color: var(--danger-light);
+            border-color: var(--danger);
+        }
+        .callout.tip {
+            background-color: var(--accent-light);
+            border-color: var(--accent);
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            margin: 20px 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .code-comment { color: #64748b; }
+        .code-keyword { color: #c678dd; }
+        .code-string { color: #98c379; }
+        .code-func { color: #61afef; }
+
+        /* Array Visualizations */
+        .viz-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f1f5f9;
+            border-radius: 12px;
+            overflow-x: auto;
+        }
+
+        .viz-title {
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 15px;
+            color: var(--text-muted);
+        }
+
+        .array-row {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 0px;
+            margin-bottom: 10px;
+        }
+
+        .array-cell-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 70px;
+        }
+
+        .array-index {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+            font-weight: bold;
+        }
+
+        .array-box {
+            width: 100%;
+            height: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border: 2px solid #cbd5e1;
+            background: white;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #0f172a;
+            position: relative;
+        }
+
+        .array-box.highlight {
+            border-color: var(--accent);
+            background-color: var(--accent-light);
+            color: var(--accent);
+        }
+
+        .array-box.empty {
+            color: transparent;
+            background: #f8fafc;
+            border-style: dashed;
+        }
+        
+        .array-box.success {
+            border-color: var(--success);
+            background-color: #d1fae5;
+            color: var(--success);
+        }
+
+        .array-address {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+        }
+
+        /* Arrows for shifting visualization */
+        .shift-arrow {
+            font-size: 1.5rem;
+            color: var(--accent);
+            position: absolute;
+            top: -25px;
+            right: -10px;
+            z-index: 10;
+            font-weight: bold;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <!-- Header -->
+        <header class="header-card">
+            <h1>Operations on Arrays</h1>
+            <p>Data Structures in C • Comprehensive Study Feed</p>
+        </header>
+
+        <!-- Topic 1: Overview -->
+        <section class="card">
+            <h2>1. Overview of Operations</h2>
+            <p>While many operations can be performed on arrays (like finding min/max, reversing, etc.), there are five fundamental operations you must master in Data Structures:</p>
+            <ul>
+                <li><strong>Traversal</strong> (Covered today)</li>
+                <li><strong>Insertion</strong> (Covered today)</li>
+                <li><strong>Deletion</strong></li>
+                <li><strong>Searching</strong></li>
+                <li><strong>Sorting</strong></li>
+            </ul>
+        </section>
+
+        <!-- Topic 2: Traversal -->
+        <section class="card">
+            <h2>2. Array Traversal</h2>
+            <p><strong>Definition:</strong> Traversal means visiting every element of the array exactly <em>once</em>. Usually, this involves printing the elements to the output screen.</p>
+            
+            <div class="viz-container">
+                <div class="viz-title">Visualizing Array Traversal & Memory Addresses</div>
+                <div class="array-row">
+                    <div class="array-cell-wrapper">
+                        <div class="array-index">0</div>
+                        <div class="array-box highlight">6</div>
+                        <div class="array-address">100</div>
+                    </div>
+                    <div class="array-cell-wrapper">
+                        <div class="array-index">1</div>
+                        <div class="array-box">2</div>
+                        <div class="array-address">104</div>
+                    </div>
+                    <div class="array-cell-wrapper">
+                        <div class="array-index">2</div>
+                        <div class="array-box">0</div>
+                        <div class="array-address">108</div>
+                    </div>
+                    <div class="array-cell-wrapper">
+                        <div class="array-index">3</div>
+                        <div class="array-box">1</div>
+                        <div class="array-address">112</div>
+                    </div>
+                    <div class="array-cell-wrapper">
+                        <div class="array-index">4</div>
+                        <div class="array-box">4</div>
+                        <div class="array-address">116</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="callout tip">
+                <strong>Instructor Note on Memory:</strong> Notice how the addresses jump by 4 (100 → 104 → 108). This is because a standard <code>int</code> in modern compilers takes <strong>4 bytes</strong> of memory!
+            </div>
+
+            <h3>Code: Populating & Traversing</h3>
+            <p>C arrays do not have built-in "bounds checking" at runtime. We must declare a large maximum size at compile time, but ask the user for the <em>actual</em> size they want to use at runtime.</p>
+
+<pre><code><span class="code-keyword">int</span> a[<span class="code-string">50</span>], size, i;
+
+<span class="code-comment">// 1. Get the actual size from user</span>
+<span class="code-func">printf</span>(<span class="code-string">"Enter size of array: "</span>);
+<span class="code-func">scanf</span>(<span class="code-string">"%d"</span>, &amp;size); 
+
+<span class="code-comment">// 2. Populate the array</span>
+<span class="code-func">printf</span>(<span class="code-string">"Enter elements of array: "</span>);
+<span class="code-keyword">for</span>(i = <span class="code-string">0</span>; i &lt; size; i++) {
+    <span class="code-comment">// '&amp;' is required to store data at the memory address!</span>
+    <span class="code-func">scanf</span>(<span class="code-string">"%d"</span>, &amp;a[i]);  
+}
+
+<span class="code-comment">// 3. Traverse and Print</span>
+<span class="code-func">printf</span>(<span class="code-string">"Elements in array are: "</span>);
+<span class="code-keyword">for</span>(i = <span class="code-string">0</span>; i &lt; size; i++) {
+    <span class="code-comment">// NO '&amp;' here. We just want the value, not the address.</span>
+    <span class="code-func">printf</span>(<span class="code-string">"%d "</span>, a[i]); 
+}</code></pre>
+        </section>
+
+        <!-- Topic 3: Insertion -->
+        <section class="card">
+            <h2>3. Array Insertion (Specific Position)</h2>
+            <p>Inserting data at a specific position is the most complex insertion operation. Once you master this, inserting at the beginning or end is trivial.</p>
+
+            <div class="callout warning">
+                <strong>The "Overflow" Condition</strong><br>
+                Before inserting, you must write code to check if the array is already full. If we declared <code>int a[50]</code> and <code>size == 50</code>, there is no room left. Trying to insert will cause an Array Overflow.
+            </div>
+
+            <h3>Position vs. Index</h3>
+            <p>Humans count starting from 1 (Position). Computers count starting from 0 (Index).<br>
+            <strong>Formula:</strong> <code>Target Index = Position - 1</code><br>
+            <em>Example:</em> If a user wants to insert at Position 3, the target index is 2.</p>
+
+            <h3>The Shifting Concept</h3>
+            <p>Assume we have 5 elements. We want to insert the number <strong>10</strong> at Position <strong>3</strong> (Index 2). You <strong>CANNOT</strong> just write <code>a[2] = 10</code>, because you will overwrite and permanently lose the existing data. You must shift elements to the right first!</p>
+            <p><strong>Golden Rule:</strong> You must always start shifting from the <em>end</em> of the array moving left. If you shift left-to-right, you overwrite your own data.</p>
+
+            <div class="viz-container">
+                <div class="viz-title">Step 1: Before Insertion (Size = 5)</div>
+                <div class="array-row">
+                    <div class="array-cell-wrapper"><div class="array-index">0</div><div class="array-box">6</div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">1</div><div class="array-box">2</div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">2 (Pos 3)</div><div class="array-box highlight">0</div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">3</div><div class="array-box">4</div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">4</div><div class="array-box">5</div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">5</div><div class="array-box empty">_</div></div>
+                </div>
+
+                <div class="viz-title" style="margin-top: 30px;">Step 2: Shifting Right-to-Left</div>
+                <div class="array-row">
+                    <div class="array-cell-wrapper"><div class="array-index">0</div><div class="array-box">6</div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">1</div><div class="array-box">2</div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">2</div><div class="array-box empty">_<div class="shift-arrow">↷</div></div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">3</div><div class="array-box highlight">0<div class="shift-arrow">↷</div></div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">4</div><div class="array-box highlight">4<div class="shift-arrow">↷</div></div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">5</div><div class="array-box highlight">5</div></div>
+                </div>
+
+                <div class="viz-title" style="margin-top: 30px;">Step 3: Insert 10 at Index 2</div>
+                <div class="array-row">
+                    <div class="array-cell-wrapper"><div class="array-index">0</div><div class="array-box">6</div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">1</div><div class="array-box">2</div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">2</div><div class="array-box success">10</div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">3</div><div class="array-box">0</div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">4</div><div class="array-box">4</div></div>
+                    <div class="array-cell-wrapper"><div class="array-index">5</div><div class="array-box">5</div></div>
+                </div>
+            </div>
+
+            <h3>Complete C Code for Insertion</h3>
+<pre><code><span class="code-keyword">int</span> num, pos;
+
+<span class="code-func">printf</span>(<span class="code-string">"Enter data you want to insert: "</span>);
+<span class="code-func">scanf</span>(<span class="code-string">"%d"</span>, &amp;num);
+
+<span class="code-func">printf</span>(<span class="code-string">"Enter Position: "</span>);
+<span class="code-func">scanf</span>(<span class="code-string">"%d"</span>, &amp;pos);
+
+<span class="code-comment">// Bounds & Overflow Checking</span>
+<span class="code-keyword">if</span>(pos &lt;= <span class="code-string">0</span> || pos &gt; size + <span class="code-string">1</span>) {
+    <span class="code-func">printf</span>(<span class="code-string">"Invalid Position"</span>);
+}
+<span class="code-keyword">else if</span>(size &gt;= <span class="code-string">50</span>) {
+    <span class="code-func">printf</span>(<span class="code-string">"Array Overflow"</span>);
+}
+<span class="code-keyword">else</span> {
+    <span class="code-comment">// 1. Shift elements to the right</span>
+    <span class="code-comment">// Start at the last element (size-1), stop at target index (pos-1)</span>
+    <span class="code-keyword">for</span>(i = size - <span class="code-string">1</span>; i &gt;= pos - <span class="code-string">1</span>; i--) {
+        a[i + <span class="code-string">1</span>] = a[i];  
+    }
+    
+    <span class="code-comment">// 2. Insert the new number</span>
+    a[pos - <span class="code-string">1</span>] = num;
+    
+    <span class="code-comment">// 3. Update the size of the array</span>
+    size++;
+}</code></pre>
+        </section>
+
+        <!-- Topic 4: Variations -->
+        <section class="card">
+            <h2>4. Modifying Insertion for Other Scenarios</h2>
+            
+            <h3>Inserting at the Beginning</h3>
+            <p>If you specifically want an algorithm just for inserting at the very beginning (Index 0), modify the loop so it always stops at index 0:</p>
+<pre><code><span class="code-comment">// Shift everything from the end down to index 0</span>
+<span class="code-keyword">for</span>(i = size - <span class="code-string">1</span>; i &gt;= <span class="code-string">0</span>; i--) {
+    a[i + <span class="code-string">1</span>] = a[i];
+}
+a[<span class="code-string">0</span>] = num;
+size++;</code></pre>
+
+            <h3>Inserting at the End</h3>
+            <p>If you only want to insert at the end, <strong>no shifting is required!</strong> The current <code>size</code> integer naturally acts as the index for the first empty slot.</p>
+<pre><code>a[size] = num; 
+size++;</code></pre>
+        </section>
+
+        <!-- Topic 5: Complexity & Pro Tip -->
+        <section class="card">
+            <h2>5. Time Complexity & Pro-Tip</h2>
+            <p>If the array is sorted, or if the relative order of the elements must be maintained, you are forced to shift elements. This determines the time complexity:</p>
+            <ul>
+                <li><strong>Best Case:</strong> $\Theta(1)$ (Inserting at the very end, no shifting required).</li>
+                <li><strong>Worst Case:</strong> $\Theta(n)$ (Inserting at the very beginning, must shift every single element).</li>
+                <li><strong>Average Case:</strong> $\Theta(n - p)$ where $p$ is the position (You only shift the elements that come after the chosen position).</li>
+            </ul>
+
+            <div class="callout tip">
+                <h3>💡 Pro-Tip: The "Unsorted Array" Trick</h3>
+                <p>If the array is <strong>unsorted</strong> and the order of elements <strong>does not matter</strong>, you can achieve <strong>$\Theta(1)$ time complexity</strong> for inserting at <em>any</em> position, completely avoiding the shifting loop!</p>
+                
+                <p><strong>Algorithm:</strong> Instead of shifting everything, just take the element currently sitting at the target index, throw it to the very end of the array, and put your new number in the newly vacated spot.</p>
+
+<pre><code><span class="code-comment">// 1. Move element at target index to the end</span>
+a[size] = a[pos - <span class="code-string">1</span>]; 
+
+<span class="code-comment">// 2. Put the new number in the target index</span>
+a[pos - <span class="code-string">1</span>] = num;
+
+<span class="code-comment">// 3. Increment size</span>
+size++;</code></pre>
+            </div>
+            <p><em>(This is a highly useful trick for competitive programming and technical interviews!)</em></p>
+        </section>
+
+    </div>
+
+    <!-- MathJax for rendering math symbols like Theta -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</body>
+</html>
