@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2D Arrays in C - Complete Study Guide</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #0f172a; /* Slate 900 */
+            color: #e2e8f0; /* Slate 200 */
+        }
+        pre, code, .code-font {
+            font-family: 'Fira Code', monospace;
+        }
+        
+        /* Custom scrollbar for a seamless feed experience */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #3b82f6; 
+            border-radius: 4px;
+        }
+
+        /* Matrix Visualization Styles */
+        .matrix-grid {
+            display: inline-grid;
+            gap: 4px;
+            padding: 12px;
+            background-color: #1e293b;
+            border-left: 4px solid #3b82f6;
+            border-right: 4px solid #3b82f6;
+            border-radius: 8px;
+        }
+        .matrix-cell {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 3rem;
+            height: 3rem;
+            background-color: #334155;
+            border-radius: 4px;
+            font-weight: 600;
+            position: relative;
+        }
+        .cell-index {
+            position: absolute;
+            bottom: 2px;
+            right: 4px;
+            font-size: 0.6rem;
+            color: #94a3b8;
+        }
+
+        /* Memory Tape Visualization */
+        .memory-tape {
+            display: flex;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            gap: 2px;
+            padding-bottom: 1rem;
+        }
+        .memory-block {
+            flex: 0 0 auto;
+            width: 4rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .memory-value {
+            width: 100%;
+            height: 3rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border: 2px solid #475569;
+            font-family: 'Fira Code', monospace;
+        }
+        .memory-address {
+            font-size: 0.75rem;
+            color: #cbd5e1;
+            margin-top: 4px;
+            font-family: 'Fira Code', monospace;
+        }
+        
+        /* Colors for Row/Column mapping */
+        .row-0 { background-color: rgba(59, 130, 246, 0.2); border-color: #3b82f6; }
+        .row-1 { background-color: rgba(16, 185, 129, 0.2); border-color: #10b981; }
+        .col-0 { background-color: rgba(245, 158, 11, 0.2); border-color: #f59e0b; }
+        .col-1 { background-color: rgba(236, 72, 153, 0.2); border-color: #ec4899; }
+        .col-2 { background-color: rgba(139, 92, 246, 0.2); border-color: #8b5cf6; }
+
+        .feed-card {
+            background-color: #1e293b;
+            border: 1px solid #334155;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+        }
+    </style>
+</head>
+<body class="antialiased leading-relaxed tracking-wide min-h-screen pb-20">
+
+    <!-- Header -->
+    <header class="sticky top-0 z-50 bg-slate-900/90 backdrop-blur-md border-b border-slate-700 py-4">
+        <div class="max-w-3xl mx-auto px-6 flex items-center justify-between">
+            <h1 class="text-2xl font-bold text-blue-400">Lecture Notes: 2D Arrays in C</h1>
+            <span class="text-sm font-semibold bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full">Continuous Feed</span>
+        </div>
+    </header>
+
+    <!-- Main Content Feed -->
+    <main class="max-w-3xl mx-auto px-4 mt-8 space-y-12">
+
+        <!-- 1. Mental Model -->
+        <article class="feed-card rounded-2xl p-6 md:p-8">
+            <div class="inline-block px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider rounded-md mb-4">Topic 1</div>
+            <h2 class="text-3xl font-bold mb-4 text-white">The Mental Model: What is a 2D Array?</h2>
+            <p class="mb-6 text-slate-300 text-lg">
+                While a 1D array is a simple list (a single line of items), a 2D array is best visualized as a <strong>Matrix</strong> or a grid. However, the core programming concept is that a 2D array is an <strong>"Array of Arrays."</strong>
+            </p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-6">
+                <!-- 1D Visual -->
+                <div class="bg-slate-800 p-4 rounded-xl text-center border border-slate-700">
+                    <h3 class="font-semibold text-slate-400 mb-4">1D Array (List)</h3>
+                    <div class="flex justify-center gap-1">
+                        <div class="matrix-cell">1</div>
+                        <div class="matrix-cell">2</div>
+                        <div class="matrix-cell">3</div>
+                    </div>
+                </div>
+                
+                <!-- 2D Visual -->
+                <div class="bg-slate-800 p-4 rounded-xl text-center border border-slate-700">
+                    <h3 class="font-semibold text-slate-400 mb-4">2D Array (Matrix)</h3>
+                    <div class="matrix-grid" style="grid-template-columns: repeat(3, 1fr);">
+                        <div class="matrix-cell">1 <span class="cell-index">0,0</span></div>
+                        <div class="matrix-cell">2 <span class="cell-index">0,1</span></div>
+                        <div class="matrix-cell">3 <span class="cell-index">0,2</span></div>
+                        <div class="matrix-cell">4 <span class="cell-index">1,0</span></div>
+                        <div class="matrix-cell">5 <span class="cell-index">1,1</span></div>
+                        <div class="matrix-cell">6 <span class="cell-index">1,2</span></div>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 bg-yellow-500/10 border-l-4 border-yellow-500 rounded-r-lg">
+                <p class="text-yellow-200 text-sm"><strong>Takeaway:</strong> Think of the 2x3 matrix above as an array containing 2 elements, where each element is a 1D array of size 3.</p>
+            </div>
+        </article>
+
+        <!-- 2. Declaration & Size -->
+        <article class="feed-card rounded-2xl p-6 md:p-8">
+            <div class="inline-block px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider rounded-md mb-4">Topic 2</div>
+            <h2 class="text-3xl font-bold mb-4 text-white">Declaration & Memory Size</h2>
+            <p class="mb-4 text-slate-300">To create a 2D array, specify the data type, name, and the two dimensions in separate square brackets.</p>
+            
+            <div class="bg-slate-900 rounded-lg p-4 mb-6 border border-slate-700">
+                <code class="text-xl text-pink-400">int a[3][4];</code>
+            </div>
+
+            <ul class="space-y-3 text-slate-300 list-disc pl-5 mb-6">
+                <li><code class="text-blue-300 bg-slate-800 px-1 rounded">int</code> : Data type (each item is an integer).</li>
+                <li><code class="text-blue-300 bg-slate-800 px-1 rounded">[3]</code> : First subscript = <strong>Number of Rows</strong>.</li>
+                <li><code class="text-blue-300 bg-slate-800 px-1 rounded">[4]</code> : Second subscript = <strong>Number of Columns</strong>.</li>
+            </ul>
+
+            <div class="bg-slate-800 rounded-xl p-5 border border-slate-600">
+                <h3 class="font-bold text-white mb-2 border-b border-slate-600 pb-2">Calculating Memory Size</h3>
+                <div class="flex flex-col space-y-2 mt-3 font-mono text-sm text-slate-300">
+                    <p>Total Elements = Rows × Columns = <span class="text-green-400">3 × 4 = 12</span></p>
+                    <p>Size of 1 integer = <span class="text-green-400">4 bytes</span></p>
+                    <p>Total Array Size = 12 × 4 = <strong class="text-white bg-green-500/20 px-2 py-1 rounded">48 bytes</strong></p>
+                </div>
+            </div>
+        </article>
+
+        <!-- 3. Initialization -->
+        <article class="feed-card rounded-2xl p-6 md:p-8">
+            <div class="inline-block px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider rounded-md mb-4">Topic 3</div>
+            <h2 class="text-3xl font-bold mb-4 text-white">Initialization</h2>
+            
+            <h3 class="text-xl font-semibold mt-6 mb-3 text-blue-300">A. Compile-Time Initialization</h3>
+            <p class="text-slate-300 mb-4">Assigning values directly in the code. Nested braces are recommended for visual clarity.</p>
+            
+            <div class="bg-slate-900 rounded-lg p-4 mb-6 border border-slate-700 font-mono text-sm overflow-x-auto space-y-2">
+                <p class="text-green-400"><span class="text-slate-500">// 1. Flat list (Valid)</span><br>int a[2][3] = {1, 2, 3, 4, 5, 6};</p>
+                <p class="text-green-400"><span class="text-slate-500">// 2. Nested braces (Recommended)</span><br>int a[2][3] = {{1, 2, 3}, {4, 5, 6}};</p>
+                <p class="text-green-400"><span class="text-slate-500">// 3. Omitting row size (Valid)</span><br>int a[][3] = {{1, 2, 3}, {4, 5, 6}};</p>
+            </div>
+
+            <!-- Crucial Rule Alert -->
+            <div class="bg-red-500/10 border border-red-500/50 rounded-xl p-5 mb-8">
+                <h4 class="text-red-400 font-bold mb-2 flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                    Strict Compiler Rule
+                </h4>
+                <p class="font-mono text-sm text-red-300 line-through">int a[2][] = {1, 2, 3, 4, 5, 6}; // INVALID</p>
+                <p class="text-slate-300 text-sm mt-2">You can leave the 1st subscript (rows) empty, but you <strong>MUST</strong> provide the 2nd subscript (columns). The compiler needs the column size to know exactly where one row ends and the next begins to structure the memory.</p>
+            </div>
+
+            <h3 class="text-xl font-semibold mt-6 mb-3 text-blue-300">B. Run-Time Initialization (User Input)</h3>
+            <p class="text-slate-300 mb-4">To iterate through a 2D array, you must use <strong>nested for loops</strong>.</p>
+            <div class="bg-slate-900 rounded-lg p-4 border border-slate-700 overflow-x-auto">
+<pre><code class="text-sm text-slate-300"><span class="text-pink-400">int</span> a[<span class="text-orange-300">2</span>][<span class="text-orange-300">3</span>];
+<span class="text-pink-400">int</span> i, j;
+
+<span class="text-blue-300">printf</span>(<span class="text-green-300">"Enter the elements: "</span>);
+
+<span class="text-slate-500">// Outer loop controls Rows</span>
+<span class="text-pink-400">for</span>(i = <span class="text-orange-300">0</span>; i < <span class="text-orange-300">2</span>; i++) {       
+    <span class="text-slate-500">// Inner loop controls Columns</span>
+    <span class="text-pink-400">for</span>(j = <span class="text-orange-300">0</span>; j < <span class="text-orange-300">3</span>; j++) {   
+        <span class="text-blue-300">scanf</span>(<span class="text-green-300">"%d"</span>, &a[i][j]); 
+    }
+}</code></pre>
+            </div>
+        </article>
+
+        <!-- 4. Memory Representation (Core Concept) -->
+        <article class="feed-card rounded-2xl p-6 md:p-8">
+            <div class="inline-block px-3 py-1 bg-blue-500/20 text-blue-400 text-xs font-bold uppercase tracking-wider rounded-md mb-4">Topic 4</div>
+            <h2 class="text-3xl font-bold mb-4 text-white">Memory Representation (The Flat Tape)</h2>
+            <p class="mb-6 text-slate-300 text-lg">
+                Computer memory is <strong>not a 2D grid</strong>. It is a flat, 1-Dimensional sequence of bytes. A 2D array must be "flattened" by the compiler to fit into this tape. 
+            </p>
+
+            <p class="mb-4 text-slate-300 italic">Let's map this matrix into memory assuming a Base Address of 100, and int size of 4 bytes:</p>
+            <div class="flex justify-center mb-8">
+                <div class="matrix-grid" style="grid-template-columns: repeat(3, 1fr);">
+                    <div class="matrix-cell row-0 col-0">1</div>
+                    <div class="matrix-cell row-0 col-1">2</div>
+                    <div class="matrix-cell row-0 col-2">3</div>
+                    <div class="matrix-cell row-1 col-0">4</div>
+                    <div class="matrix-cell row-1 col-1">5</div>
+                    <div class="matrix-cell row-1 col-2">6</div>
+                </div>
+            </div>
+
+            <!-- Row Major Visual -->
+            <div class="mb-10">
+                <h3 class="text-xl font-bold text-white mb-2 flex items-center">
+                    <span class="bg-blue-500 text-xs rounded px-2 py-1 mr-3">Default in C</span> 
+                    1. Row-Major Implementation
+                </h3>
+                <p class="text-slate-400 mb-4 text-sm">Stored row by row. Entire 0th row first, then 1st row.</p>
+                <div class="memory-tape bg-slate-900 p-4 rounded-xl border border-slate-700">
+                    <!-- Row 0 -->
+                    <div class="memory-block"><div class="memory-value row-0">1</div><div class="memory-address">100</div></div>
+                    <div class="memory-block"><div class="memory-value row-0">2</div><div class="memory-address">104</div></div>
+                    <div class="memory-block"><div class="memory-value row-0">3</div><div class="memory-address">108</div></div>
+                    <!-- Row 1 -->
+                    <div class="memory-block"><div class="memory-value row-1">4</div><div class="memory-address">112</div></div>
+                    <div class="memory-block"><div class="memory-value row-1">5</div><div class="memory-address">116</div></div>
+                    <div class="memory-block"><div class="memory-value row-1">6</div><div class="memory-address">120</div></div>
+                </div>
+            </div>
+
+            <!-- Column Major Visual -->
+            <div>
+                <h3 class="text-xl font-bold text-white mb-2">2. Column-Major Implementation</h3>
+                <p class="text-slate-400 mb-4 text-sm">Stored column by column. Entire 0th column first, then 1st column.</p>
+                <div class="memory-tape bg-slate-900 p-4 rounded-xl border border-slate-700">
+                    <!-- Col 0 -->
+                    <div class="memory-block"><div class="memory-value col-0">1</div><div class="memory-address">100</div></div>
+                    <div class="memory-block"><div class="memory-value col-0">4</div><div class="memory-address">104</div></div>
+                    <!-- Col 1 -->
+                    <div class="memory-block"><div class="memory-value col-1">2</div><div class="memory-address">108</div></div>
+                    <div class="memory-block"><div class="memory-value col-1">5</div><div class="memory-address">112</div></div>
+                    <!-- Col 2 -->
+                    <div class="memory-block"><div class="memory-value col-2">3</div><div class="memory-address">116</div></div>
+                    <div class="memory-block"><div class="memory-value col-2">6</div><div class="memory-address">120</div></div>
+                </div>
+            </div>
+        </article>
+
+        <!-- 5. Formula Derivation -->
+        <article class="feed-card rounded-2xl p-6 md:p-8">
+            <div class="inline-block px-3 py-1 bg-red-500/20 text-red-400 text-xs font-bold uppercase tracking-wider rounded-md mb-4">Exam Critical</div>
+            <h2 class="text-3xl font-bold mb-4 text-white">Address Calculation Formulas</h2>
+            <p class="mb-6 text-slate-300">The compiler uses O(1) math formulas to instantly jump to any element's memory address without searching.</p>
+
+            <div class="bg-slate-800 rounded-lg p-4 border border-slate-700 mb-8 font-mono text-sm grid grid-cols-2 gap-4 text-slate-300">
+                <div><span class="text-pink-400">B</span> = Base Address</div>
+                <div><span class="text-pink-400">size</span> = Bytes per element (Word size)</div>
+                <div><span class="text-pink-400">m</span> = Total Rows</div>
+                <div><span class="text-pink-400">n</span> = Total Columns</div>
+                <div><span class="text-pink-400">i</span> = Target Row Index</div>
+                <div><span class="text-pink-400">j</span> = Target Column Index</div>
+            </div>
+
+            <div class="space-y-8">
+                <!-- Row Major -->
+                <div>
+                    <h3 class="text-2xl font-semibold mb-3 text-blue-300">A. Row-Major Formula</h3>
+                    <p class="text-slate-400 mb-3 text-sm"><strong>Logic:</strong> Skip 'i' complete rows (where each row has 'n' elements). Then step into current row and skip 'j' elements.</p>
+                    
+                    <div class="bg-slate-900 rounded-xl p-5 border border-slate-700">
+                        <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">0-Indexed Arrays (Standard C)</p>
+                        <p class="code-font text-lg text-white mb-4">Address(a[i][j]) = <span class="text-pink-400">B</span> + [ (i * <span class="text-blue-300">n</span>) + j ] * <span class="text-green-400">size</span></p>
+                        
+                        <p class="text-xs text-slate-500 uppercase tracking-widest mb-1 border-t border-slate-700 pt-4 mt-4">1-Indexed Arrays (Math/Other Languages)</p>
+                        <p class="code-font text-md text-slate-300">Address(a[i][j]) = B + [ ((i-1) * n) + (j-1) ] * size</p>
+                    </div>
+                </div>
+
+                <!-- Column Major -->
+                <div>
+                    <h3 class="text-2xl font-semibold mb-3 text-blue-300">B. Column-Major Formula</h3>
+                    <p class="text-slate-400 mb-3 text-sm"><strong>Logic:</strong> Skip 'j' complete columns (where each column has 'm' elements). Then step down into the current column by 'i' elements.</p>
+                    
+                    <div class="bg-slate-900 rounded-xl p-5 border border-slate-700">
+                        <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">0-Indexed Arrays</p>
+                        <p class="code-font text-lg text-white mb-4">Address(a[i][j]) = <span class="text-pink-400">B</span> + [ (j * <span class="text-orange-300">m</span>) + i ] * <span class="text-green-400">size</span></p>
+                        
+                        <p class="text-xs text-slate-500 uppercase tracking-widest mb-1 border-t border-slate-700 pt-4 mt-4">1-Indexed Arrays</p>
+                        <p class="code-font text-md text-slate-300">Address(a[i][j]) = B + [ ((j-1) * m) + (i-1) ] * size</p>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Footer / Next Video Hook -->
+        <footer class="text-center pt-8 pb-12 text-slate-500">
+            <p class="mb-4">End of current lecture.</p>
+            <div class="inline-flex items-center justify-center space-x-2 bg-slate-800 border border-slate-700 px-6 py-3 rounded-full text-slate-300 transition hover:bg-slate-700 cursor-pointer">
+                <span>Next up: 2D Arrays and Pointers</span>
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"></path></svg>
+            </div>
+        </footer>
+
+    </main>
+
+</body>
+</html>
