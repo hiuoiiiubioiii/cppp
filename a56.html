@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree Construction Notes</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #333;
+            --text-light: #666;
+            --primary: #4A90E2;
+            --accent: #E91E63;
+            --card-bg: #ffffff;
+            --highlight-bg: #fff3cd;
+            --node-color: #2c3e50;
+            --node-border: #bdc3c7;
+            --line-color: #bdc3c7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            padding-bottom: 50px;
+        }
+
+        /* Cards / Sections */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        h1 { color: var(--primary); font-size: 2.2em; margin-bottom: 10px; }
+        h2 { color: var(--node-color); margin-bottom: 15px; border-bottom: 2px solid #eee; padding-bottom: 5px; }
+        h3 { color: var(--primary); margin: 20px 0 10px 0; }
+        
+        p { margin-bottom: 15px; }
+
+        /* Golden Rules Box */
+        .golden-rules {
+            background: linear-gradient(135deg, #e3f2fd, #bbdefb);
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+        .golden-rules strong { color: #1565c0; }
+
+        /* Array Visualizations */
+        .array-container {
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.2em;
+            margin-bottom: 15px;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+        .array-container span {
+            padding: 2px 6px;
+            margin: 0 2px;
+            border-radius: 4px;
+        }
+        .hl-root { background-color: var(--accent); color: white; font-weight: bold; }
+        .hl-left { background-color: #27ae60; color: white; }
+        .hl-right { background-color: #d35400; color: white; }
+
+        /* Explanation Tags */
+        .tag {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-right: 10px;
+            margin-bottom: 5px;
+        }
+        .tag-logic { background-color: #e1bee7; color: #4a148c; }
+        .tag-action { background-color: #c8e6c9; color: #1b5e20; }
+        .tag-visual { background-color: #bbdefb; color: #0d47a1; }
+
+        .explanation-block {
+            margin-bottom: 15px;
+            padding-left: 15px;
+            border-left: 3px solid #eee;
+        }
+
+        /* --- CSS Tree Visualization --- */
+        .tree-wrapper {
+            width: 100%;
+            overflow-x: auto;
+            padding: 20px 0;
+            display: flex;
+            justify-content: center;
+            background-color: #fafafa;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+            margin-top: 15px;
+        }
+
+        .tree ul {
+            padding-top: 20px;
+            position: relative;
+            transition: all 0.5s;
+            display: flex;
+            justify-content: center;
+        }
+
+        .tree li {
+            float: left;
+            text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 5px 0 5px;
+            transition: all 0.5s;
+        }
+
+        /* Connecting lines */
+        .tree li::before, .tree li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 50%;
+            border-top: 2px solid var(--line-color);
+            width: 50%;
+            height: 20px;
+        }
+        .tree li::after {
+            right: auto;
+            left: 50%;
+            border-left: 2px solid var(--line-color);
+        }
+
+        /* Remove lines for single elements */
+        .tree li:only-child::after, .tree li:only-child::before { display: none; }
+        .tree li:only-child { padding-top: 0; }
+
+        /* Remove left/right lines for first/last children */
+        .tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
+        .tree li:last-child::before { border-right: 2px solid var(--line-color); border-radius: 0 5px 0 0; }
+        .tree li:first-child::after { border-radius: 5px 0 0 0; }
+
+        /* Dropdown line from parent */
+        .tree ul ul::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            border-left: 2px solid var(--line-color);
+            width: 0;
+            height: 20px;
+        }
+
+        /* Node Styling */
+        .tree li .node {
+            border: 2px solid var(--node-border);
+            padding: 10px;
+            text-decoration: none;
+            color: var(--node-color);
+            font-family: arial, verdana, tahoma;
+            font-size: 16px;
+            font-weight: bold;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 45px;
+            min-height: 45px;
+            border-radius: 50%;
+            background: white;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        /* Array Box Styling (Unresolved subtrees) */
+        .tree li .array-box {
+            border: 2px dashed var(--primary);
+            padding: 10px 15px;
+            border-radius: 8px;
+            color: var(--primary);
+            font-weight: bold;
+            display: inline-block;
+            background: #e3f2fd;
+        }
+
+        /* Invisible node to force left/right branching correctly */
+        .hidden-node { visibility: hidden; pointer-events: none; }
+
+        /* Verification Box */
+        .verification {
+            background-color: #e8f5e9;
+            border-left: 5px solid #4caf50;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <!-- Title & Rules -->
+    <div class="card visible">
+        <h1>Constructing a Binary Tree</h1>
+        <p>A complete visual breakdown of generating a Binary Tree using <strong>Post-Order</strong> and <strong>In-Order</strong> traversals.</p>
+        
+        <div class="golden-rules">
+            <h2>The Golden Rules 🧠</h2>
+            <p><strong>Rule 1: Post-Order = (Left, Right, Root)</strong><br>
+            The root is <i>always</i> processed last. Therefore, if you read a Post-order sequence backwards (from Right to Left), the first number you encounter for any group is its root.</p>
+            <br>
+            <p><strong>Rule 2: In-Order = (Left, Root, Right)</strong><br>
+            Once you find a root from Rule 1, locate it in the In-order sequence. Everything to its left belongs in the Left Subtree, and everything to its right belongs in the Right Subtree.</p>
+        </div>
+
+        <h3>Given Data:</h3>
+        <div class="array-container">
+            Post: 9, 1, 2, 12, 7, 5, 3, 11, 4, 8
+        </div>
+        <div class="array-container">
+            In: 9, 5, 1, 7, 2, 12, 8, 4, 3, 11
+        </div>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="card scroll-anim">
+        <h2>Step 1: Find the Main Root</h2>
+        
+        <div class="explanation-block">
+            <span class="tag tag-logic">Instructor's Logic</span>
+            You cannot find the root using In-order because the root is somewhere in the middle. You must use Post-order. The very last element is the main root of the entire tree.
+        </div>
+        <div class="explanation-block">
+            <span class="tag tag-action">Action</span>
+            Scan Post-order from Right to Left. The last element is <strong>8</strong>.
+        </div>
+
+        <div class="array-container">
+            Post: 9, 1, 2, 12, 7, 5, 3, 11, 4, <span class="hl-root">8</span>
+        </div>
+
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li><div class="node" style="border-color: var(--accent);">8</div></li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="card scroll-anim">
+        <h2>Step 2: Divide into Left and Right Subtrees</h2>
+        
+        <div class="explanation-block">
+            <span class="tag tag-action">Action</span>
+            Locate <code>8</code> in the In-order sequence. Everything to the left forms the Left array. Everything to the right forms the Right array.
+        </div>
+
+        <div class="array-container">
+            In: <span class="hl-left">9, 5, 1, 7, 2, 12</span>, <span class="hl-root">8</span>, <span class="hl-right">4, 3, 11</span>
+        </div>
+
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <div class="node">8</div>
+                        <ul>
+                            <li><div class="array-box">[9, 5, 1, 7, 2, 12]</div></li>
+                            <li><div class="array-box">[4, 3, 11]</div></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="card scroll-anim">
+        <h2>Step 3: Build the Left Subtree</h2>
+        
+        <div class="explanation-block">
+            <span class="tag tag-logic">Instructor's Logic</span>
+            Look at the left group: <code>[9, 5, 1, 7, 2, 12]</code>. Scan Post-order backwards. The *first* number you encounter that belongs to this specific group is the root of this sub-tree.
+        </div>
+        <div class="explanation-block">
+            <span class="tag tag-action">Action</span>
+            Scanning backwards (...11, 4, 8), the first number from our group we hit is <strong>5</strong>. In In-order, <code>9</code> is to the left of <code>5</code>, and <code>1, 7, 2, 12</code> is to the right.
+        </div>
+
+        <div class="array-container">
+            Post: 9, 1, 2, 12, 7, <span class="hl-root">5</span>, 3, 11, 4, 8<br>
+            In: <span class="hl-left">9</span>, <span class="hl-root">5</span>, <span class="hl-right">1, 7, 2, 12</span> (relative to 5)
+        </div>
+
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <div class="node">8</div>
+                        <ul>
+                            <li>
+                                <div class="node">5</div>
+                                <ul>
+                                    <li><div class="node">9</div></li>
+                                    <li><div class="array-box">[1, 7, 2, 12]</div></li>
+                                </ul>
+                            </li>
+                            <li><div class="array-box">[4, 3, 11]</div></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="card scroll-anim">
+        <h2>Step 4: Resolve the group [1, 7, 2, 12]</h2>
+        
+        <div class="explanation-block">
+            <span class="tag tag-action">Action</span>
+            Find the root of <code>[1, 7, 2, 12]</code>. Scanning Post-order backwards, the first number we find is <strong>7</strong>.
+        </div>
+        <div class="explanation-block">
+            <span class="tag tag-visual">Visual</span>
+            In In-order, <code>1</code> is left of <code>7</code>. <code>[2, 12]</code> is to the right.
+        </div>
+
+        <div class="array-container">
+            Post: 9, 1, 2, 12, <span class="hl-root">7</span>, 5, 3...<br>
+            In: <span class="hl-left">1</span>, <span class="hl-root">7</span>, <span class="hl-right">2, 12</span>
+        </div>
+
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <div class="node">8</div>
+                        <ul>
+                            <li>
+                                <div class="node">5</div>
+                                <ul>
+                                    <li><div class="node">9</div></li>
+                                    <li>
+                                        <div class="node">7</div>
+                                        <ul>
+                                            <li><div class="node">1</div></li>
+                                            <li><div class="array-box">[2, 12]</div></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><div class="array-box">[4, 3, 11]</div></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="card scroll-anim">
+        <h2>Step 5: Resolve the group [2, 12]</h2>
+        
+        <div class="explanation-block">
+            <span class="tag tag-action">Action</span>
+            Find the root of <code>[2, 12]</code>. Scanning Post-order backwards, the first number is <strong>12</strong>.
+        </div>
+        <div class="explanation-block">
+            <span class="tag tag-visual">Visual</span>
+            In In-order, <code>2</code> is to the <i>left</i> of <code>12</code>. There is nothing to the right. The entire left side of the main tree is now complete!
+        </div>
+
+        <div class="array-container">
+            Post: 9, 1, 2, <span class="hl-root">12</span>, 7...<br>
+            In: <span class="hl-left">2</span>, <span class="hl-root">12</span>
+        </div>
+
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <div class="node">8</div>
+                        <ul>
+                            <li>
+                                <div class="node">5</div>
+                                <ul>
+                                    <li><div class="node">9</div></li>
+                                    <li>
+                                        <div class="node">7</div>
+                                        <ul>
+                                            <li><div class="node">1</div></li>
+                                            <li>
+                                                <div class="node">12</div>
+                                                <ul>
+                                                    <li><div class="node">2</div></li>
+                                                    <li class="hidden-node"><div class="node"></div></li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><div class="array-box">[4, 3, 11]</div></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="card scroll-anim">
+        <h2>Step 6: Build the Right Subtree [4, 3, 11]</h2>
+        
+        <div class="explanation-block">
+            <span class="tag tag-logic">Instructor's Logic</span>
+            Moving to the right side of main root 8. The elements are <code>[4, 3, 11]</code>. Scanning Post-order backwards from the very end, <strong>4</strong> is found immediately.
+        </div>
+        <div class="explanation-block">
+            <span class="tag tag-visual">Visual</span>
+            In In-order, both <code>3</code> and <code>11</code> are to the <strong>right</strong> of <code>4</code>. Because of this, node 4 has NO left child.
+        </div>
+
+        <div class="array-container">
+            Post: ...3, 11, <span class="hl-root">4</span>, 8<br>
+            In: ...8, <span class="hl-root">4</span>, <span class="hl-right">3, 11</span>
+        </div>
+
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <div class="node">8</div>
+                        <ul>
+                            <li>
+                                <div class="node" style="opacity: 0.5;">... Left Side ...</div>
+                            </li>
+                            <li>
+                                <div class="node">4</div>
+                                <ul>
+                                    <li class="hidden-node"><div class="node"></div></li>
+                                    <li><div class="array-box">[3, 11]</div></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 7 -->
+    <div class="card scroll-anim">
+        <h2>Step 7: Resolve the group [3, 11]</h2>
+        
+        <div class="explanation-block">
+            <span class="tag tag-action">Action</span>
+            Find the root of <code>[3, 11]</code>. Scanning Post-order backwards, the first number is <strong>11</strong>. 
+        </div>
+        <div class="explanation-block">
+            <span class="tag tag-visual">Visual</span>
+            Find <code>11</code> in In-order. The number <code>3</code> is to the <strong>left</strong> of <code>11</code>.
+        </div>
+
+        <div class="array-container">
+            Post: ...3, <span class="hl-root">11</span>, 4...<br>
+            In: ...<span class="hl-left">3</span>, <span class="hl-root">11</span>
+        </div>
+
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <div class="node" style="border-color: var(--accent);">8</div>
+                        <ul>
+                            <li>
+                                <div class="node">5</div>
+                                <ul>
+                                    <li><div class="node">9</div></li>
+                                    <li>
+                                        <div class="node">7</div>
+                                        <ul>
+                                            <li><div class="node">1</div></li>
+                                            <li>
+                                                <div class="node">12</div>
+                                                <ul>
+                                                    <li><div class="node">2</div></li>
+                                                    <li class="hidden-node"><div class="node"></div></li>
+                                                </ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li>
+                                <div class="node">4</div>
+                                <ul>
+                                    <li class="hidden-node"><div class="node"></div></li>
+                                    <li>
+                                        <div class="node">11</div>
+                                        <ul>
+                                            <li><div class="node">3</div></li>
+                                            <li class="hidden-node"><div class="node"></div></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Verification -->
+    <div class="card scroll-anim verification">
+        <h2>Final Step: Verify Your Work ✅</h2>
+        <p>The instructor provides a highly recommended pro-tip for exams:</p>
+        <p><strong>Ignore the arrays written on the board.</strong> Look ONLY at the drawing of the tree you just created. Manually calculate the Post-order and In-order traversals based on your drawing.</p>
+        <p>If your manual calculation matches the sequences given in the original problem exactly, your tree is <strong>100% correct</strong>.</p>
+    </div>
+
+</div>
+
+<!-- Simple script for scroll animations -->
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.15
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target); // Run animation only once
+                }
+            });
+        }, observerOptions);
+
+        const cards = document.querySelectorAll('.scroll-anim');
+        cards.forEach(card => observer.observe(card));
+    });
+</script>
+
+</body>
+</html>
