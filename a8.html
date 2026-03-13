@@ -1,0 +1,577 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Notes: Types of Linked Lists</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-light: #666666;
+            --accent-blue: #3498db;
+            --accent-green: #2ecc71;
+            --accent-red: #e74c3c;
+            --border-color: #e0e0e0;
+            --code-bg: #282c34;
+            --code-text: #abb2bf;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Feed Container */
+        .feed-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--accent-blue);
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--text-light);
+            font-size: 1.1rem;
+        }
+
+        /* Cards/Sections */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            border-bottom: 2px solid var(--accent-blue);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h3 {
+            margin: 20px 0 10px 0;
+            font-size: 1.3rem;
+            color: var(--text-light);
+        }
+
+        .card p, .card ul {
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+        }
+
+        .card ul {
+            padding-left: 20px;
+        }
+
+        .card li {
+            margin-bottom: 8px;
+        }
+
+        .highlight-note {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+            margin-top: 15px;
+        }
+
+        .keyword { color: #c678dd; }
+        .type { color: #e5c07b; }
+        .variable { color: #e06c75; }
+        .comment { color: #5c6370; font-style: italic; }
+
+        /* Visualization Area */
+        .visualization-box {
+            background-color: #f8fcfb;
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 40px 20px;
+            margin: 25px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: nowrap;
+            overflow-x: auto;
+            position: relative;
+            min-height: 180px;
+        }
+
+        /* Node Styling */
+        .node-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .pointer-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 10px;
+        }
+
+        .pointer-label {
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--text-light);
+            margin-bottom: 5px;
+        }
+
+        .pointer-value {
+            border: 2px solid var(--accent-blue);
+            background: #eef7fc;
+            padding: 8px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+        }
+
+        .node {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .node-address {
+            font-size: 0.8rem;
+            color: var(--text-light);
+            margin-bottom: 5px;
+            font-family: monospace;
+        }
+
+        .node-structure {
+            display: flex;
+            border: 2px solid #2c3e50;
+            border-radius: 6px;
+            background: white;
+            overflow: hidden;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .node-part {
+            padding: 10px 15px;
+            text-align: center;
+            min-width: 50px;
+            font-weight: bold;
+        }
+
+        .part-data {
+            background-color: #fff;
+        }
+
+        .part-ptr {
+            background-color: #e8f6f3;
+            border-left: 2px solid #2c3e50;
+            font-size: 0.9rem;
+        }
+        
+        .part-prev {
+            background-color: #fdf2e9;
+            border-right: 2px solid #2c3e50;
+            font-size: 0.9rem;
+        }
+
+        .val-null {
+            color: var(--accent-red);
+            font-style: italic;
+        }
+
+        /* Arrows */
+        .arrow {
+            font-size: 1.5rem;
+            color: #7f8c8d;
+            margin: 0 10px;
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Circular Return Links (CSS Magic for Whiteboard Drawing) */
+        .return-path-singly {
+            position: absolute;
+            bottom: 20px;
+            left: 12%;
+            right: 12%;
+            height: 30px;
+            border-bottom: 2px solid var(--accent-blue);
+            border-left: 2px solid var(--accent-blue);
+            border-right: 2px solid var(--accent-blue);
+            border-radius: 0 0 15px 15px;
+            z-index: 1;
+        }
+
+        .return-path-singly::before {
+            content: '◄';
+            position: absolute;
+            top: -10px;
+            left: -6.5px;
+            color: var(--accent-blue);
+            font-size: 1.2rem;
+        }
+
+        .return-path-doubly-top {
+            position: absolute;
+            top: 20px;
+            left: 25%;
+            right: 12%;
+            height: 30px;
+            border-top: 2px solid var(--accent-green);
+            border-left: 2px solid var(--accent-green);
+            border-right: 2px solid var(--accent-green);
+            border-radius: 15px 15px 0 0;
+            z-index: 1;
+        }
+
+        .return-path-doubly-top::after {
+            content: '▼';
+            position: absolute;
+            bottom: -11px;
+            right: -6.5px;
+            color: var(--accent-green);
+            font-size: 1.2rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <!-- Header Section -->
+        <header>
+            <h1>Types of Linked Lists</h1>
+            <p>Comprehensive Video Lecture Breakdown & Visualizations</p>
+        </header>
+
+        <!-- Intro -->
+        <section class="card">
+            <h2>Introduction</h2>
+            <p>In this lecture, the instructor introduces the four standard types of linked lists. However, she notes a crucial concept: <strong>you can modify these base structures according to your specific programming needs.</strong> They are not strictly rigid.</p>
+            <p>The four fundamental types we will cover are:</p>
+            <ul>
+                <li>Singly Linked List</li>
+                <li>Doubly Linked List</li>
+                <li>Circular Linked List</li>
+                <li>Doubly Circular Linked List</li>
+            </ul>
+        </section>
+
+        <!-- 1. Singly Linked List -->
+        <section class="card">
+            <h2>1. Singly Linked List</h2>
+            <p><strong>Concept:</strong> This is the most common type. If someone just says "Linked List," they usually mean a Singly Linked List. It is called "singly" because there is only a <strong>single link</strong> between nodes.</p>
+            <p>Because of this single link, <strong>only forward, sequential traversal is possible</strong>. You cannot move backward through the list.</p>
+
+            <h3>Whiteboard Visualization</h3>
+            <div class="visualization-box">
+                <div class="node-container">
+                    <!-- Head Pointer -->
+                    <div class="pointer-box">
+                        <span class="pointer-label">head</span>
+                        <span class="pointer-value">100</span>
+                    </div>
+                    <div class="arrow">➔</div>
+                    
+                    <!-- Node 1 -->
+                    <div class="node">
+                        <span class="node-address">100</span>
+                        <div class="node-structure">
+                            <div class="node-part part-data">3</div>
+                            <div class="node-part part-ptr">200</div>
+                        </div>
+                    </div>
+                    <div class="arrow">➔</div>
+
+                    <!-- Node 2 -->
+                    <div class="node">
+                        <span class="node-address">200</span>
+                        <div class="node-structure">
+                            <div class="node-part part-data">7</div>
+                            <div class="node-part part-ptr">300</div>
+                        </div>
+                    </div>
+                    <div class="arrow">➔</div>
+
+                    <!-- Node 3 -->
+                    <div class="node">
+                        <span class="node-address">300</span>
+                        <div class="node-structure">
+                            <div class="node-part part-data">8</div>
+                            <div class="node-part part-ptr val-null">Null</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlight-note">
+                <strong>Instructor's Crucial Note:</strong> The <code>head</code> is <strong>not a node</strong>. It is simply a pointer variable whose only job is to store the starting address of the first node so the program knows where the list begins.
+            </div>
+
+            <h3>Code Representation (C-Style Struct)</h3>
+            <pre><code><span class="keyword">struct</span> <span class="type">node</span> {
+    <span class="type">int</span> <span class="variable">data</span>;               <span class="comment">// Stores the actual value</span>
+    <span class="keyword">struct</span> <span class="type">node</span> *<span class="variable">next</span>;      <span class="comment">// Pointer to the next node</span>
+};</code></pre>
+        </section>
+
+        <!-- 2. Doubly Linked List -->
+        <section class="card">
+            <h2>2. Doubly Linked List</h2>
+            <p><strong>Concept:</strong> As the name suggests, this list has <strong>double links</strong> (two pointers per node). Because it has two pointers, you can traverse the list in <strong>both forward and backward directions</strong>.</p>
+            <p>Each node consists of three parts: a pointer to the previous node, the actual data, and a pointer to the next node.</p>
+
+            <h3>Whiteboard Visualization</h3>
+            <div class="visualization-box">
+                <div class="node-container">
+                    <!-- Head Pointer -->
+                    <div class="pointer-box">
+                        <span class="pointer-label">head</span>
+                        <span class="pointer-value">100</span>
+                    </div>
+                    <div class="arrow">➔</div>
+                    
+                    <!-- Node 1 -->
+                    <div class="node">
+                        <span class="node-address">100</span>
+                        <div class="node-structure">
+                            <div class="node-part part-prev val-null">Null</div>
+                            <div class="node-part part-data">1</div>
+                            <div class="node-part part-ptr">200</div>
+                        </div>
+                    </div>
+                    <div class="arrow">⟷</div>
+
+                    <!-- Node 2 -->
+                    <div class="node">
+                        <span class="node-address">200</span>
+                        <div class="node-structure">
+                            <div class="node-part part-prev">100</div>
+                            <div class="node-part part-data">2</div>
+                            <div class="node-part part-ptr">300</div>
+                        </div>
+                    </div>
+                    <div class="arrow">⟷</div>
+
+                    <!-- Node 3 -->
+                    <div class="node">
+                        <span class="node-address">300</span>
+                        <div class="node-structure">
+                            <div class="node-part part-prev">200</div>
+                            <div class="node-part part-data">3</div>
+                            <div class="node-part part-ptr val-null">Null</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3>Code Representation</h3>
+            <pre><code><span class="keyword">struct</span> <span class="type">node</span> {
+    <span class="type">int</span> <span class="variable">data</span>;               <span class="comment">// Stores the actual value</span>
+    <span class="keyword">struct</span> <span class="type">node</span> *<span class="variable">next</span>;      <span class="comment">// Pointer to the succeeding node</span>
+    <span class="keyword">struct</span> <span class="type">node</span> *<span class="variable">prev</span>;      <span class="comment">// Pointer to the preceding node</span>
+};</code></pre>
+        </section>
+
+        <!-- 3. Circular Linked List -->
+        <section class="card">
+            <h2>3. Circular Linked List</h2>
+            <p><strong>Concept:</strong> A Circular Linked List is a direct variation of the Singly Linked List. The only difference is that the list forms a continuous circle. There is no <code>Null</code> at the end of the list; the last element links back to the first element.</p>
+
+            <h3>Whiteboard Visualization</h3>
+            <div class="visualization-box">
+                <!-- Return Path Line -->
+                <div class="return-path-singly"></div>
+                
+                <div class="node-container">
+                    <!-- Head Pointer -->
+                    <div class="pointer-box">
+                        <span class="pointer-label">head</span>
+                        <span class="pointer-value">100</span>
+                    </div>
+                    <div class="arrow">➔</div>
+                    
+                    <!-- Node 1 -->
+                    <div class="node">
+                        <span class="node-address">100</span>
+                        <div class="node-structure">
+                            <div class="node-part part-data">3</div>
+                            <div class="node-part part-ptr">200</div>
+                        </div>
+                    </div>
+                    <div class="arrow">➔</div>
+
+                    <!-- Node 2 -->
+                    <div class="node">
+                        <span class="node-address">200</span>
+                        <div class="node-structure">
+                            <div class="node-part part-data">7</div>
+                            <div class="node-part part-ptr">300</div>
+                        </div>
+                    </div>
+                    <div class="arrow">➔</div>
+
+                    <!-- Node 3 -->
+                    <div class="node">
+                        <span class="node-address">300</span>
+                        <div class="node-structure">
+                            <div class="node-part part-data">8</div>
+                            <div class="node-part part-ptr" style="color:var(--accent-blue)">100</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlight-note">
+                Notice that the structure code is exactly the same as the Singly Linked List! A circular list is created purely through logic during implementation (by making the last node point to the <code>head</code> node rather than Null).
+            </div>
+        </section>
+
+        <!-- 4. Doubly Circular Linked List -->
+        <section class="card">
+            <h2>4. Doubly Circular Linked List</h2>
+            <p><strong>Concept:</strong> This is a combination of both a Doubly Linked List and a Circular Linked List. It has two pointers per node (forward and backward). There are no <code>Null</code> values at either the beginning or the end of the list. The list is completely connected in a circle in both directions.</p>
+
+            <h3>Whiteboard Visualization</h3>
+            <div class="visualization-box">
+                <!-- Forward Return Path -->
+                <div class="return-path-doubly-top"></div>
+                <!-- Backward Return Path -->
+                <div class="return-path-singly"></div>
+
+                <div class="node-container">
+                    <!-- Head Pointer -->
+                    <div class="pointer-box">
+                        <span class="pointer-label">head</span>
+                        <span class="pointer-value">100</span>
+                    </div>
+                    <div class="arrow">➔</div>
+                    
+                    <!-- Node 1 -->
+                    <div class="node">
+                        <span class="node-address">100</span>
+                        <div class="node-structure">
+                            <div class="node-part part-prev" style="color:var(--accent-blue)">300</div>
+                            <div class="node-part part-data">1</div>
+                            <div class="node-part part-ptr">200</div>
+                        </div>
+                    </div>
+                    <div class="arrow">⟷</div>
+
+                    <!-- Node 2 -->
+                    <div class="node">
+                        <span class="node-address">200</span>
+                        <div class="node-structure">
+                            <div class="node-part part-prev">100</div>
+                            <div class="node-part part-data">2</div>
+                            <div class="node-part part-ptr">300</div>
+                        </div>
+                    </div>
+                    <div class="arrow">⟷</div>
+
+                    <!-- Node 3 -->
+                    <div class="node">
+                        <span class="node-address">300</span>
+                        <div class="node-structure">
+                            <div class="node-part part-prev">200</div>
+                            <div class="node-part part-data">3</div>
+                            <div class="node-part part-ptr" style="color:var(--accent-green)">100</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="highlight-note">
+                Just like before, the struct definition is exactly the same as the standard Doubly Linked List. It becomes Circular during implementation when you assign the first node's <code>prev</code> to the last node, and the last node's <code>next</code> to the first node.
+            </div>
+        </section>
+        
+        <!-- Conclusion -->
+        <section class="card">
+            <h2>Summary & Next Steps</h2>
+            <p>The instructor concludes by noting that while Doubly Linked Lists allow backward traversal, they come at the cost of requiring more memory space to store the extra pointer in every single node.</p>
+            <p>In future videos, we will cover the actual operations performed on these lists, including:</p>
+            <ul>
+                <li>Traversal</li>
+                <li>Insertion (at beginning, middle, end)</li>
+                <li>Deletion</li>
+            </ul>
+        </section>
+
+    </div>
+
+    <!-- JavaScript for Fade-in Scroll Effect -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const cards = document.querySelectorAll('.card');
+
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, {
+                threshold: 0.1 // Trigger when 10% of the card is visible
+            });
+
+            cards.forEach(card => {
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>
