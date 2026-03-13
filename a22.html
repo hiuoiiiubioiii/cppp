@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insertion in Circular Linked List | Study Notes Feed</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --primary: #4299e1;
+            --secondary: #ed8936;
+            --code-bg: #1a202c;
+            --code-text: #e2e8f0;
+            --node-border: #2b6cb0;
+            --node-bg: #ebf8ff;
+            --highlight: #fefcbf;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Feed Container */
+        .feed-container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            box-shadow: 0 0 20px rgba(0,0,0,0.05);
+            min-height: 100vh;
+        }
+
+        /* Header & Typography */
+        header {
+            padding: 40px 40px 20px;
+            border-bottom: 2px solid #e2e8f0;
+            background-color: #ffffff;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        h1 { font-size: 2.2rem; color: #1a202c; margin-bottom: 10px; line-height: 1.2; }
+        h2 { font-size: 1.8rem; margin: 40px 0 20px; color: var(--primary); padding-bottom: 10px; border-bottom: 2px solid #edf2f7; }
+        h3 { font-size: 1.3rem; margin: 20px 0 10px; color: #2d3748; }
+        p { margin-bottom: 16px; font-size: 1.1rem; }
+        ul { margin-left: 20px; margin-bottom: 20px; font-size: 1.1rem; }
+        li { margin-bottom: 8px; }
+        
+        strong { color: var(--primary); }
+        .highlight { background-color: var(--highlight); padding: 2px 4px; border-radius: 4px;}
+
+        /* Sections */
+        section {
+            padding: 20px 40px 40px;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+            margin-bottom: 20px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+        code .keyword { color: #f6ad55; }
+        code .comment { color: #a0aec0; font-style: italic; }
+        code .string { color: #9ae6b4; }
+
+        /* --- VISUALIZATIONS CSS --- */
+        .visualization-box {
+            background-color: #f8fafc;
+            border: 2px dashed #cbd5e0;
+            border-radius: 8px;
+            padding: 30px;
+            margin: 30px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: auto;
+        }
+
+        .list-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-top: 20px;
+            position: relative;
+        }
+
+        .node-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .node-address {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .node {
+            display: flex;
+            border: 2px solid var(--node-border);
+            border-radius: 4px;
+            background-color: var(--node-bg);
+            font-family: monospace;
+            font-size: 1.2rem;
+            width: 90px;
+            height: 40px;
+            transition: all 0.3s ease;
+        }
+
+        .node.new-node {
+            border-color: var(--secondary);
+            background-color: #fffaf0;
+        }
+        
+        .node.highlight-update {
+            background-color: #fefcbf;
+            transform: scale(1.1);
+        }
+
+        .node-data, .node-next {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .node-data { border-right: 2px solid var(--node-border); }
+        .new-node .node-data { border-right: 2px solid var(--secondary); }
+
+        .arrow {
+            font-size: 1.5rem;
+            color: var(--node-border);
+            font-weight: bold;
+        }
+
+        .tail-pointer {
+            margin-top: 15px;
+            background: #e53e3e;
+            color: white;
+            padding: 5px 10px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        /* Interactive Controls */
+        .controls {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background 0.2s;
+        }
+
+        button:hover { background-color: #2b6cb0; }
+        button:disabled { background-color: #a0aec0; cursor: not-allowed; }
+
+        .step-desc {
+            margin-top: 15px;
+            font-weight: bold;
+            color: var(--secondary);
+            text-align: center;
+            min-height: 24px;
+        }
+
+        /* Circular Return Arrow Simulation */
+        .circular-arrow {
+            position: absolute;
+            bottom: -20px;
+            left: 45px;
+            right: 45px;
+            height: 20px;
+            border-bottom: 2px dashed var(--node-border);
+            border-left: 2px dashed var(--node-border);
+            border-right: 2px dashed var(--node-border);
+            border-radius: 0 0 10px 10px;
+        }
+        
+        .floating-node-container {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.5s;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    <header>
+        <p style="color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; font-weight: bold;">Lecture Breakdown</p>
+        <h1>Insertion in a Circular Linked List</h1>
+        <p>Comprehensive study notes featuring simulated whiteboard visualizations. Scroll down to learn.</p>
+    </header>
+
+    <main>
+        <!-- Section 1: Intro -->
+        <section>
+            <h2>📌 1. Initial Setup & Concepts</h2>
+            <p>Unlike a singly linked list, a Circular Linked List does not have a <code>NULL</code> pointer at the end. Instead, the last node points back to the first node.</p>
+            <p><span class="highlight">Instructor's Golden Rule:</span> We implement the list using <strong>only a <code>tail</code> pointer</strong> (pointing to the last node), rather than a <code>head</code> pointer.</p>
+            <ul>
+                <li><strong>Why?</strong> With a <code>tail</code> pointer, you have access to both the last node (<code>tail</code>) and the first node (<code>tail->next</code>) in O(1) time!</li>
+            </ul>
+
+            <h3>The Node Structure</h3>
+<pre><code><span class="keyword">struct</span> node {
+    <span class="keyword">int</span> data;
+    <span class="keyword">struct</span> node *next;
+};
+<span class="keyword">struct</span> node *tail; <span class="comment">// Global tail pointer</span></code></pre>
+
+            <div class="visualization-box">
+                <h3>Whiteboard Status: Initial List</h3>
+                <div class="list-container">
+                    <div class="node-wrapper"><div class="node"><div class="node-data">5</div><div class="node-next">200</div></div><div class="node-address">100</div></div>
+                    <div class="arrow">→</div>
+                    <div class="node-wrapper"><div class="node"><div class="node-data">1</div><div class="node-next">150</div></div><div class="node-address">200</div></div>
+                    <div class="arrow">→</div>
+                    <div class="node-wrapper"><div class="node"><div class="node-data">2</div><div class="node-next">500</div></div><div class="node-address">150</div></div>
+                    <div class="arrow">→</div>
+                    <div class="node-wrapper"><div class="node"><div class="node-data">4</div><div class="node-next">100</div></div><div class="node-address">500</div></div>
+                    <div class="circular-arrow"></div>
+                </div>
+                <div class="tail-pointer">Tail: 500</div>
+            </div>
+        </section>
+
+        <!-- Section 2: Insert Beginning -->
+        <section>
+            <h2>🚀 2. Insertion at the Beginning</h2>
+            <p><strong>Goal:</strong> Create a new node and make it the first node in the list.</p>
+            
+            <h3>The Logic:</h3>
+            <p>If the list is not empty, the new node needs to be inserted before Node 1.</p>
+            <ol>
+                <li><strong>Step 1:</strong> Make the new node point to the current first node. We find the first node using <code>tail->next</code>.</li>
+                <li><strong>Step 2:</strong> Make the last node (<code>tail</code>) point to the new node, because the new node is now the first node.</li>
+            </ol>
+
+<pre><code><span class="keyword">void</span> insertAtBeg() {
+    <span class="comment">// 1. Create Node (Data: 7, Address: 600)</span>
+    <span class="keyword">struct</span> node *newnode = malloc(sizeof(<span class="keyword">struct</span> node));
+    newnode->data = 7; 
+    newnode->next = 0;
+
+    <span class="keyword">if</span>(tail == 0) {
+        tail = newnode;
+        tail->next = newnode; <span class="comment">// Points to itself</span>
+    } <span class="keyword">else</span> {
+        newnode->next = tail->next; <span class="comment">// Step 1</span>
+        tail->next = newnode;       <span class="comment">// Step 2</span>
+    }
+}</code></pre>
+
+            <div class="visualization-box">
+                <h3>Interactive Whiteboard: Insert at Beginning</h3>
+                
+                <div class="floating-node-container" id="float1">
+                    <div class="node-wrapper"><div class="node new-node" id="n1-new"><div class="node-data">7</div><div class="node-next" id="n1-new-next">0</div></div><div class="node-address" style="color:var(--secondary)">New: 600</div></div>
+                </div>
+
+                <div class="list-container" id="list1">
+                    <div class="node-wrapper"><div class="node"><div class="node-data">5</div><div class="node-next">200</div></div><div class="node-address">100</div></div>
+                    <div class="arrow">→</div>
+                    <div class="node-wrapper"><div class="node"><div class="node-data">1</div><div class="node-next">150</div></div><div class="node-address">200</div></div>
+                    <div class="arrow">→</div>
+                    <div class="node-wrapper"><div class="node"><div class="node-data">2</div><div class="node-next">500</div></div><div class="node-address">150</div></div>
+                    <div class="arrow">→</div>
+                    <div class="node-wrapper"><div class="node" id="n1-last"><div class="node-data">4</div><div class="node-next" id="n1-last-next">100</div></div><div class="node-address">500</div></div>
+                    <div class="circular-arrow"></div>
+                </div>
+                <div class="tail-pointer">Tail: 500</div>
+
+                <div class="step-desc" id="desc1">Click 'Next Step' to simulate whiteboard drawing.</div>
+                <div class="controls">
+                    <button id="btn1" onclick="stepInsertBeg()">Next Step</button>
+                    <button onclick="resetBeg()" style="background:#718096">Reset</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Insert End -->
+        <section>
+            <h2>🏁 3. Insertion at the End</h2>
+            <p><strong>Goal:</strong> Create a new node and place it at the very end of the list, making it the new <code>tail</code>.</p>
+            <p><strong>Crucial Warning:</strong> The <em>order of operations</em> matters immensely here. If you move the <code>tail</code> pointer first, you will lose the address of the first node!</p>
+
+            <ol>
+                <li><strong>Step 1:</strong> The new node will be the new last node, so it must point back to the first node (<code>tail->next</code>).</li>
+                <li><strong>Step 2:</strong> The current last node (<code>tail</code>) must point to the new node.</li>
+                <li><strong>Step 3:</strong> Update the global <code>tail</code> pointer to point to the new node.</li>
+            </ol>
+
+<pre><code><span class="keyword">void</span> insertAtEnd() {
+    <span class="comment">// 1. Create Node (Data: 10, Address: 700)</span>
+    <span class="keyword">struct</span> node *newnode = malloc(sizeof(<span class="keyword">struct</span> node));
+    newnode->data = 10; 
+    newnode->next = 0;
+
+    <span class="keyword">if</span>(tail == 0) { ... }
+    <span class="keyword">else</span> {
+        newnode->next = tail->next; <span class="comment">// Step 1</span>
+        tail->next = newnode;       <span class="comment">// Step 2</span>
+        tail = newnode;             <span class="comment">// Step 3: Shift tail</span>
+    }
+}</code></pre>
+
+            <div class="visualization-box">
+                <h3>Interactive Whiteboard: Insert at End</h3>
+                
+                <div class="floating-node-container" id="float2">
+                    <div class="node-wrapper"><div class="node new-node" id="n2-new"><div class="node-data">10</div><div class="node-next" id="n2-new-next">0</div></div><div class="node-address" style="color:var(--secondary)">New: 700</div></div>
+                </div>
+
+                <div class="list-container" id="list2">
+                    <div class="node-wrapper"><div class="node"><div class="node-data">5</div><div class="node-next">200</div></div><div class="node-address">100</div></div>
+                    <div class="arrow">→</div>
+                    <div class="node-wrapper"><div class="node"><div class="node-data">1</div><div class="node-next">150</div></div><div class="node-address">200</div></div>
+                    <div class="arrow">→</div>
+                    <div class="node-wrapper"><div class="node" id="n2-last"><div class="node-data">4</div><div class="node-next" id="n2-last-next">100</div></div><div class="node-address">500</div></div>
+                    <div class="circular-arrow"></div>
+                </div>
+                <div class="tail-pointer" id="n2-tail">Tail: 500</div>
+
+                <div class="step-desc" id="desc2">Click 'Next Step' to simulate whiteboard drawing.</div>
+                <div class="controls">
+                    <button id="btn2" onclick="stepInsertEnd()">Next Step</button>
+                    <button onclick="resetEnd()" style="background:#718096">Reset</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Insert Pos -->
+        <section>
+            <h2>🎯 4. Insertion at a Specific Position</h2>
+            <p><strong>Goal:</strong> Insert a node at a specific position (e.g., Position 3). To insert at position <code>pos</code>, we must stop our traversal at position <code>pos - 1</code>.</p>
+
+<pre><code><span class="keyword">void</span> insertAtPos() {
+    <span class="keyword">int</span> pos = 3, i = 1;
+    <span class="comment">// ... Validation checks for pos < 0 or pos == 1 ...</span>
+    
+    <span class="keyword">struct</span> node *newnode = malloc(...); <span class="comment">// Data 7, Addr 250</span>
+    <span class="keyword">struct</span> node *temp = tail->next; <span class="comment">// Start at node 1</span>
+
+    <span class="comment">// Traverse to node JUST BEFORE insertion point</span>
+    <span class="keyword">while</span>(i < pos - 1) {
+        temp = temp->next;
+        i++;
+    }
+
+    <span class="comment">// Pointer magic</span>
+    newnode->next = temp->next; <span class="comment">// Step 1</span>
+    temp->next = newnode;       <span class="comment">// Step 2</span>
+}</code></pre>
+
+            <div class="visualization-box">
+                <h3>Interactive Whiteboard: Insert at Pos 3</h3>
+                
+                <div class="floating-node-container" id="float3">
+                    <div class="node-wrapper"><div class="node new-node" id="n3-new"><div class="node-data">7</div><div class="node-next" id="n3-new-next">0</div></div><div class="node-address" style="color:var(--secondary)">New: 250</div></div>
+                </div>
+
+                <div class="list-container" id="list3">
+                    <div class="node-wrapper"><div class="node" id="pos-node1"><div class="node-data">5</div><div class="node-next">200</div></div><div class="node-address">Pos 1: 100</div></div>
+                    <div class="arrow">→</div>
+                    <div class="node-wrapper"><div class="node" id="pos-node2"><div class="node-data">1</div><div class="node-next" id="n3-prev-next">150</div></div><div class="node-address">Pos 2: 200</div></div>
+                    <div class="arrow" id="n3-arr">→</div>
+                    <div class="node-wrapper"><div class="node" id="pos-node3"><div class="node-data">2</div><div class="node-next">500</div></div><div class="node-address">Pos 3: 150</div></div>
+                    <div class="circular-arrow" style="width:70%"></div>
+                </div>
+                
+                <div class="step-desc" id="desc3">Click 'Next Step' to traverse and insert.</div>
+                <div class="controls">
+                    <button id="btn3" onclick="stepInsertPos()">Next Step</button>
+                    <button onclick="resetPos()" style="background:#718096">Reset</button>
+                </div>
+            </div>
+        </section>
+
+        <section>
+            <h2>💡 Summary: Golden Rules</h2>
+            <ul>
+                <li><strong>The power of <code>tail</code>:</strong> <code>tail</code> gives you the last node. <code>tail->next</code> ALWAYS gives you the first node.</li>
+                <li><strong>Order of Pointer Updates:</strong> When inserting, <strong>always update the new node's pointer first.</strong> If you update the existing list's pointers first, you break the chain.</li>
+                <li><strong>Position Traversal Rule:</strong> To insert at position <em>N</em>, you must stop your <code>temp</code> pointer at position <em>N-1</em>.</li>
+            </ul>
+        </section>
+
+    </main>
+</div>
+
+<script>
+    // --- Logic for Vis 1: Insert Beginning ---
+    let state1 = 0;
+    function stepInsertBeg() {
+        const floatBox = document.getElementById('float1');
+        const newNext = document.getElementById('n1-new-next');
+        const lastNext = document.getElementById('n1-last-next');
+        const desc = document.getElementById('desc1');
+        const btn = document.getElementById('btn1');
+        const newNode = document.getElementById('n1-new');
+        const lastNode = document.getElementById('n1-last');
+
+        if(state1 === 0) {
+            floatBox.style.opacity = '1';
+            desc.innerText = "Created node 600.";
+            state1++;
+        } else if(state1 === 1) {
+            newNext.innerText = "100";
+            newNode.classList.add('highlight-update');
+            setTimeout(() => newNode.classList.remove('highlight-update'), 500);
+            desc.innerHTML = "<code>newnode->next = tail->next;</code><br>New node points to First Node (100).";
+            state1++;
+        } else if(state1 === 2) {
+            lastNext.innerText = "600";
+            lastNode.classList.add('highlight-update');
+            setTimeout(() => lastNode.classList.remove('highlight-update'), 500);
+            desc.innerHTML = "<code>tail->next = newnode;</code><br>Last node now points to New Node (600).";
+            btn.disabled = true;
+            btn.innerText = "Complete";
+        }
+    }
+    function resetBeg() {
+        state1 = 0;
+        document.getElementById('float1').style.opacity = '0';
+        document.getElementById('n1-new-next').innerText = '0';
+        document.getElementById('n1-last-next').innerText = '100';
+        document.getElementById('desc1').innerText = "Click 'Next Step' to simulate whiteboard drawing.";
+        document.getElementById('btn1').disabled = false;
+        document.getElementById('btn1').innerText = "Next Step";
+    }
+
+    // --- Logic for Vis 2: Insert End ---
+    let state2 = 0;
+    function stepInsertEnd() {
+        const floatBox = document.getElementById('float2');
+        const newNext = document.getElementById('n2-new-next');
+        const lastNext = document.getElementById('n2-last-next');
+        const tailLabel = document.getElementById('n2-tail');
+        const desc = document.getElementById('desc2');
+        const btn = document.getElementById('btn2');
+        const newNode = document.getElementById('n2-new');
+        const lastNode = document.getElementById('n2-last');
+
+        if(state2 === 0) {
+            floatBox.style.opacity = '1';
+            desc.innerText = "Created node 700.";
+            state2++;
+        } else if(state2 === 1) {
+            newNext.innerText = "100";
+            newNode.classList.add('highlight-update');
+            setTimeout(() => newNode.classList.remove('highlight-update'), 500);
+            desc.innerHTML = "<code>newnode->next = tail->next;</code><br>New node points to First Node (100).";
+            state2++;
+        } else if(state2 === 2) {
+            lastNext.innerText = "700";
+            lastNode.classList.add('highlight-update');
+            setTimeout(() => lastNode.classList.remove('highlight-update'), 500);
+            desc.innerHTML = "<code>tail->next = newnode;</code><br>Old last node points to New Node (700).";
+            state2++;
+        } else if (state2 === 3) {
+            tailLabel.innerText = "Tail: 700";
+            tailLabel.style.transform = "scale(1.1)";
+            setTimeout(() => tailLabel.style.transform = "scale(1)", 500);
+            desc.innerHTML = "<code>tail = newnode;</code><br>Tail pointer updated to 700.";
+            btn.disabled = true;
+            btn.innerText = "Complete";
+        }
+    }
+    function resetEnd() {
+        state2 = 0;
+        document.getElementById('float2').style.opacity = '0';
+        document.getElementById('n2-new-next').innerText = '0';
+        document.getElementById('n2-last-next').innerText = '100';
+        document.getElementById('n2-tail').innerText = 'Tail: 500';
+        document.getElementById('desc2').innerText = "Click 'Next Step' to simulate whiteboard drawing.";
+        document.getElementById('btn2').disabled = false;
+        document.getElementById('btn2').innerText = "Next Step";
+    }
+
+    // --- Logic for Vis 3: Insert Pos ---
+    let state3 = 0;
+    function stepInsertPos() {
+        const floatBox = document.getElementById('float3');
+        const newNext = document.getElementById('n3-new-next');
+        const prevNext = document.getElementById('n3-prev-next');
+        const desc = document.getElementById('desc3');
+        const btn = document.getElementById('btn3');
+        const n1 = document.getElementById('pos-node1');
+        const n2 = document.getElementById('pos-node2');
+        const newNode = document.getElementById('n3-new');
+
+        if(state3 === 0) {
+            floatBox.style.opacity = '1';
+            desc.innerText = "Created node 250. Target Position: 3.";
+            state3++;
+        } else if(state3 === 1) {
+            n1.classList.add('highlight-update');
+            desc.innerHTML = "Traversing: <code>temp</code> is at Pos 1.";
+            setTimeout(() => n1.classList.remove('highlight-update'), 800);
+            state3++;
+        } else if(state3 === 2) {
+            n2.classList.add('highlight-update');
+            desc.innerHTML = "Traversing: <code>temp</code> stops at Pos 2 (pos - 1).";
+            setTimeout(() => n2.classList.remove('highlight-update'), 800);
+            state3++;
+        } else if(state3 === 3) {
+            newNext.innerText = "150";
+            newNode.classList.add('highlight-update');
+            setTimeout(() => newNode.classList.remove('highlight-update'), 500);
+            desc.innerHTML = "<code>newnode->next = temp->next;</code><br>New node points to Pos 3 (150).";
+            state3++;
+        } else if(state3 === 4) {
+            prevNext.innerText = "250";
+            n2.classList.add('highlight-update');
+            setTimeout(() => n2.classList.remove('highlight-update'), 500);
+            desc.innerHTML = "<code>temp->next = newnode;</code><br>Pos 2 now points to New Node (250).";
+            btn.disabled = true;
+            btn.innerText = "Complete";
+        }
+    }
+    function resetPos() {
+        state3 = 0;
+        document.getElementById('float3').style.opacity = '0';
+        document.getElementById('n3-new-next').innerText = '0';
+        document.getElementById('n3-prev-next').innerText = '150';
+        document.getElementById('desc3').innerText = "Click 'Next Step' to traverse and insert.";
+        document.getElementById('btn3').disabled = false;
+        document.getElementById('btn3').innerText = "Next Step";
+    }
+</script>
+</body>
+</html>
