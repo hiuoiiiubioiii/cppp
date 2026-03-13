@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stack Using Arrays in C - Study Notes</title>
+    <style>
+        /* Base Styling & Vertical Feed Layout */
+        :root {
+            --bg-color: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+            --accent: #0984e3;
+            --code-bg: #2d3436;
+            --danger: #d63031;
+            --success: #00b894;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.7;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .feed-container {
+            max-width: 800px;
+            width: 100%;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* Card Sections */
+        .note-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--accent);
+        }
+
+        h1 { font-size: 2.2rem; margin-top: 0; color: #000; }
+        h2 { font-size: 1.8rem; border-bottom: 2px solid #eee; padding-bottom: 10px; margin-top: 0; }
+        h3 { font-size: 1.3rem; color: var(--accent); }
+        
+        p, li { font-size: 1.1rem; }
+        ul { padding-left: 20px; }
+        .highlight { background-color: #ffeaa7; padding: 2px 6px; border-radius: 4px; font-weight: bold; }
+
+        /* Code Block Styling */
+        pre {
+            background-color: var(--code-bg);
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+        .kw { color: #ff79c6; } /* Keywords */
+        .fn { color: #50fa7b; } /* Functions */
+        .str { color: #f1fa8c; } /* Strings */
+        .cmt { color: #6272a4; } /* Comments */
+        .var { color: #8be9fd; } /* Variables */
+
+        /* Visualizations */
+        .visualization-box {
+            background-color: #e9ecef;
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Logical Rotation Visual */
+        .array-vis {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+        .array-slot {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: 2px solid var(--text-main);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-radius: 4px;
+        }
+        .arrow-rotate {
+            font-size: 2rem;
+            color: var(--accent);
+            transform: rotate(90deg);
+            margin: 10px 0;
+        }
+
+        /* Interactive Stack Visualizer */
+        .stack-wrapper {
+            display: flex;
+            align-items: flex-end;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .stack-container {
+            width: 120px;
+            border: 4px solid var(--text-main);
+            border-top: none;
+            display: flex;
+            flex-direction: column-reverse;
+            padding: 5px;
+            background: white;
+            border-radius: 0 0 8px 8px;
+        }
+        .stack-item {
+            height: 40px;
+            background-color: var(--accent);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-top: 5px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .stack-item.empty {
+            background-color: transparent;
+            border: 2px dashed #ccc;
+            color: #ccc;
+        }
+        .pointer-box {
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+            justify-content: flex-end;
+            height: 250px;
+        }
+        .top-pointer {
+            color: var(--danger);
+            font-weight: bold;
+            font-size: 1.2rem;
+            transition: transform 0.3s ease;
+        }
+
+        .controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .btn-push { background-color: var(--success); color: white; }
+        .btn-pop { background-color: var(--danger); color: white; }
+        .btn-peek { background-color: var(--accent); color: white; }
+        button:hover { opacity: 0.8; }
+        button:disabled { background-color: #ccc; cursor: not-allowed; }
+
+        .log-box {
+            margin-top: 15px;
+            padding: 10px;
+            background: #fff;
+            border-left: 4px solid var(--accent);
+            width: 100%;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <!-- Title Section -->
+    <div class="note-card" style="border-top-width: 10px;">
+        <h1>📚 Implementation of Stack Using Arrays</h1>
+        <p style="color: var(--text-muted);">Instructor's complete whiteboard breakdown, visualized. Scroll down to learn.</p>
+    </div>
+
+    <!-- Section 1: Intro & Visualization -->
+    <div class="note-card">
+        <h2>1. Core Concept & Logical Rotation</h2>
+        <p>A stack can be implemented using <b>Arrays (Static Memory)</b> or <b>Linked Lists (Dynamic Memory)</b>. Here, we focus entirely on the Array implementation.</p>
+        
+        <h3>Memory Math</h3>
+        <p>When you declare an array like <code>int a[5];</code>, the computer allocates 5 contiguous blocks in memory.</p>
+        <ul>
+            <li>If 1 integer takes <b>4 bytes</b>...</li>
+            <li>5 integers will take exactly <b>20 bytes</b> of memory.</li>
+            <li>Indexes run from <code>0</code> to <code>4</code>.</li>
+        </ul>
+
+        <div class="visualization-box">
+            <p><b>Visualizing the Array as a Stack:</b></p>
+            <p style="font-size: 0.9rem; color: #666;">If we take a standard horizontal array and rotate it 90 degrees, it naturally forms a stack. Index 0 is the bottom, and Index 4 is the top.</p>
+            
+            <div class="array-vis">
+                <div class="array-slot">0</div>
+                <div class="array-slot">1</div>
+                <div class="array-slot">2</div>
+                <div class="array-slot">3</div>
+                <div class="array-slot">4</div>
+            </div>
+            
+            <div class="arrow-rotate">➔</div>
+
+            <div class="stack-container" style="width: 80px;">
+                <div class="stack-item">4</div>
+                <div class="stack-item">3</div>
+                <div class="stack-item">2</div>
+                <div class="stack-item">1</div>
+                <div class="stack-item">0</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 2: Global Setup -->
+    <div class="note-card">
+        <h2>2. Global Declarations</h2>
+        <p>Because we are building a menu-driven program where multiple functions (Push, Pop, Peek, Display) need access to the exact same stack, we declare our variables <b>globally</b> (outside of `main`).</p>
+        
+<pre>
+<span class="cmt">// Global Declarations</span>
+<span class="kw">#define</span> N 5
+<span class="kw">int</span> stack[N];
+<span class="kw">int</span> top = -1;
+</pre>
+        
+        <h3>Instructor's Breakdown:</h3>
+        <ul>
+            <li><span class="highlight">#define N 5</span>: This is a macro. It sets the max size to 5. Using a macro makes it incredibly easy to change the stack size later without hunting through your code.</li>
+            <li><span class="highlight">int top = -1</span>: <b>Crucial variable.</b> `top` tracks the index of the highest element. It starts at `-1` because the stack is currently empty (if it started at 0, that would mean there is an element at index 0!).</li>
+        </ul>
+    </div>
+
+    <!-- Section 3: Interactive Playground (Push & Pop logic) -->
+    <div class="note-card">
+        <h2>3. Live Interactive Stack Visualizer</h2>
+        <p>Before looking at the specific C code, interact with this visualizer to understand the exact logic the instructor writes on the whiteboard.</p>
+        
+        <div class="visualization-box">
+            <div class="stack-wrapper">
+                <div class="stack-container" id="live-stack">
+                    <!-- JS will populate this -->
+                </div>
+                <div class="pointer-box">
+                    <div class="top-pointer" id="top-pointer">← top = -1</div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn-push" onclick="simulatePush()">Push (Add)</button>
+                <button class="btn-pop" onclick="simulatePop()">Pop (Remove)</button>
+                <button class="btn-peek" onclick="simulatePeek()">Peek (Top)</button>
+            </div>
+            <div class="log-box" id="sim-log">System initialized. Stack is empty.</div>
+        </div>
+    </div>
+
+    <!-- Section 4: Push -->
+    <div class="note-card">
+        <h2>4. The push() Operation</h2>
+        <p><b>Goal:</b> Check for overflow, increment the top pointer, and insert data.</p>
+<pre>
+<span class="kw">void</span> <span class="fn">push</span>() {
+    <span class="kw">int</span> x;
+    <span class="fn">printf</span>(<span class="str">"Enter data: "</span>);
+    <span class="fn">scanf</span>(<span class="str">"%d"</span>, &x);
+
+    <span class="kw">if</span> (top == N - 1) {
+        <span class="fn">printf</span>(<span class="str">"Overflow"</span>);
+    } <span class="kw">else</span> {
+        top++;
+        stack[top] = x;
+    }
+}
+</pre>
+        <h3>Instructor's Breakdown:</h3>
+        <ul>
+            <li><b>Check Overflow:</b> We must check if the stack is full. Since max size is N (5), the highest index is 4 (N - 1). If <code>top == N - 1</code>, we print "Overflow".</li>
+            <li><b>Increment FIRST:</b> If there is space, we do <code>top++</code>. If `top` was -1, it becomes 0.</li>
+            <li><b>Insert LAST:</b> Now that `top` points to a valid empty slot, we insert: <code>stack[top] = x;</code>.</li>
+        </ul>
+    </div>
+
+    <!-- Section 5: Pop -->
+    <div class="note-card">
+        <h2>5. The pop() Operation</h2>
+        <p><b>Goal:</b> Check for underflow, retrieve the top value, and decrement the top pointer.</p>
+<pre>
+<span class="kw">void</span> <span class="fn">pop</span>() {
+    <span class="kw">int</span> item;
+    <span class="kw">if</span> (top == -1) {
+        <span class="fn">printf</span>(<span class="str">"Underflow"</span>);
+    } <span class="kw">else</span> {
+        item = stack[top];
+        top--;
+        <span class="fn">printf</span>(<span class="str">"The popped item is %d"</span>, item);
+    }
+}
+</pre>
+        <h3>Instructor's Breakdown:</h3>
+        <ul>
+            <li><b>Check Underflow:</b> If <code>top == -1</code>, the stack is completely empty. Print "Underflow".</li>
+            <li><b>The Garbage Value Concept:</b> Look closely at <code>top--;</code>. Notice we don't actually "delete" the memory block. We just lower our pointer. The old data is left behind as "garbage" and will simply be overwritten the next time we push data.</li>
+        </ul>
+    </div>
+
+    <!-- Section 6: Peek -->
+    <div class="note-card">
+        <h2>6. The peek() (or top) Operation</h2>
+        <p><b>Goal:</b> Look at the top element without modifying the stack.</p>
+<pre>
+<span class="kw">void</span> <span class="fn">peek</span>() {
+    <span class="kw">if</span> (top == -1) {
+        <span class="fn">printf</span>(<span class="str">"Stack is empty"</span>);
+    } <span class="kw">else</span> {
+        <span class="fn">printf</span>(<span class="str">"The topmost element is %d"</span>, stack[top]);
+    }
+}
+</pre>
+        <p>This is almost identical to <code>pop()</code>, but we <b>do not</b> write <code>top--;</code>. The pointer stays exactly where it is.</p>
+    </div>
+
+    <!-- Section 7: Display -->
+    <div class="note-card">
+        <h2>7. The display() Operation</h2>
+        <p><b>Goal:</b> Traverse the stack and print elements from top to bottom (LIFO order).</p>
+<pre>
+<span class="kw">void</span> <span class="fn">display</span>() {
+    <span class="kw">int</span> i;
+    <span class="kw">for</span> (i = top; i >= 0; i--) {
+        <span class="fn">printf</span>(<span class="str">"%d, "</span>, stack[i]);
+    }
+}
+</pre>
+        <p>Because stacks follow <b>LIFO (Last In, First Out)</b>, we must print the top item first. Therefore, the <code>for</code> loop initializes <code>i = top</code> and counts <b>downwards</b> (<code>i--</code>) until it hits the bottom index (<code>i >= 0</code>).</p>
+    </div>
+
+    <!-- Section 8: Main Function -->
+    <div class="note-card">
+        <h2>8. The main() Function Menu</h2>
+        <p><b>Goal:</b> Tie it all together using a Switch case inside a Do-While loop.</p>
+<pre>
+<span class="kw">void</span> <span class="fn">main</span>() {
+    <span class="kw">int</span> ch;
+    <span class="kw">do</span> {
+        <span class="fn">printf</span>(<span class="str">"Enter choice: 1:Push 2:Pop 3:Peek 4:Display 0:Exit\n"</span>);
+        <span class="fn">scanf</span>(<span class="str">"%d"</span>, &ch);
+
+        <span class="kw">switch</span> (ch) {
+            <span class="kw">case</span> 1: <span class="fn">push</span>(); <span class="kw">break</span>;
+            <span class="kw">case</span> 2: <span class="fn">pop</span>(); <span class="kw">break</span>;
+            <span class="kw">case</span> 3: <span class="fn">peek</span>(); <span class="kw">break</span>;
+            <span class="kw">case</span> 4: <span class="fn">display</span>(); <span class="kw">break</span>;
+            <span class="kw">case</span> 0: <span class="fn">printf</span>(<span class="str">"Exiting..."</span>); <span class="kw">break</span>;
+            <span class="kw">default</span>: <span class="fn">printf</span>(<span class="str">"Invalid choice"</span>);
+        }
+    } <span class="kw">while</span> (ch != 0);
+}
+</pre>
+        <h3>Important Notes:</h3>
+        <ul>
+            <li>The <span class="highlight">do-while</span> loop ensures the menu prints to the user at least once.</li>
+            <li>The instructor explicitly stresses the importance of <span class="highlight">break;</span>. If you forget to write <code>break;</code> after calling <code>push()</code>, the code will "fall through" and automatically execute <code>pop()</code> without asking the user!</li>
+        </ul>
+    </div>
+
+    <!-- Section 9: Time Complexity -->
+    <div class="note-card">
+        <h2>9. Time Complexity Summary</h2>
+        <p>At the end of the lecture, the instructor summarizes the efficiency of an array-based stack:</p>
+        <ul>
+            <li><b>Push:</b> <code>O(1)</code> - Constant time. No loops, just basic math and assignment.</li>
+            <li><b>Pop:</b> <code>O(1)</code> - Constant time. Just decreasing the top pointer.</li>
+            <li><b>Peek/Top:</b> <code>O(1)</code> - Constant time. Directly accessing an array index.</li>
+            <li><b>Display/Search:</b> <code>O(n)</code> - Linear time. Requires a for-loop to traverse through 'n' elements.</li>
+        </ul>
+    </div>
+
+</div>
+
+<!-- Interactive Stack Logic -->
+<script>
+    const MAX_SIZE = 5;
+    let stackArray = [];
+    let topVal = -1;
+
+    const stackDom = document.getElementById('live-stack');
+    const pointerDom = document.getElementById('top-pointer');
+    const logDom = document.getElementById('sim-log');
+
+    // Initial render
+    renderStack();
+
+    function renderStack() {
+        stackDom.innerHTML = '';
+        
+        // Render 5 slots. i goes from 0 to 4. We prepend so 4 is visually at the top.
+        for(let i = MAX_SIZE - 1; i >= 0; i--) {
+            const slot = document.createElement('div');
+            
+            if(i <= topVal) {
+                slot.className = 'stack-item';
+                slot.innerText = stackArray[i];
+            } else {
+                slot.className = 'stack-item empty';
+                slot.innerText = `[${i}]`; // Show index when empty
+            }
+            stackDom.appendChild(slot);
+        }
+
+        // Move pointer. 
+        // 5 slots total. slot height = 45px (40+5 margin). 
+        // If top = -1, it sits below the stack.
+        let translateAmount = 0;
+        if(topVal === -1) {
+            translateAmount = 0;
+        } else {
+            translateAmount = -(topVal * 45) - 45; 
+        }
+        pointerDom.style.transform = `translateY(${translateAmount}px)`;
+        pointerDom.innerText = `← top = ${topVal}`;
+    }
+
+    function simulatePush() {
+        if(topVal === MAX_SIZE - 1) {
+            logDom.innerHTML = "<span style='color: var(--danger)'>Overflow! Stack is full.</span>";
+            return;
+        }
+        let randomVal = Math.floor(Math.random() * 100); // Random data
+        topVal++;
+        stackArray[topVal] = randomVal;
+        logDom.innerHTML = `Pushed <span style='color: var(--success)'>${randomVal}</span> into stack. top is now ${topVal}.`;
+        renderStack();
+    }
+
+    function simulatePop() {
+        if(topVal === -1) {
+            logDom.innerHTML = "<span style='color: var(--danger)'>Underflow! Stack is empty.</span>";
+            return;
+        }
+        let poppedItem = stackArray[topVal];
+        topVal--;
+        logDom.innerHTML = `Popped <span style='color: var(--danger)'>${poppedItem}</span> from stack. top is now ${topVal}.`;
+        renderStack();
+    }
+
+    function simulatePeek() {
+        if(topVal === -1) {
+            logDom.innerHTML = "<span style='color: var(--danger)'>Stack is empty, nothing to peek!</span>";
+            return;
+        }
+        let peekItem = stackArray[topVal];
+        logDom.innerHTML = `Peek: Top element is <span style='color: var(--accent)'>${peekItem}</span>. top remains ${topVal}.`;
+    }
+</script>
+
+</body>
+</html>
