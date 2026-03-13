@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queue using Linked List - Study Notes</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-light: #666666;
+            --primary: #4A90E2;
+            --accent-green: #2ecc71;
+            --accent-red: #e74c3c;
+            --accent-purple: #9b59b6;
+            --code-bg: #1e1e1e;
+            --border-color: #e0e0e0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Vertical Feed Container */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* Feed Item Card */
+        .feed-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+
+        .feed-card::before {
+            content: '';
+            position: absolute;
+            left: -20px;
+            top: 40px;
+            height: calc(100% + 40px);
+            width: 4px;
+            background-color: var(--primary);
+            border-radius: 2px;
+            opacity: 0.2;
+        }
+
+        .feed-card:last-child::before {
+            display: none;
+        }
+
+        /* Typography */
+        h1 {
+            text-align: center;
+            font-size: 2.5em;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--text-light);
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 0;
+        }
+        h3 {
+            color: var(--text-main);
+            margin-top: 25px;
+        }
+        
+        /* Highlight Blocks */
+        .highlight-box {
+            background-color: #e8f4fd;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+            font-weight: 500;
+        }
+
+        /* Code Block Styling */
+        pre {
+            background-color: var(--code-bg);
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: "Courier New", Courier, monospace;
+            font-size: 14px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .kw { color: #569cd6; } /* Keyword */
+        .type { color: #4ec9b0; } /* Type */
+        .func { color: #dcdcaa; } /* Function */
+        .str { color: #ce9178; } /* String */
+        .comment { color: #6a9955; font-style: italic; } /* Comment */
+
+        /* Visualizations */
+        .visual-container {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            flex-wrap: wrap;
+            background-color: #fafafa;
+            padding: 30px 20px;
+            border-radius: 8px;
+            border: 1px dashed #ccc;
+            margin: 20px 0;
+            gap: 10px;
+            position: relative;
+        }
+
+        .node-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .node {
+            display: flex;
+            border: 2px solid #333;
+            border-radius: 4px;
+            background: white;
+            box-shadow: 2px 2px 0px rgba(0,0,0,0.1);
+        }
+
+        .node-data {
+            padding: 10px 20px;
+            border-right: 2px solid #333;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-width: 30px;
+        }
+
+        .node-next {
+            padding: 10px;
+            background-color: #f9f9f9;
+            color: #666;
+            font-size: 0.9em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .arrow {
+            font-size: 24px;
+            color: #333;
+            margin: 0 5px;
+            font-weight: bold;
+        }
+
+        /* Pointers */
+        .pointer {
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85em;
+            font-weight: bold;
+            color: white;
+            position: relative;
+        }
+        
+        .ptr-front { background-color: var(--accent-green); }
+        .ptr-rear { background-color: var(--accent-red); }
+        .ptr-temp { background-color: var(--accent-purple); }
+        .ptr-head { background-color: #f39c12; }
+
+        .pointer::after {
+            content: '↓';
+            position: absolute;
+            bottom: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            color: inherit;
+            font-size: 18px;
+        }
+        
+        .pointer.up-arrow::after {
+            content: '↑';
+            bottom: auto;
+            top: -20px;
+        }
+
+        .memory-addr {
+            font-size: 0.75em;
+            color: #888;
+            margin-top: 5px;
+            font-family: monospace;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div>
+        <h1>Queue Implementation using Linked List</h1>
+        <div class="subtitle">Complete Video Breakdown & Study Feed</div>
+    </div>
+
+    <div class="feed-container">
+
+        <!-- Card 1: The Problem -->
+        <div class="feed-card">
+            <h2>1. The Problem with Arrays</h2>
+            <p>In the previous lesson, we implemented a Queue using an Array. However, arrays have a major limitation:</p>
+            <ul>
+                <li><strong>Static Memory Allocation:</strong> You must fix the maximum size of the queue at the beginning (e.g., size = 5).</li>
+                <li><strong>Overflow & Copying:</strong> If you try to insert a 6th element, it overflows. To fix this, you have to create a new, larger array and copy all old elements over.</li>
+                <li><strong>Time Complexity Flaw:</strong> Copying elements takes <strong>O(N) time</strong>.</li>
+            </ul>
+            
+            <div class="highlight-box">
+                <strong>The Solution: Dynamic Memory Allocation</strong><br>
+                By using a Linked List, memory is allocated on the fly using <code>malloc()</code>. The queue can grow and shrink infinitely (until RAM runs out) without ever needing to copy old elements.
+            </div>
+        </div>
+
+        <!-- Card 2: Rules & The "Two Pointer" Concept -->
+        <div class="feed-card">
+            <h2>2. The "Aha!" Concept: Why We Need Two Pointers</h2>
+            <p>A Queue strictly follows the <strong>FIFO (First In, First Out)</strong> principle. Furthermore, both Enqueue (Insertion) and Dequeue (Deletion) <strong>MUST happen in O(1) constant time</strong>.</p>
+            
+            <h3>Attempt 1: Standard Linked List (One Pointer)</h3>
+            <p>If we use a standard linked list with only a <code>head</code> pointer:</p>
+            <ul>
+                <li><strong>Deletion (Front):</strong> <code>head = head->next</code>. This takes <strong>O(1)</strong>. ✅</li>
+                <li><strong>Insertion (Rear):</strong> You must traverse the entire list from the head to find the last node. This takes <strong>O(N)</strong>. ❌ <em>This breaks the rules of a Queue!</em></li>
+            </ul>
+
+            <h3>Attempt 2: The Solution (Two Pointers)</h3>
+            <p>To fix this, we maintain TWO pointers. We replace <code>head</code> with <code>front</code> and <code>rear</code>.</p>
+            
+            <div class="visual-container">
+                <div class="node-wrapper">
+                    <span class="pointer ptr-front">front</span>
+                    <div class="node">
+                        <div class="node-data">7</div>
+                        <div class="node-next">250</div>
+                    </div>
+                    <span class="memory-addr">150</span>
+                </div>
+                <span class="arrow">→</span>
+                <div class="node-wrapper">
+                    <div class="pointer" style="opacity: 0;">hidden</div>
+                    <div class="node">
+                        <div class="node-data">6</div>
+                        <div class="node-next">400</div>
+                    </div>
+                    <span class="memory-addr">250</span>
+                </div>
+                <span class="arrow">→</span>
+                <div class="node-wrapper">
+                    <span class="pointer ptr-rear">rear</span>
+                    <div class="node">
+                        <div class="node-data">1</div>
+                        <div class="node-next">0</div>
+                    </div>
+                    <span class="memory-addr">400</span>
+                </div>
+            </div>
+            
+            <p>Now, when we insert, we just look at the <code>rear</code> pointer directly. Both Enqueue and Dequeue are now <strong>O(1)</strong>.</p>
+        </div>
+
+        <!-- Card 3: Code Setup -->
+        <div class="feed-card">
+            <h2>3. Code Setup: Structures & Global Variables</h2>
+            <p>First, we define what a single node looks like in C, and declare our two global pointers initialized to <code>0</code> (NULL), representing an empty queue.</p>
+
+<pre><span class="kw">struct</span> <span class="type">node</span> {
+    <span class="kw">int</span> data;
+    <span class="kw">struct</span> <span class="type">node</span> *next;
+};
+
+<span class="comment">// Global pointers initialized to NULL</span>
+<span class="kw">struct</span> <span class="type">node</span> *front = <span class="kw">0</span>;
+<span class="kw">struct</span> <span class="type">node</span> *rear = <span class="kw">0</span>;</pre>
+        </div>
+
+        <!-- Card 4: Enqueue -->
+        <div class="feed-card">
+            <h2>4. Enqueue Operation (Insertion)</h2>
+            <p>Insertion always happens at the <strong>rear</strong>. We use <code>malloc</code> to dynamically create a new memory block.</p>
+            
+<pre><span class="type">void</span> <span class="func">enqueue</span>(<span class="kw">int</span> x) {
+    <span class="comment">// 1. Create a new node</span>
+    <span class="kw">struct</span> <span class="type">node</span> *newnode;
+    newnode = (<span class="kw">struct</span> <span class="type">node</span> *)<span class="func">malloc</span>(<span class="kw">sizeof</span>(<span class="kw">struct</span> <span class="type">node</span>));
+    newnode->data = x;
+    newnode->next = <span class="kw">0</span>;
+
+    <span class="comment">// 2. Condition A: If the queue is empty</span>
+    <span class="kw">if</span> (front == <span class="kw">0</span> && rear == <span class="kw">0</span>) {
+        front = rear = newnode;
+    } 
+    <span class="comment">// 3. Condition B: Queue has elements</span>
+    <span class="kw">else</span> {
+        rear->next = newnode; <span class="comment">// Link old rear to new node</span>
+        rear = newnode;       <span class="comment">// Move rear pointer to new node</span>
+    }
+}</pre>
+
+            <h3>Visualizing Enqueue</h3>
+            <p>Let's say we have inserted 5, 0, and are now inserting -3.</p>
+            
+            <div class="visual-container">
+                <div class="node-wrapper">
+                    <span class="pointer ptr-front">front</span>
+                    <div class="node">
+                        <div class="node-data">5</div>
+                        <div class="node-next">200</div>
+                    </div>
+                </div>
+                <span class="arrow">→</span>
+                <div class="node-wrapper">
+                    <div class="pointer" style="opacity: 0;">hidden</div>
+                    <div class="node">
+                        <div class="node-data">0</div>
+                        <div class="node-next">300</div>
+                    </div>
+                </div>
+                <span class="arrow" style="color:var(--accent-red)">→</span>
+                <div class="node-wrapper">
+                    <span class="pointer ptr-rear">rear</span>
+                    <div class="node" style="border-color:var(--accent-red)">
+                        <div class="node-data">-3</div>
+                        <div class="node-next">0</div>
+                    </div>
+                </div>
+            </div>
+            <p>Notice how <code>rear->next</code> connects to the new node, and then <code>rear</code> jumps to point to the new node.</p>
+        </div>
+
+        <!-- Card 5: Display -->
+        <div class="feed-card">
+            <h2>5. Displaying the Queue</h2>
+            <p>To print the queue without modifying <code>front</code> or <code>rear</code>, we use a temporary pointer <code>temp</code>.</p>
+
+<pre><span class="type">void</span> <span class="func">display</span>() {
+    <span class="kw">struct</span> <span class="type">node</span> *temp;
+    
+    <span class="kw">if</span> (front == <span class="kw">0</span> && rear == <span class="kw">0</span>) {
+        <span class="func">printf</span>(<span class="str">"Queue is empty"</span>);
+    } <span class="kw">else</span> {
+        temp = front;
+        <span class="kw">while</span> (temp != <span class="kw">0</span>) {
+            <span class="func">printf</span>(<span class="str">"%d "</span>, temp->data);
+            temp = temp->next; <span class="comment">// Move temp forward</span>
+        }
+    }
+}</pre>
+
+            <div class="visual-container">
+                <div class="node-wrapper">
+                    <span class="pointer ptr-temp">temp</span>
+                    <div class="node">
+                        <div class="node-data">5</div>
+                        <div class="node-next">200</div>
+                    </div>
+                </div>
+                <span class="arrow">→</span>
+                <span style="color:var(--text-light); font-style:italic;">temp traverses the list printing data until it hits 0 (NULL).</span>
+            </div>
+        </div>
+
+        <!-- Card 6: Dequeue -->
+        <div class="feed-card">
+            <h2>6. Dequeue Operation (Deletion)</h2>
+            <p>Deletion always happens at the <strong>front</strong>. We must carefully update the <code>front</code> pointer and explicitly free the memory to prevent memory leaks.</p>
+
+<pre><span class="type">void</span> <span class="func">dequeue</span>() {
+    <span class="kw">struct</span> <span class="type">node</span> *temp;
+    temp = front; <span class="comment">// Store the node to be deleted</span>
+
+    <span class="kw">if</span> (front == <span class="kw">0</span> && rear == <span class="kw">0</span>) {
+        <span class="func">printf</span>(<span class="str">"Queue is empty"</span>);
+    } <span class="kw">else</span> {
+        <span class="func">printf</span>(<span class="str">"Dequeued element: %d"</span>, front->data);
+        front = front->next; <span class="comment">// Move front to the next node</span>
+        <span class="func">free</span>(temp);          <span class="comment">// IMPORTANT: Free memory!</span>
+    }
+}</pre>
+
+            <div class="highlight-box">
+                <strong>Instructor Note on `free()`:</strong> In dynamic memory allocation, leaving unlinked nodes floating in memory creates garbage. You <em>must</em> explicitly use the <code>free(temp)</code> function to clear up the RAM.
+            </div>
+
+            <div class="visual-container">
+                <div class="node-wrapper" style="opacity: 0.4;">
+                    <span class="pointer ptr-temp" style="background-color: #7f8c8d;">temp (Freeing)</span>
+                    <div class="node" style="border-style: dashed;">
+                        <div class="node-data">5</div>
+                        <div class="node-next">200</div>
+                    </div>
+                </div>
+                <span class="arrow" style="opacity: 0.4;">→</span>
+                <div class="node-wrapper">
+                    <span class="pointer ptr-front">NEW front</span>
+                    <div class="node">
+                        <div class="node-data">0</div>
+                        <div class="node-next">300</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Card 7: Peek -->
+        <div class="feed-card">
+            <h2>7. Peek Operation</h2>
+            <p>Peek simply looks at the front element without deleting it.</p>
+
+<pre><span class="type">void</span> <span class="func">peek</span>() {
+    <span class="kw">if</span> (front == <span class="kw">0</span> && rear == <span class="kw">0</span>) {
+        <span class="func">printf</span>(<span class="str">"Queue is empty"</span>);
+    } <span class="kw">else</span> {
+        <span class="func">printf</span>(<span class="str">"%d"</span>, front->data);
+    }
+}</pre>
+        </div>
+
+        <!-- Card 8: Summary -->
+        <div class="feed-card" style="border-left: 5px solid var(--accent-green);">
+            <h2>✅ Lecture Summary Checklist</h2>
+            <ul>
+                <li><strong>Dynamic Allocation:</strong> Overcomes the static size limitations of arrays.</li>
+                <li><strong>Why Two Pointers?</strong> A single <code>head</code> pointer results in <code>O(N)</code> insertion. Adding a <code>rear</code> pointer makes it <code>O(1)</code>.</li>
+                <li><strong>Enqueue:</strong> Handled by updating <code>rear->next</code> and moving <code>rear</code>.</li>
+                <li><strong>Dequeue:</strong> Handled by moving <code>front</code> to <code>front->next</code> and using <code>free(temp)</code>.</li>
+                <li><strong>Time Complexity:</strong> Enqueue, Dequeue, and Peek are all achieved in exactly <strong>O(1)</strong> time.</li>
+            </ul>
+        </div>
+
+    </div>
+
+</body>
+</html>
