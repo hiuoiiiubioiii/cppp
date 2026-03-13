@@ -1,0 +1,556 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Splay Tree Deletion - Study Notes</title>
+    <style>
+        /* --- GLOBAL VARIABLES & RESET --- */
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --primary: #4A90E2;
+            --secondary: #E94E77;
+            --success: #50E3C2;
+            --warning: #F5A623;
+            --code-bg: #2d2d2d;
+            --node-bg: #fff;
+            --node-border: #4A90E2;
+            --line-color: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* --- VERTICAL FEED LAYOUT --- */
+        .feed-container {
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px; /* Space between feed cards */
+        }
+
+        .feed-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--primary);
+            position: relative;
+        }
+
+        .feed-card:nth-child(even) {
+            border-top-color: var(--secondary);
+        }
+
+        .feed-card:nth-child(3n) {
+            border-top-color: var(--success);
+        }
+
+        /* --- TYPOGRAPHY --- */
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+            color: var(--primary);
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            margin-bottom: 20px;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 10px;
+        }
+
+        h3 {
+            font-size: 1.3rem;
+            margin: 25px 0 15px 0;
+            color: var(--text-main);
+        }
+
+        p, li {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--text-muted);
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            background-color: #eef2fb;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .alert-box {
+            background-color: #fff4f4;
+            border-left: 4px solid var(--secondary);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* --- CSS TREE VISUALIZATION SYSTEM --- */
+        .tree-wrapper {
+            display: flex;
+            justify-content: center;
+            overflow-x: auto;
+            padding: 30px 0;
+            background: #fafafa;
+            border-radius: 12px;
+            margin: 20px 0;
+            border: 1px dashed #e0e0e0;
+        }
+
+        .tree ul {
+            padding-top: 20px; position: relative;
+            transition: all 0.5s;
+            display: flex;
+            justify-content: center;
+        }
+
+        .tree li {
+            float: left; text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 10px 0 10px;
+            margin: 0;
+        }
+
+        /* Connectors */
+        .tree li::before, .tree li::after {
+            content: ''; position: absolute; top: 0; right: 50%;
+            border-top: 2px solid var(--line-color);
+            width: 50%; height: 20px;
+        }
+        .tree li::after {
+            right: auto; left: 50%;
+            border-left: 2px solid var(--line-color);
+        }
+        .tree li:only-child::after, .tree li:only-child::before {
+            display: none;
+        }
+        .tree li:only-child { padding-top: 0;}
+        .tree li:first-child::before, .tree li:last-child::after {
+            border: 0 none;
+        }
+        .tree li:last-child::before {
+            border-right: 2px solid var(--line-color);
+            border-radius: 0 5px 0 0;
+        }
+        .tree li:first-child::after {
+            border-radius: 5px 0 0 0;
+        }
+
+        /* Downward connectors from parents */
+        .tree ul ul::before {
+            content: ''; position: absolute; top: 0; left: 50%;
+            border-left: 2px solid var(--line-color);
+            width: 0; height: 20px;
+            transform: translateX(-50%);
+        }
+
+        /* Tree Nodes */
+        .tree li a {
+            border: 2px solid var(--node-border);
+            padding: 10px 15px;
+            text-decoration: none;
+            color: var(--text-main);
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: inline-block;
+            border-radius: 50%;
+            background: var(--node-bg);
+            transition: all 0.3s;
+            min-width: 45px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+
+        /* Special Node States */
+        .tree li a.root-node { border-color: var(--primary); background-color: #eef2fb;}
+        .tree li a.target-node { border-color: var(--secondary); background-color: #fff0f4;}
+        .tree li a.max-node { border-color: var(--success); background-color: #f0fdf9;}
+        .tree li a.null-node { border-color: #ccc; border-style: dashed; color: #aaa; background: transparent; box-shadow: none;}
+        
+        .tree-split {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .tree-split-label {
+            font-weight: bold;
+            color: var(--text-muted);
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        /* --- CODE BLOCK --- */
+        pre {
+            background-color: var(--code-bg);
+            color: #f8f8f2;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+        .comment { color: #8b949e; font-style: italic; }
+        .keyword { color: #ff79c6; }
+        .function { color: #50fa7b; }
+        .variable { color: #f8f8f2; }
+
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+
+    <!-- Header & Rules -->
+    <article class="feed-card">
+        <h1>🌳 Deletion in Splay Trees</h1>
+        <p><strong>Top-Down Approach Breakdown</strong></p>
+        <p>Unlike standard Binary Search Trees where you swap a node with its inorder successor or predecessor, in a Top-Down Splay Tree, <strong style="color:var(--secondary)">you NEVER delete an internal node directly</strong>.</p>
+        
+        <h3>📌 The 4-Step Golden Rule:</h3>
+        <ol>
+            <li><span class="highlight">Search</span> for the element to be deleted.</li>
+            <li><span class="highlight">Splay</span> that element to the root of the tree.</li>
+            <li><span class="highlight">Delete</span> the root node. This splits the tree into two disjoint subtrees: a Left Subtree (<strong>L</strong>) and a Right Subtree (<strong>R</strong>).</li>
+            <li><span class="highlight">Join</span> the two subtrees back together.</li>
+        </ol>
+
+        <div class="alert-box">
+            <strong>🔗 How the "Join" Operation Works:</strong><br>
+            1. Go to the Left Subtree (L).<br>
+            2. Find the <strong>maximum element</strong> in L.<br>
+            3. <strong>Splay</strong> that maximum element so it becomes the new root of L. <em>(Since it's the max element, its right-child pointer is guaranteed to be NULL!)</em><br>
+            4. Attach the Right Subtree (R) as the right child of this new root.
+        </div>
+    </article>
+
+    <!-- Initial Setup Visual -->
+    <article class="feed-card">
+        <h2>📍 Initial Setup</h2>
+        <p>This is our starting point. The instructor will delete three nodes in this order: <strong>16, 12, and 7</strong>.</p>
+        
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li><a href="#" class="root-node">12</a>
+                        <ul>
+                            <li><a href="#">10</a>
+                                <ul>
+                                    <li><a href="#">7</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#">14</a>
+                                <ul>
+                                    <li><a href="#" class="target-node">16</a>
+                                        <ul>
+                                            <li><a href="#">15</a></li>
+                                            <li><a href="#">17</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </article>
+
+    <!-- Example 1 -->
+    <article class="feed-card">
+        <h2>🛠️ Example 1: Deleting Node 16</h2>
+        
+        <h3>Step 1: Splay 16 to the Root</h3>
+        <p><strong>Search:</strong> 16 > 12, 16 > 14. <br>
+        <strong>Relationship:</strong> 16 is the right child of 14, and 14 is the right child of 12. This is a Right-Right (<strong>Zig-Zig</strong>) relationship.</p>
+        <p><strong>Rotations:</strong> Perform a Left rotation on the grandparent (12), followed by a Left rotation on the parent (14).</p>
+        
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li><a href="#" class="target-node">16</a>
+                        <ul>
+                            <li><a href="#">14</a>
+                                <ul>
+                                    <li><a href="#">12</a>
+                                        <ul>
+                                            <li><a href="#">10</a>
+                                                <ul><li><a href="#">7</a></li></ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li><a href="#">15</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#">17</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <h3>Step 2: Delete the Root (16)</h3>
+        <p>Cross out 16. You now have two disjoint trees: Left Subtree (L) and Right Subtree (R).</p>
+
+        <div class="tree-split">
+            <div>
+                <div class="tree-split-label">Left Subtree (L)</div>
+                <div class="tree-wrapper" style="margin:0;">
+                    <div class="tree">
+                        <ul>
+                            <li><a href="#">14</a>
+                                <ul>
+                                    <li><a href="#">12</a>
+                                        <ul>
+                                            <li><a href="#">10</a>
+                                                <ul><li><a href="#">7</a></li></ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                    <li><a href="#" class="max-node">15 (Max)</a></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+            <div>
+                <div class="tree-split-label">Right Subtree (R)</div>
+                <div class="tree-wrapper" style="margin:0;">
+                    <div class="tree">
+                        <ul><li><a href="#">17</a></li></ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <h3>Step 3: Join Operation</h3>
+        <p>1. Find max in L (It is <strong>15</strong>). <br>
+        2. Splay 15 to the root of L. (15 is a right child, so perform a single Left <strong>Zig</strong> rotation on 14). <br>
+        3. Attach R (17) to the now-empty right child of 15.</p>
+
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li><a href="#" class="root-node">15</a>
+                        <ul>
+                            <li><a href="#">14</a>
+                                <ul>
+                                    <li><a href="#">12</a>
+                                        <ul>
+                                            <li><a href="#">10</a>
+                                                <ul><li><a href="#">7</a></li></ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <li><a href="#" style="border-color:var(--success)">17 (Attached)</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </article>
+
+    <!-- Example 2 -->
+    <article class="feed-card">
+        <h2>🛠️ Example 2: Deleting Node 12</h2>
+        
+        <h3>Step 1: Splay 12 to the Root</h3>
+        <p><strong>Search:</strong> 12 < 15, 12 < 14. This is a Left-Left (<strong>Zig-Zig</strong>) relationship.<br>
+        <strong>Rotations:</strong> Perform a Right rotation on the grandparent (15), then a Right rotation on the parent (14).</p>
+        
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li><a href="#" class="target-node">12</a>
+                        <ul>
+                            <li><a href="#">10</a>
+                                <ul><li><a href="#">7</a></li></ul>
+                            </li>
+                            <li><a href="#">14</a>
+                                <ul>
+                                    <li><a href="#">15</a>
+                                        <ul><li><a href="#">17</a></li></ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <h3>Step 2 & 3: Delete & Join</h3>
+        <p>Cross out 12. Split into L (root 10) and R (root 14).</p>
+        <p>Find the max in L. The max is <strong>10</strong>. Because 10 is <em>already</em> the root of L, no rotations are needed! Simply attach R to the right child of 10.</p>
+
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li><a href="#" class="root-node">10</a>
+                        <ul>
+                            <li><a href="#">7</a></li>
+                            <li><a href="#" style="border-color:var(--success)">14 (Attached)</a>
+                                <ul>
+                                    <li><a href="#">15</a>
+                                        <ul><li><a href="#">17</a></li></ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </article>
+
+    <!-- Example 3 -->
+    <article class="feed-card">
+        <h2>🛠️ Example 3: Deleting Node 7 (Edge Case)</h2>
+        
+        <h3>Step 1: Splay 7 to the Root</h3>
+        <p><strong>Search:</strong> 7 is the left child of 10. Just one level below the root. This is a <strong>Zig</strong> relationship.<br>
+        <strong>Rotation:</strong> Single Right rotation on 10.</p>
+        
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li><a href="#" class="target-node">7</a>
+                        <ul>
+                            <li><a href="#" class="null-node">NULL</a></li>
+                            <li><a href="#">10</a>
+                                <ul>
+                                    <li><a href="#">14</a>
+                                        <ul>
+                                            <li><a href="#">15</a>
+                                                <ul><li><a href="#">17</a></li></ul>
+                                            </li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <h3>Step 2 & 3: Delete & Join</h3>
+        <p>Cross out 7. <strong>Left Subtree (L) is NULL.</strong></p>
+        <p>Because L is empty, there is no maximum value to find, and no joining is necessary. The Right Subtree (R) simply becomes the new tree.</p>
+
+        <div class="tree-wrapper">
+            <div class="tree">
+                <ul>
+                    <li><a href="#" class="root-node">10</a>
+                        <ul>
+                            <li><a href="#">14</a>
+                                <ul>
+                                    <li><a href="#">15</a>
+                                        <ul><li><a href="#">17</a></li></ul>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </article>
+
+    <!-- Edge Cases Audio Notes -->
+    <article class="feed-card">
+        <h2>🚨 Audio Notes: Edge Cases Explained</h2>
+        <p>The instructor verbalizes two important edge cases you must account for in your code:</p>
+        
+        <ul>
+            <li>
+                <strong>What if you try to delete a node that isn't in the tree? (e.g., Delete 20)</strong><br>
+                You search for 20 and eventually hit a <code>NULL</code>. According to Splay rules, you must splay the <em>last accessed non-null node</em> (e.g., 17) to the root. Once 17 is at the root, you compare the root data to the target data. Since 17 != 20, you simply print "Key not present" and stop.
+            </li>
+            <br>
+            <li>
+                <strong>What if a subtree is empty?</strong><br>
+                If L is empty (like in Example 3), R becomes the whole tree. If R is empty, L simply becomes the whole tree.
+            </li>
+        </ul>
+    </article>
+
+    <!-- Algorithm -->
+    <article class="feed-card">
+        <h2>💻 Algorithm / Pseudo-code</h2>
+        <p>Here is the code structure the instructor mapped out on the whiteboard:</p>
+
+<pre><code><span class="comment">// 1. Handle an empty tree</span>
+<span class="keyword">if</span> (<span class="variable">root</span> == <span class="keyword">NULL</span>) 
+    <span class="keyword">return</span> <span class="keyword">NULL</span>;
+
+<span class="comment">// 2. Splay the target data to the root</span>
+<span class="function">Splay</span>(<span class="variable">root</span>, <span class="variable">data</span>);
+
+<span class="comment">// 3. Check if the data actually existed in the tree</span>
+<span class="keyword">if</span> (<span class="variable">data</span> != <span class="variable">root</span>-><span class="variable">data</span>) {
+    <span class="function">print</span> <span class="variable">"Key not present"</span>;
+    <span class="keyword">return</span> <span class="variable">root</span>; 
+}
+
+<span class="comment">// 4. At this point, the root IS the node we want to delete.</span>
+<span class="comment">// Hold onto the current root so we can free it later.</span>
+<span class="variable">temp</span> = <span class="variable">root</span>;
+
+<span class="comment">// 5. Edge Case: What if there is no Left Subtree?</span>
+<span class="keyword">if</span> (<span class="variable">root</span>-><span class="variable">left</span> == <span class="keyword">NULL</span>) {
+    <span class="variable">root</span> = <span class="variable">root</span>-><span class="variable">right</span>;   <span class="comment">// Right Subtree becomes the tree</span>
+} 
+<span class="keyword">else</span> {
+    <span class="comment">// 6. Standard Join Operation</span>
+    <span class="comment">// Note: Calling Splay with the target 'data' on the left subtree </span>
+    <span class="comment">// naturally splays the maximum element to the top, because 'data'  </span>
+    <span class="comment">// is greater than everything in the left subtree.</span>
+    <span class="function">Splay</span>(<span class="variable">root</span>-><span class="variable">left</span>, <span class="variable">data</span>);
+    
+    <span class="comment">// The new root is now the max element of the left subtree.</span>
+    <span class="variable">root</span> = <span class="variable">root</span>-><span class="variable">left</span>; 
+    
+    <span class="comment">// Attach the old root's right subtree.</span>
+    <span class="variable">root</span>-><span class="variable">right</span> = <span class="variable">temp</span>-><span class="variable">right</span>; 
+}
+
+<span class="comment">// 7. Delete the old root from memory</span>
+<span class="function">free</span>(<span class="variable">temp</span>);
+
+<span class="comment">// 8. Return the new tree</span>
+<span class="keyword">return</span> <span class="variable">root</span>;</code></pre>
+    </article>
+
+</div>
+
+</body>
+</html>
