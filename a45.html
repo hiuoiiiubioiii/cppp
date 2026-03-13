@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circular Queue Using Linked List - Study Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code&display=swap');
+
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --primary: #4f46e5;
+            --front-color: #0ea5e9;
+            --rear-color: #10b981;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Header styling */
+        .header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--primary), #818cf8);
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(79, 70, 229, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Card Feed Styling */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            color: var(--primary);
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin: 20px 0 10px 0;
+            color: var(--text-main);
+        }
+
+        .card p {
+            margin-bottom: 15px;
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        .highlight {
+            background: #fef08a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #854d0e;
+            font-weight: 600;
+        }
+
+        /* Callouts */
+        .callout {
+            background: #eff6ff;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+        }
+
+        /* Code block styling */
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 10px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            margin: 15px 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        code .keyword { color: #569cd6; }
+        code .type { color: #4ec9b0; }
+        code .comment { color: #6a9955; font-style: italic; }
+        code .string { color: #ce9178; }
+
+        /* --- VISUALIZATION SANDBOX CSS --- */
+        .sandbox-area {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px 20px 60px 20px; /* Extra bottom padding for circular link */
+            position: relative;
+            min-height: 250px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            margin-top: 20px;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        button {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: white;
+        }
+
+        .btn-enq { background: var(--primary); }
+        .btn-enq:hover { background: #4338ca; }
+        .btn-deq { background: var(--danger); }
+        .btn-deq:hover { background: #dc2626; }
+
+        .log-panel {
+            text-align: center;
+            font-weight: 600;
+            color: var(--text-main);
+            margin-bottom: 15px;
+            min-height: 24px;
+        }
+
+        /* Linked List Node CSS */
+        .node-wrapper {
+            display: flex;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .ll-node {
+            display: flex;
+            background: white;
+            border: 2px solid var(--text-main);
+            border-radius: 8px;
+            width: 80px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: popIn 0.3s ease-out;
+            position: relative;
+        }
+
+        @keyframes popIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .ll-data {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            font-weight: bold;
+            border-right: 2px solid var(--text-main);
+        }
+
+        .ll-next {
+            width: 30px;
+            background: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            border-radius: 0 6px 6px 0;
+            position: relative;
+        }
+
+        .arrow {
+            width: 40px;
+            height: 2px;
+            background: var(--text-main);
+            position: relative;
+        }
+
+        .arrow::after {
+            content: '';
+            position: absolute;
+            right: 0;
+            top: -4px;
+            border-top: 5px solid transparent;
+            border-bottom: 5px solid transparent;
+            border-left: 8px solid var(--text-main);
+        }
+
+        /* Pointers (Front & Rear) */
+        .pointer {
+            position: absolute;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            padding: 4px 8px;
+            border-radius: 4px;
+            color: white;
+            top: -35px;
+            left: 50%;
+            transform: translateX(-50%);
+            white-space: nowrap;
+        }
+
+        .pointer.front { background: var(--front-color); }
+        .pointer.rear { background: var(--rear-color); top: 55px; }
+
+        /* The Circular Back-Link Arrow */
+        .circular-link {
+            position: absolute;
+            bottom: 20px;
+            height: 30px;
+            border-bottom: 2px solid var(--primary);
+            border-left: 2px solid var(--primary);
+            border-right: 2px solid var(--primary);
+            border-radius: 0 0 10px 10px;
+            z-index: 1;
+            opacity: 0;
+            transition: all 0.3s ease;
+        }
+
+        .circular-link::before {
+            content: '';
+            position: absolute;
+            left: -6px;
+            top: -8px;
+            border-left: 5px solid transparent;
+            border-right: 5px solid transparent;
+            border-bottom: 8px solid var(--primary);
+        }
+
+        /* Responsive */
+        @media(max-width: 600px) {
+            .header h1 { font-size: 2rem; }
+            .card { padding: 20px; }
+            .ll-node { width: 60px; }
+            .arrow { width: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <!-- HEADER -->
+    <header class="header">
+        <h1>Circular Queue via Linked List</h1>
+        <p>In-depth breakdown of instructor's whiteboard logic, code, and visualizations.</p>
+    </header>
+
+    <!-- SECTION 1 -->
+    <article class="card">
+        <h2>1. Why Do We Need a Circular Queue?</h2>
+        <div class="callout">
+            <p><strong>The Rule of Queues:</strong> They follow <strong>FIFO</strong> (First In, First Out). Insertions happen at the <code>rear</code>, and deletions happen at the <code>front</code>.</p>
+        </div>
+        <p>If we implement a standard Linear Queue using an array (e.g., size 5), a massive problem occurs. When the queue fills up, the <code>rear</code> pointer points to index 4. If we dequeue two items, indices 0 and 1 become empty. However, if we try to insert a new item, the queue says it's "Full" because the <code>rear</code> pointer is stuck at the end!</p>
+        <p>This results in <span class="highlight">memory wastage</span>. The Circular Queue solves this by logically connecting the last index back to the first, creating a circle.</p>
+    </article>
+
+    <!-- SECTION 2 -->
+    <article class="card">
+        <h2>2. Transitioning to a Linked List</h2>
+        <p>Using arrays limits our queue size. A Linked List allows our queue to grow dynamically. But how do we make it fast and circular?</p>
+        <ul>
+            <li><strong>The Problem:</strong> Standard linked lists only have a <code>head</code>. Deleting from the front is O(1), but traversing to the end to insert takes <strong>O(n)</strong> time.</li>
+            <li><strong>The Solution:</strong> We use <strong>two pointers</strong>: <code>front</code> (for Dequeue) and <code>rear</code> (for Enqueue). This makes both operations <strong>O(1)</strong>.</li>
+            <li><strong>Making it Circular:</strong> Instead of the last node pointing to <code>NULL</code>, the <code>rear</code> node's <code>next</code> pointer connects back to the <code>front</code> node.</li>
+        </ul>
+    </article>
+
+    <!-- SECTION 3 -->
+    <article class="card">
+        <h2>3. Global Setup & Node Structure</h2>
+        <p>We start by defining the blueprint of our node and initializing the global pointers to `0` (NULL), indicating the queue is currently empty.</p>
+<pre><code><span class="keyword">struct</span> <span class="type">node</span> {
+    <span class="keyword">int</span> data;
+    <span class="keyword">struct</span> <span class="type">node</span> *next;
+};
+
+<span class="comment">// Global pointers</span>
+<span class="keyword">struct</span> <span class="type">node</span> *front = <span class="keyword">0</span>;
+<span class="keyword">struct</span> <span class="type">node</span> *rear = <span class="keyword">0</span>;</code></pre>
+    </article>
+
+    <!-- SECTION 4 -->
+    <article class="card">
+        <h2>4. Enqueue Operation (Insertion)</h2>
+        <p>To insert data, we first allocate memory. Then, we check if the queue is empty. If it is, the new node becomes both the front and rear, and points to itself. If it isn't, we add it after the current rear and update the circular link.</p>
+<pre><code><span class="keyword">void</span> <span class="type">enqueue</span>(<span class="keyword">int</span> x) {
+    <span class="keyword">struct</span> <span class="type">node</span> *newnode;
+    newnode = (<span class="keyword">struct</span> <span class="type">node</span> *)malloc(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> <span class="type">node</span>));
+    newnode->data = x;
+    newnode->next = <span class="keyword">0</span>;
+
+    <span class="comment">// Case 1: Empty Queue</span>
+    <span class="keyword">if</span>(rear == <span class="keyword">0</span>) {
+        front = rear = newnode;
+        rear->next = front; <span class="comment">// Circular link</span>
+    } 
+    <span class="comment">// Case 2: Multiple Nodes</span>
+    <span class="keyword">else</span> {
+        rear->next = newnode;
+        rear = newnode;
+        rear->next = front; <span class="comment">// Maintain the circle</span>
+    }
+}</code></pre>
+    </article>
+
+    <!-- SECTION 5 -->
+    <article class="card">
+        <h2>5. Dequeue Operation (Deletion)</h2>
+        <p>We always delete from the <code>front</code>. We must handle three scenarios: Underflow (empty), deleting the very last remaining node, and deleting from a list with multiple nodes.</p>
+<pre><code><span class="keyword">void</span> <span class="type">dequeue</span>() {
+    <span class="keyword">struct</span> <span class="type">node</span> *temp;
+    temp = front; <span class="comment">// Store to free later</span>
+
+    <span class="comment">// Case 1: Queue is Empty</span>
+    <span class="keyword">if</span>(front == <span class="keyword">0</span> && rear == <span class="keyword">0</span>) {
+        printf(<span class="string">"Underflow!"</span>);
+    }
+    <span class="comment">// Case 2: Only ONE node left</span>
+    <span class="keyword">else if</span>(front == rear) {
+        front = rear = <span class="keyword">0</span>;
+        free(temp);
+    }
+    <span class="comment">// Case 3: Multiple nodes exist</span>
+    <span class="keyword">else</span> {
+        front = front->next; <span class="comment">// Move front forward</span>
+        rear->next = front;  <span class="comment">// Rear points to new front</span>
+        free(temp);
+    }
+}</code></pre>
+    </article>
+
+    <!-- SECTION 6 -->
+    <article class="card">
+        <h2>6. Peek & Display Operations</h2>
+        <div class="callout">
+            <p><strong>The Display Quirk:</strong> In a linear list, we loop until <code>temp != NULL</code>. Here, we loop until <code>temp->next != front</code>. Because the loop exits exactly at the last node, we must print the last node manually outside the loop!</p>
+        </div>
+<pre><code><span class="keyword">void</span> <span class="type">display</span>() {
+    <span class="keyword">struct</span> <span class="type">node</span> *temp = front;
+    <span class="keyword">if</span>(front == <span class="keyword">0</span> && rear == <span class="keyword">0</span>) {
+        printf(<span class="string">"Empty"</span>);
+    } <span class="keyword">else</span> {
+        <span class="keyword">while</span>(temp->next != front) {
+            printf(<span class="string">"%d "</span>, temp->data);
+            temp = temp->next;
+        }
+        <span class="comment">// Print the last node</span>
+        printf(<span class="string">"%d "</span>, temp->data);
+    }
+}
+
+<span class="keyword">void</span> <span class="type">peek</span>() {
+    <span class="keyword">if</span>(front == <span class="keyword">0</span>) printf(<span class="string">"Empty"</span>);
+    <span class="keyword">else</span> printf(<span class="string">"%d"</span>, front->data);
+}</code></pre>
+    </article>
+
+    <!-- SECTION 7: INTERACTIVE SANDBOX -->
+    <article class="card">
+        <h2>7. Interactive Visualization Sandbox</h2>
+        <p>Watch the code come to life. The blue line underneath represents <code>rear->next = front</code>, closing the circle!</p>
+        
+        <div class="controls">
+            <button class="btn-enq" onclick="enqueue()">Enqueue (Random)</button>
+            <button class="btn-deq" onclick="dequeue()">Dequeue ()</button>
+        </div>
+
+        <div class="log-panel" id="log-panel">Queue is empty.</div>
+
+        <div class="sandbox-area" id="sandbox-area">
+            <!-- Nodes will be injected here via JS -->
+            <div id="circular-line" class="circular-link"></div>
+        </div>
+    </article>
+
+</div>
+
+<script>
+    // JavaScript Logic for the Circular Queue Visualization
+    let queue = [];
+    const maxNodes = 5; // To prevent overflow visually on small screens
+    const sandbox = document.getElementById('sandbox-area');
+    const logPanel = document.getElementById('log-panel');
+    const circularLine = document.getElementById('circular-line');
+
+    function renderQueue() {
+        // Clear existing nodes but keep the circular line element
+        const nodes = document.querySelectorAll('.node-wrapper');
+        nodes.forEach(n => n.remove());
+
+        if (queue.length === 0) {
+            circularLine.style.opacity = 0;
+            return;
+        }
+
+        queue.forEach((val, index) => {
+            const wrapper = document.createElement('div');
+            wrapper.className = 'node-wrapper';
+            wrapper.id = `node-${index}`;
+
+            // Create node element
+            const nodeDiv = document.createElement('div');
+            nodeDiv.className = 'll-node';
+            nodeDiv.innerHTML = `<div class="ll-data">${val}</div><div class="ll-next">•</div>`;
+
+            // Add Pointers
+            if (index === 0) {
+                const fPtr = document.createElement('div');
+                fPtr.className = 'pointer front';
+                fPtr.innerText = 'Front';
+                nodeDiv.appendChild(fPtr);
+            }
+            if (index === queue.length - 1) {
+                const rPtr = document.createElement('div');
+                rPtr.className = 'pointer rear';
+                rPtr.innerText = 'Rear';
+                nodeDiv.appendChild(rPtr);
+            }
+
+            wrapper.appendChild(nodeDiv);
+
+            // Add Arrow if NOT the last node
+            if (index < queue.length - 1) {
+                const arrow = document.createElement('div');
+                arrow.className = 'arrow';
+                wrapper.appendChild(arrow);
+            }
+
+            sandbox.appendChild(wrapper);
+        });
+
+        // Update Circular Back-link
+        setTimeout(updateCircularLink, 50);
+    }
+
+    function updateCircularLink() {
+        if (queue.length === 0) return;
+        
+        const firstNode = document.getElementById('node-0');
+        const lastNode = document.getElementById(`node-${queue.length - 1}`);
+        
+        if (!firstNode || !lastNode) return;
+
+        // Calculate positions to draw the CSS bounding box line
+        const startX = firstNode.offsetLeft + 15; // Middle of first node
+        const endX = lastNode.offsetLeft + lastNode.offsetWidth - 15; // End of last node
+        
+        circularLine.style.width = `${endX - startX}px`;
+        circularLine.style.left = `${startX}px`;
+        circularLine.style.opacity = 1;
+    }
+
+    function enqueue() {
+        if(queue.length >= maxNodes) {
+            logPanel.innerText = "Screen limit reached! Please dequeue.";
+            logPanel.style.color = "var(--danger)";
+            return;
+        }
+        
+        const val = Math.floor(Math.random() * 90) + 10; // Random two digit number
+        queue.push(val);
+        
+        if(queue.length === 1) {
+            logPanel.innerText = `Enqueued ${val}. front = rear = newnode. rear->next = front.`;
+        } else {
+            logPanel.innerText = `Enqueued ${val}. rear->next = newnode, rear = newnode.`;
+        }
+        logPanel.style.color = "var(--primary)";
+        renderQueue();
+    }
+
+    function dequeue() {
+        if (queue.length === 0) {
+            logPanel.innerText = "Underflow! Queue is already empty.";
+            logPanel.style.color = "var(--danger)";
+            return;
+        }
+
+        const val = queue.shift();
+        
+        if (queue.length === 0) {
+            logPanel.innerText = `Dequeued ${val}. Queue is now empty (front = rear = 0).`;
+        } else {
+            logPanel.innerText = `Dequeued ${val}. front = front->next, rear->next = front.`;
+        }
+        logPanel.style.color = "var(--danger)";
+        renderQueue();
+    }
+
+    // Adjust circular line on window resize
+    window.addEventListener('resize', updateCircularLink);
+</script>
+
+</body>
+</html>
