@@ -1,0 +1,529 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Notes: Binary Trees & Its Types</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f9;
+            --card-bg: #ffffff;
+            --primary-color: #2563eb;
+            --text-main: #334155;
+            --text-muted: #64748b;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --border: #e2e8f0;
+            --math-bg: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Vertical Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border-top: 4px solid var(--primary-color);
+        }
+
+        .card h2 {
+            color: var(--primary-color);
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 0.5rem;
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin: 1.5rem 0 0.5rem 0;
+            color: #0f172a;
+        }
+
+        ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight {
+            font-weight: bold;
+            color: var(--primary-color);
+        }
+
+        /* Math and Formula Styling */
+        .formula-box {
+            background-color: var(--math-bg);
+            border-left: 4px solid var(--primary-color);
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+            font-size: 1.1rem;
+        }
+
+        .math {
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            background: #e2e8f0;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 1rem;
+        }
+
+        /* Visualization Grid */
+        .visual-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .visual-item {
+            background: var(--bg-color);
+            padding: 1rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .visual-item p {
+            margin-top: 0.5rem;
+            font-weight: 600;
+        }
+
+        .valid { color: var(--success); }
+        .invalid { color: var(--danger); }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+
+        th, td {
+            border: 1px solid var(--border);
+            padding: 12px;
+            text-align: left;
+        }
+
+        th {
+            background-color: var(--math-bg);
+            color: var(--primary-color);
+        }
+
+        /* SVGs */
+        svg {
+            max-width: 100%;
+            height: auto;
+        }
+        
+        .node { fill: white; stroke: var(--text-main); stroke-width: 2; }
+        .node-text { font-family: sans-serif; font-size: 12px; text-anchor: middle; dominant-baseline: central; }
+        .edge { stroke: var(--text-main); stroke-width: 2; }
+        .cross { stroke: var(--danger); stroke-width: 4; stroke-linecap: round; }
+        
+        /* Memory Block visual */
+        .memory-node {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid var(--text-main);
+            border-radius: 4px;
+            width: fit-content;
+            margin: 0 auto;
+            background: white;
+        }
+        .mem-part {
+            padding: 0.5rem 1rem;
+            text-align: center;
+        }
+        .mem-left, .mem-right { width: 40px; background: #e2e8f0; }
+        .mem-data { border-left: 2px solid var(--text-main); border-right: 2px solid var(--text-main); font-weight: bold;}
+    </style>
+</head>
+<body>
+
+<main class="feed-container">
+    
+    <!-- HEADER -->
+    <header class="header">
+        <h1>Binary Trees & Its Types</h1>
+        <p>Complete In-Depth Study Notes & Visualizations</p>
+    </header>
+
+    <!-- SECTION 1: Introduction -->
+    <section class="card">
+        <h2>1. Introduction to Binary Trees</h2>
+        <p>A binary tree is a specific type of tree data structure where each node can have a <span class="highlight">maximum of two children</span>.</p>
+        <ul>
+            <li><strong>"Binary" means 2.</strong> Therefore, a node can have exactly <strong>0, 1, or 2</strong> children.</li>
+            <li>It cannot have 3 or more children.</li>
+        </ul>
+
+        <div class="visual-grid">
+            <div class="visual-item">
+                <svg width="120" height="120" viewBox="0 0 100 100">
+                    <line x1="50" y1="20" x2="25" y2="60" class="edge"/>
+                    <line x1="50" y1="20" x2="75" y2="60" class="edge"/>
+                    <circle cx="50" cy="20" r="12" class="node"/>
+                    <circle cx="25" cy="60" r="12" class="node"/>
+                    <circle cx="75" cy="60" r="12" class="node"/>
+                </svg>
+                <p class="valid">✅ Valid (Max 2)</p>
+            </div>
+            <div class="visual-item">
+                <svg width="120" height="120" viewBox="0 0 100 100">
+                    <line x1="50" y1="20" x2="50" y2="60" class="edge"/>
+                    <circle cx="50" cy="20" r="12" class="node"/>
+                    <circle cx="50" cy="60" r="12" class="node"/>
+                </svg>
+                <p class="valid">✅ Valid (1 child)</p>
+            </div>
+            <div class="visual-item">
+                <svg width="120" height="120" viewBox="0 0 100 100">
+                    <line x1="50" y1="20" x2="20" y2="60" class="edge"/>
+                    <line x1="50" y1="20" x2="50" y2="60" class="edge"/>
+                    <line x1="50" y1="20" x2="80" y2="60" class="edge"/>
+                    <circle cx="50" cy="20" r="12" class="node"/>
+                    <circle cx="20" cy="60" r="12" class="node"/>
+                    <circle cx="50" cy="60" r="12" class="node"/>
+                    <circle cx="80" cy="60" r="12" class="node"/>
+                    <!-- Red Cross -->
+                    <line x1="30" y1="30" x2="70" y2="70" class="cross" opacity="0.7"/>
+                    <line x1="70" y1="30" x2="30" y2="70" class="cross" opacity="0.7"/>
+                </svg>
+                <p class="invalid">❌ Invalid (3 children)</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2: Memory Representation -->
+    <section class="card">
+        <h2>2. Memory Representation</h2>
+        <p>To store a binary tree in computer memory, we use a dynamic linked representation. Every node consists of three distinct parts:</p>
+        
+        <div class="memory-node" style="margin: 2rem auto;">
+            <div class="mem-part mem-left">Left Ptr</div>
+            <div class="mem-part mem-data">Data (Value)</div>
+            <div class="mem-part mem-right">Right Ptr</div>
+        </div>
+
+        <ul>
+            <li><strong>Left Pointer:</strong> Stores the memory address of the left child.</li>
+            <li><strong>Data:</strong> Stores the actual value/information.</li>
+            <li><strong>Right Pointer:</strong> Stores the memory address of the right child.</li>
+            <li>If a child doesn't exist (like in a leaf node), the pointer holds <strong>Null (X)</strong>.</li>
+        </ul>
+
+        <div class="visual-item" style="margin-top: 1rem;">
+            <p style="margin-bottom: 1rem;">Visualizing Node 1 (Root) pointing to Node 2 and Node 4:</p>
+            <svg width="400" height="150" viewBox="0 0 400 150">
+                <!-- Root Node -->
+                <rect x="150" y="10" width="100" height="30" fill="white" stroke="black"/>
+                <line x1="183" y1="10" x2="183" y2="40" stroke="black"/>
+                <line x1="216" y1="10" x2="216" y2="40" stroke="black"/>
+                <text x="200" y="25" class="node-text">1</text>
+                <text x="166" y="25" class="node-text">•</text>
+                <text x="233" y="25" class="node-text">•</text>
+
+                <!-- Left Child (2) -->
+                <rect x="50" y="80" width="100" height="30" fill="white" stroke="black"/>
+                <line x1="83" y1="80" x2="83" y2="110" stroke="black"/>
+                <line x1="116" y1="80" x2="116" y2="110" stroke="black"/>
+                <text x="100" y="95" class="node-text">2</text>
+                <text x="66" y="95" class="node-text">X</text>
+                <text x="133" y="95" class="node-text">X</text>
+
+                <!-- Right Child (4) -->
+                <rect x="250" y="80" width="100" height="30" fill="white" stroke="black"/>
+                <line x1="283" y1="80" x2="283" y2="110" stroke="black"/>
+                <line x1="316" y1="80" x2="316" y2="110" stroke="black"/>
+                <text x="300" y="95" class="node-text">4</text>
+                <text x="266" y="95" class="node-text">X</text>
+                <text x="333" y="95" class="node-text">X</text>
+
+                <!-- Pointers -->
+                <line x1="166" y1="25" x2="100" y2="80" stroke="blue" stroke-width="2" marker-end="url(#arrow)"/>
+                <line x1="233" y1="25" x2="300" y2="80" stroke="blue" stroke-width="2" marker-end="url(#arrow)"/>
+            </svg>
+        </div>
+    </section>
+
+    <!-- SECTION 3: Mathematical Properties -->
+    <section class="card">
+        <h2>3. Mathematical Properties</h2>
+        <p>Deriving formulas based on the structure of binary trees.</p>
+
+        <h3>A. Maximum Nodes at a Specific Level (<span class="math">i</span>)</h3>
+        <p>If you pick any level of the tree, what is the maximum number of nodes that can fit on that line?</p>
+        <div class="formula-box">
+            Max nodes at level <span class="math">i</span> = <span class="math">2<sup>i</sup></span>
+        </div>
+        <ul>
+            <li>Level 0: <span class="math">2<sup>0</sup> = 1</span> node</li>
+            <li>Level 1: <span class="math">2<sup>1</sup> = 2</span> nodes</li>
+            <li>Level 2: <span class="math">2<sup>2</sup> = 4</span> nodes</li>
+        </ul>
+
+        <h3>B. Maximum Nodes for a Tree of Height (<span class="math">h</span>)</h3>
+        <p>Adding together the max nodes at every single level from 0 up to <span class="math">h</span> forms a Geometric Progression.</p>
+        <div class="formula-box">
+            Max total nodes (<span class="math">n</span>) = <span class="math">2<sup>h+1</sup> - 1</span>
+        </div>
+
+        <h3>C. Minimum Nodes for a Tree of Height (<span class="math">h</span>)</h3>
+        <p>What is the bare minimum number of nodes required to reach height <span class="math">h</span>? You only need one node per level (a straight line).</p>
+        <div class="formula-box">
+            Min total nodes (<span class="math">n</span>) = <span class="math">h + 1</span>
+        </div>
+
+        <h3>D. Finding Height (<span class="math">h</span>) when given Nodes (<span class="math">n</span>)</h3>
+        <p>Reverse the formulas above to find the height:</p>
+        <div class="formula-box" style="background-color: #eef2ff;">
+            <strong>Minimum Height:</strong> <span class="math">h = ⌈ log<sub>2</sub>(n+1) ⌉ - 1</span><br><br>
+            <strong>Maximum Height:</strong> <span class="math">h = n - 1</span>
+        </div>
+    </section>
+
+    <!-- SECTION 4: Types of Binary Trees -->
+    <section class="card">
+        <h2>4. Types of Binary Trees</h2>
+        
+        <!-- Type 1 -->
+        <h3>Type 1: Full / Proper / Strict Binary Tree</h3>
+        <p><strong>Rule:</strong> Each node has either <strong>0 or 2 children</strong>. (No node is allowed to have exactly 1 child).</p>
+        <div class="formula-box">
+            Property: Leaf Nodes (<span class="math">L</span>) = Internal Nodes (<span class="math">I</span>) + 1
+        </div>
+        <div class="visual-grid">
+            <div class="visual-item">
+                <svg width="100" height="120" viewBox="0 0 100 120">
+                    <line x1="50" y1="20" x2="25" y2="50" class="edge"/>
+                    <line x1="50" y1="20" x2="75" y2="50" class="edge"/>
+                    <line x1="25" y1="50" x2="10" y2="90" class="edge"/>
+                    <line x1="25" y1="50" x2="40" y2="90" class="edge"/>
+                    <circle cx="50" cy="20" r="10" class="node"/>
+                    <circle cx="25" cy="50" r="10" class="node"/>
+                    <circle cx="75" cy="50" r="10" class="node"/>
+                    <circle cx="10" cy="90" r="10" class="node"/>
+                    <circle cx="40" cy="90" r="10" class="node"/>
+                </svg>
+                <p class="valid">✅ Valid (0 or 2)</p>
+            </div>
+            <div class="visual-item">
+                <svg width="100" height="120" viewBox="0 0 100 120">
+                    <line x1="50" y1="20" x2="25" y2="50" class="edge"/>
+                    <line x1="50" y1="20" x2="75" y2="50" class="edge"/>
+                    <line x1="25" y1="50" x2="40" y2="90" class="edge"/>
+                    <circle cx="50" cy="20" r="10" class="node"/>
+                    <circle cx="25" cy="50" r="10" class="node"/>
+                    <circle cx="75" cy="50" r="10" class="node"/>
+                    <circle cx="40" cy="90" r="10" class="node" stroke="red"/>
+                    <line x1="10" y1="40" x2="90" y2="100" class="cross" opacity="0.7"/>
+                </svg>
+                <p class="invalid">❌ Invalid (has 1 child)</p>
+            </div>
+        </div>
+
+        <!-- Type 2 -->
+        <h3 style="margin-top: 3rem;">Type 2: Complete Binary Tree</h3>
+        <p><strong>Rule:</strong></p>
+        <ol style="margin-left: 2rem; margin-bottom: 1rem;">
+            <li>All levels are completely filled (except possibly the last level).</li>
+            <li>The last level has nodes packed <strong>as left as possible</strong>.</li>
+        </ol>
+        <div class="visual-grid">
+            <div class="visual-item">
+                <svg width="140" height="120" viewBox="0 0 140 120">
+                    <line x1="70" y1="20" x2="35" y2="50" class="edge"/>
+                    <line x1="70" y1="20" x2="105" y2="50" class="edge"/>
+                    <line x1="35" y1="50" x2="15" y2="90" class="edge"/>
+                    <line x1="35" y1="50" x2="55" y2="90" class="edge"/>
+                    <line x1="105" y1="50" x2="85" y2="90" class="edge"/>
+                    <circle cx="70" cy="20" r="10" class="node"/>
+                    <circle cx="35" cy="50" r="10" class="node"/>
+                    <circle cx="105" cy="50" r="10" class="node"/>
+                    <circle cx="15" cy="90" r="10" class="node" fill="#dcfce7"/>
+                    <circle cx="55" cy="90" r="10" class="node" fill="#dcfce7"/>
+                    <circle cx="85" cy="90" r="10" class="node" fill="#dcfce7"/>
+                </svg>
+                <p class="valid">✅ Valid (Left-packed)</p>
+            </div>
+            <div class="visual-item">
+                <svg width="140" height="120" viewBox="0 0 140 120">
+                    <line x1="70" y1="20" x2="35" y2="50" class="edge"/>
+                    <line x1="70" y1="20" x2="105" y2="50" class="edge"/>
+                    <line x1="35" y1="50" x2="15" y2="90" class="edge"/>
+                    <line x1="105" y1="50" x2="125" y2="90" class="edge"/>
+                    <circle cx="70" cy="20" r="10" class="node"/>
+                    <circle cx="35" cy="50" r="10" class="node"/>
+                    <circle cx="105" cy="50" r="10" class="node"/>
+                    <circle cx="15" cy="90" r="10" class="node"/>
+                    <circle cx="125" cy="90" r="10" class="node" stroke="red"/>
+                    <line x1="20" y1="30" x2="120" y2="100" class="cross" opacity="0.7"/>
+                </svg>
+                <p class="invalid">❌ Invalid (Gap on left)</p>
+            </div>
+        </div>
+
+        <!-- Type 3 -->
+        <h3 style="margin-top: 3rem;">Type 3: Perfect Binary Tree</h3>
+        <p><strong>Rule:</strong> All internal nodes have exactly 2 children <strong>AND</strong> all leaves are at the exact same level. (Forms a perfect symmetrical triangle).</p>
+        <p><em>Note: Every Perfect Binary Tree is automatically Full and Complete, but the reverse is not true.</em></p>
+        <div class="visual-item" style="max-width: 250px; margin: 1rem auto;">
+            <svg width="200" height="120" viewBox="0 0 200 120">
+                <line x1="100" y1="20" x2="50" y2="60" class="edge"/>
+                <line x1="100" y1="20" x2="150" y2="60" class="edge"/>
+                <line x1="50" y1="60" x2="25" y2="100" class="edge"/>
+                <line x1="50" y1="60" x2="75" y2="100" class="edge"/>
+                <line x1="150" y1="60" x2="125" y2="100" class="edge"/>
+                <line x1="150" y1="60" x2="175" y2="100" class="edge"/>
+                
+                <circle cx="100" cy="20" r="10" class="node"/>
+                <circle cx="50" cy="60" r="10" class="node"/>
+                <circle cx="150" cy="60" r="10" class="node"/>
+                <circle cx="25" cy="100" r="10" class="node" fill="#dcfce7"/>
+                <circle cx="75" cy="100" r="10" class="node" fill="#dcfce7"/>
+                <circle cx="125" cy="100" r="10" class="node" fill="#dcfce7"/>
+                <circle cx="175" cy="100" r="10" class="node" fill="#dcfce7"/>
+            </svg>
+            <p class="valid">✅ Perfect Symmetrical Triangle</p>
+        </div>
+
+        <!-- Type 4 -->
+        <h3 style="margin-top: 3rem;">Type 4: Degenerate Binary Tree</h3>
+        <p><strong>Rule:</strong> Every internal node has exactly <strong>one</strong> child. It behaves exactly like a single linked list.</p>
+        <div class="visual-grid">
+            <div class="visual-item">
+                <svg width="100" height="150" viewBox="0 0 100 150">
+                    <line x1="70" y1="20" x2="50" y2="60" class="edge"/>
+                    <line x1="50" y1="60" x2="30" y2="100" class="edge"/>
+                    <line x1="30" y1="100" x2="10" y2="140" class="edge"/>
+                    <circle cx="70" cy="20" r="10" class="node"/>
+                    <circle cx="50" cy="60" r="10" class="node"/>
+                    <circle cx="30" cy="100" r="10" class="node"/>
+                    <circle cx="10" cy="140" r="10" class="node"/>
+                </svg>
+                <p>Left-Skewed</p>
+            </div>
+            <div class="visual-item">
+                <svg width="100" height="150" viewBox="0 0 100 150">
+                    <line x1="30" y1="20" x2="50" y2="60" class="edge"/>
+                    <line x1="50" y1="60" x2="70" y2="100" class="edge"/>
+                    <line x1="70" y1="100" x2="90" y2="140" class="edge"/>
+                    <circle cx="30" cy="20" r="10" class="node"/>
+                    <circle cx="50" cy="60" r="10" class="node"/>
+                    <circle cx="70" cy="100" r="10" class="node"/>
+                    <circle cx="90" cy="140" r="10" class="node"/>
+                </svg>
+                <p>Right-Skewed</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: Summary Table -->
+    <section class="card">
+        <h2>5. Formula Summary Tables</h2>
+        <p>A quick reference guide for the formulas derived on the whiteboard during the lecture.</p>
+        
+        <table>
+            <thead>
+                <tr>
+                    <th>Tree Type</th>
+                    <th>Max Nodes (<span class="math">n</span>)</th>
+                    <th>Min Nodes (<span class="math">n</span>)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Standard Binary Tree</strong></td>
+                    <td><span class="math">2<sup>h+1</sup> - 1</span></td>
+                    <td><span class="math">h + 1</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Full Binary Tree</strong></td>
+                    <td><span class="math">2<sup>h+1</sup> - 1</span></td>
+                    <td><span class="math">2h + 1</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Complete Binary Tree</strong></td>
+                    <td><span class="math">2<sup>h+1</sup> - 1</span></td>
+                    <td><span class="math">2<sup>h</sup></span></td>
+                </tr>
+            </tbody>
+        </table>
+
+        <table style="margin-top: 2rem;">
+            <thead>
+                <tr>
+                    <th>Tree Type</th>
+                    <th>Min Height (<span class="math">h</span>)</th>
+                    <th>Max Height (<span class="math">h</span>)</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Standard Binary Tree</strong></td>
+                    <td><span class="math">⌈ log<sub>2</sub>(n+1) ⌉ - 1</span></td>
+                    <td><span class="math">n - 1</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Full Binary Tree</strong></td>
+                    <td><span class="math">⌈ log<sub>2</sub>(n+1) ⌉ - 1</span></td>
+                    <td><span class="math">(n - 1) / 2</span></td>
+                </tr>
+                <tr>
+                    <td><strong>Complete Binary Tree</strong></td>
+                    <td><span class="math">⌈ log<sub>2</sub>(n+1) ⌉ - 1</span></td>
+                    <td><span class="math">log<sub>2</sub> n</span></td>
+                </tr>
+            </tbody>
+        </table>
+    </section>
+
+</main>
+
+</body>
+</html>
