@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree Implementation in C - Study Feed</title>
+    <style>
+        /* === BASE STYLES & TYPOGRAPHY === */
+        :root {
+            --bg-color: #f4f6f8;
+            --feed-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #555555;
+            --accent-blue: #007bff;
+            --accent-red: #e74c3c;
+            --accent-green: #2ecc71;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --border-radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        /* === VERTICAL FEED LAYOUT === */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 40px; /* Space between feed items */
+            padding-bottom: 60px;
+        }
+
+        .feed-header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #007bff, #00c6ff);
+            color: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .feed-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .feed-card {
+            background: var(--feed-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.6s ease forwards;
+        }
+
+        .feed-card h2 {
+            color: var(--accent-blue);
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        .feed-card p {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        .pro-tip {
+            background-color: #e8f4fd;
+            border-left: 5px solid var(--accent-blue);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 var(--border-radius) var(--border-radius) 0;
+            font-style: italic;
+        }
+
+        /* === CODE STYLES === */
+        pre {
+            background: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Consolas', 'Monaco', monospace;
+            font-size: 1rem;
+            margin: 20px 0;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.5);
+        }
+
+        code .keyword { color: #569cd6; font-weight: bold; }
+        code .type { color: #4ec9b0; }
+        code .comment { color: #6a9955; font-style: italic; }
+        code .string { color: #ce9178; }
+        code .func { color: #dcdcaa; }
+
+        /* === VISUALIZATIONS === */
+        
+        /* Node Box Visual */
+        .node-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 30px 0;
+        }
+        .address-badge {
+            background: #ffeaa7;
+            color: #d35400;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+        .visual-node {
+            display: flex;
+            border: 3px solid var(--text-main);
+            border-radius: 8px;
+            overflow: hidden;
+            width: 350px;
+            height: 60px;
+            background: #fff;
+        }
+        .visual-node > div {
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+        .node-left, .node-right {
+            background: #f1f2f6;
+            color: var(--text-muted);
+        }
+        .node-data {
+            border-left: 3px solid var(--text-main);
+            border-right: 3px solid var(--text-main);
+            background: #fff;
+            color: var(--accent-blue);
+            font-size: 1.4rem !important;
+        }
+
+        /* Stack Visual */
+        .stack-container {
+            display: flex;
+            justify-content: center;
+            margin: 40px 0;
+        }
+        .stack-memory {
+            border: 4px solid var(--text-main);
+            border-top: none;
+            width: 300px;
+            display: flex;
+            flex-direction: column-reverse; /* Builds from bottom up */
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 0 0 12px 12px;
+        }
+        .stack-frame {
+            background: white;
+            border: 2px solid var(--accent-blue);
+            padding: 15px;
+            margin-top: 10px;
+            text-align: center;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            font-weight: bold;
+        }
+        .stack-frame.active {
+            background: #e8f4fd;
+            border-color: var(--accent-blue);
+            animation: pulse 2s infinite;
+        }
+        .stack-frame .local-vars {
+            font-size: 0.9rem;
+            color: var(--accent-red);
+            margin-top: 5px;
+            font-family: monospace;
+        }
+
+        /* Animations */
+        @keyframes fadeUp {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(0, 123, 255, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(0, 123, 255, 0); }
+        }
+
+        /* Delay animations for child elements dynamically via JS */
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <!-- Header -->
+        <header class="feed-header">
+            <h1>Binary Tree Implementation in C</h1>
+            <p>Complete Video Breakdown & Visual Notes</p>
+        </header>
+
+        <!-- Section 1: Concept -->
+        <section class="feed-card">
+            <h2>1. Core Concept: Visualizing the Tree & Node</h2>
+            <p>A binary tree consists of <strong>nodes</strong>. Each node can have at most <strong>two children</strong> (Left and Right). Just like a Linked List uses a <code>head</code> pointer, a Binary Tree uses a <strong><code>root</code> pointer</strong> to keep track of the starting node.</p>
+            
+            <p>Here is how a Node sits in memory (as drawn on the whiteboard):</p>
+            
+            <div class="node-wrapper">
+                <div class="address-badge">Address: 100</div>
+                <div class="visual-node">
+                    <div class="node-left">Left Ptr<br>(e.g., 200)</div>
+                    <div class="node-data">Data (4)</div>
+                    <div class="node-right">Right Ptr<br>(e.g., 300)</div>
+                </div>
+            </div>
+
+            <div class="pro-tip">
+                <strong>Instructor's Note:</strong> If a node does not have a child (a leaf node), its respective pointer will store <code>0</code> (which acts as <code>NULL</code> in C). During execution, we will ask the user to enter <strong><code>-1</code></strong> to signify "no node".
+            </div>
+        </section>
+
+        <!-- Section 2: Struct -->
+        <section class="feed-card">
+            <h2>2. Defining the Data Structure</h2>
+            <p>Because a node contains pointers to other nodes of the exact same type, we use a <strong>"self-referential structure."</strong> We divide it into three parts: data, left pointer, and right pointer.</p>
+
+<pre><code><span class="keyword">struct</span> <span class="type">node</span> {
+    <span class="type">int</span> data;                  <span class="comment">// Stores the integer value</span>
+    <span class="keyword">struct</span> <span class="type">node</span> *left, *right; <span class="comment">// Pointers to child nodes</span>
+};</code></pre>
+        </section>
+
+        <!-- Section 3: Main Setup -->
+        <section class="feed-card">
+            <h2>3. The main() Function Setup</h2>
+            <p>Execution starts here. We need a pointer to hold the root of our tree, and we will call a custom function named <code>create()</code> to build the tree and return the starting address.</p>
+
+<pre><code><span class="type">void</span> <span class="func">main</span>() {
+    <span class="keyword">struct</span> <span class="type">node</span> *root;   <span class="comment">// Pointer to hold the root address</span>
+    root = <span class="func">create</span>();     <span class="comment">// Build tree, assign returned address to 'root'</span>
+}</code></pre>
+        </section>
+
+        <!-- Section 4: The create() function -->
+        <section class="feed-card">
+            <h2>4. Writing the Recursive create() Function</h2>
+            <p>Building a tree is inherently a recursive process. You create a node, ask the function to build its left child, and then its right child.</p>
+            
+<pre><code><span class="keyword">struct</span> <span class="type">node</span> *<span class="func">create</span>() {
+    <span class="type">int</span> x; 
+    <span class="keyword">struct</span> <span class="type">node</span> *newnode;
+    
+    <span class="comment">// 1. Dynamically allocate memory in the heap</span>
+    newnode = (<span class="keyword">struct</span> <span class="type">node</span> *)<span class="func">malloc</span>(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> <span class="type">node</span>));
+    
+    <span class="func">printf</span>(<span class="string">"Enter data (-1 for no node): "</span>);
+    <span class="func">scanf</span>(<span class="string">"%d"</span>, &amp;x);
+
+    <span class="comment">// 2. The Base Condition (Stops the recursion)</span>
+    <span class="keyword">if</span> (x == -1) {
+        <span class="keyword">return</span> 0;  <span class="comment">// 0 acts as NULL, terminating this branch</span>
+    }
+
+    <span class="comment">// 3. Assign Data</span>
+    newnode-&gt;data = x; 
+
+    <span class="comment">// 4. Recursively build Left Subtree</span>
+    <span class="func">printf</span>(<span class="string">"Enter left child of %d"</span>, x);
+    newnode-&gt;left = <span class="func">create</span>(); 
+
+    <span class="comment">// 5. Recursively build Right Subtree</span>
+    <span class="func">printf</span>(<span class="string">"Enter right child of %d"</span>, x);
+    newnode-&gt;right = <span class="func">create</span>();
+
+    <span class="comment">// 6. Return the memory address to the parent node</span>
+    <span class="keyword">return</span> newnode; 
+}</code></pre>
+        </section>
+
+        <!-- Section 5: The Stack Trace -->
+        <section class="feed-card">
+            <h2>5. The Execution Trace (How the Stack Works)</h2>
+            <p><em>"Please do not get confused... Different copies of all the local variables (x and newnode) are created for EACH function call in the stack memory."</em></p>
+            <p>Let's assume the user builds this tree: <strong>Root(4)</strong>, <strong>Left Child(5)</strong>, and <strong>no right child</strong>. Here is how the computer's stack memory executes it:</p>
+
+            <div class="stack-container">
+                <div class="stack-memory">
+                    <!-- Bottom / First Call -->
+                    <div class="stack-frame">
+                        Call 1: create() 
+                        <div class="local-vars">Address: 100 | x: 4</div>
+                        <span style="font-size: 0.8rem; color: gray;">Pauses at: newnode->left = create()</span>
+                    </div>
+                    
+                    <!-- Middle / Second Call -->
+                    <div class="stack-frame active">
+                        Call 2: create()
+                        <div class="local-vars">Address: 200 | x: 5</div>
+                        <span style="font-size: 0.8rem; color: gray;">Pauses at: newnode->left = create()</span>
+                    </div>
+
+                    <!-- Top / Third Call (Base case) -->
+                    <div class="stack-frame" style="opacity: 0.7;">
+                        Call 3: create()
+                        <div class="local-vars">x: -1</div>
+                        <span style="font-size: 0.8rem; color: #e74c3c;">Returns 0 (Triggers Base Case)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="pro-tip">
+                <strong>The "Aha!" Moment:</strong> When Call 3 returns `0`, the stack frame is destroyed. The computer goes back down to <strong>Call 2</strong>, and assigns that `0` to <code>newnode(200)->left</code>. Then Call 2 moves to the next line to check for its right child. This "dive deep, then bubble back up" action is the essence of tree recursion!
+            </div>
+        </section>
+
+        <section class="feed-card" style="text-align: center; padding: 50px;">
+            <h2 style="border: none; margin: 0;">🎉 You've reached the end of this lesson!</h2>
+            <p style="color: var(--text-muted); margin-top: 10px;">Keep scrolling to review, or close this window to practice coding.</p>
+        </section>
+
+    </div>
+
+    <!-- Simple JS to add staggered animations to cards as they enter viewport -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const cards = document.querySelectorAll('.feed-card');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.style.animation = `fadeUp 0.6s ease forwards`;
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, {
+                threshold: 0.1
+            });
+
+            cards.forEach((card, index) => {
+                card.style.animation = 'none'; // Reset animation initially
+                card.style.opacity = '0';
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>
