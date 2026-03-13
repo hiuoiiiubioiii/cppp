@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deque Study Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono&display=swap');
+
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --accent: #3b82f6;
+            --accent-light: #eff6ff;
+            --danger: #ef4444;
+            --success: #10b981;
+            --border: #e5e7eb;
+            --board-bg: #f8fafc;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .header-section {
+            text-align: center;
+            padding: 3rem 1rem;
+            background: linear-gradient(135deg, #1e3a8a, #3b82f6);
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(59, 130, 246, 0.2);
+        }
+
+        .header-section h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .header-section p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            color: var(--accent);
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            margin: 1.5rem 0 0.5rem 0;
+        }
+
+        .card p, .card ul {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+        }
+
+        .card ul {
+            padding-left: 1.5rem;
+        }
+
+        .card li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Whiteboard Visualizations */
+        .whiteboard {
+            background-color: var(--board-bg);
+            border: 2px dashed #cbd5e1;
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            overflow-x: auto;
+        }
+
+        .wb-title {
+            font-size: 0.9rem;
+            color: #64748b;
+            margin-bottom: 1.5rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 600;
+        }
+
+        /* Array Styles */
+        .array {
+            display: flex;
+            border: 2px solid #334155;
+            background: white;
+        }
+
+        .array-cell {
+            width: 50px;
+            height: 50px;
+            border-right: 2px solid #334155;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            position: relative;
+        }
+
+        .array-cell:last-child {
+            border-right: none;
+        }
+
+        .array-cell.filled {
+            background-color: var(--accent-light);
+            color: var(--accent);
+        }
+
+        /* Arrows and Pointers */
+        .pointers-container {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            max-width: 400px;
+            margin-top: 10px;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: bold;
+            color: #334155;
+        }
+
+        .arr-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .arrow {
+            font-size: 1.5rem;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .arrow-in { color: var(--success); }
+        .arrow-out { color: var(--danger); }
+        .arrow-both { color: var(--accent); }
+
+        /* Operations List */
+        .code-list {
+            background: #1e293b;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: 'JetBrains Mono', monospace;
+            list-style: none;
+        }
+
+        .code-list li {
+            margin-bottom: 0.5rem;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 0.5rem;
+        }
+
+        .code-list li:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+        }
+
+        .code-keyword { color: #c678dd; }
+        .code-func { color: #61afef; }
+
+        /* Processors specific styles */
+        .processor-container {
+            display: flex;
+            gap: 2rem;
+            align-items: flex-start;
+            justify-content: center;
+            width: 100%;
+            position: relative;
+        }
+
+        .processor {
+            background: white;
+            border: 2px solid #94a3b8;
+            padding: 1rem;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .p-title {
+            font-weight: bold;
+            background: #e2e8f0;
+            padding: 0.2rem 1rem;
+            border-radius: 4px;
+        }
+
+        /* SVG Circular Array */
+        .circular-array {
+            width: 200px;
+            height: 200px;
+        }
+
+        .highlight-box {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+
+    <main class="feed-container">
+        
+        <!-- Header -->
+        <header class="header-section">
+            <h1>Data Structures & Algorithms</h1>
+            <p>Module: Deque (Double Ended Queue)</p>
+        </header>
+
+        <!-- Section 1: Standard vs Deque -->
+        <article class="card">
+            <h2>1. Standard Queue vs. Deque</h2>
+            <p>To understand a Deque (pronounced "deck"), you must first understand the limitations of a standard Queue.</p>
+            
+            <div class="whiteboard">
+                <div class="wb-title">The Standard Queue</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="arrow arrow-out">&larr; Delete</span>
+                    <div class="array" style="width: 250px;">
+                        <div class="array-cell"></div><div class="array-cell"></div><div class="array-cell"></div><div class="array-cell"></div><div class="array-cell"></div>
+                    </div>
+                    <span class="arrow arrow-in">&larr; Insert</span>
+                </div>
+                <div class="pointers-container" style="width: 250px;">
+                    <div class="arr-label">Front</div>
+                    <div class="arr-label">Rear</div>
+                </div>
+                <p style="margin-top: 15px; font-size: 0.9rem; text-align: center; color: var(--text-muted);">
+                    <strong>Rule:</strong> Insertion can <i>only</i> happen at the rear. Deletion can <i>only</i> happen at the front.
+                </p>
+            </div>
+
+            <div class="whiteboard">
+                <div class="wb-title">The Deque (Double Ended Queue)</div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; line-height: 1;">
+                        <span style="color: var(--success); font-size: 1.2rem;">&rarr; Insert</span>
+                        <span style="color: var(--danger); font-size: 1.2rem;">&larr; Delete</span>
+                    </div>
+                    <div class="array" style="width: 250px;">
+                        <div class="array-cell"></div><div class="array-cell"></div><div class="array-cell"></div><div class="array-cell"></div><div class="array-cell"></div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1;">
+                        <span style="color: var(--danger); font-size: 1.2rem;">Delete &rarr;</span>
+                        <span style="color: var(--success); font-size: 1.2rem;">Insert &larr;</span>
+                    </div>
+                </div>
+                <div class="pointers-container" style="width: 250px;">
+                    <div class="arr-label">Front</div>
+                    <div class="arr-label">Rear</div>
+                </div>
+            </div>
+            
+            <p><strong>Definition:</strong> A Deque is a generalized version of a queue. It is a linear list in which insertion (enqueue) and deletion (dequeue) operations are allowed from <strong>both ends</strong>.</p>
+        </article>
+
+        <!-- Section 2: Properties -->
+        <article class="card">
+            <h2>2. Properties of a Deque</h2>
+            <p>Because you can insert and delete from both ends, a Deque is highly versatile. It supports the properties of both major linear data structures.</p>
+            
+            <div class="highlight-box">
+                <strong>What she writes on the board:</strong><br>
+                <code style="font-family: monospace; font-size: 1.1rem; color: var(--accent);">Stack - LIFO</code> (Last In, First Out)<br>
+                <code style="font-family: monospace; font-size: 1.1rem; color: var(--accent);">Queue - FIFO</code> (First In, First Out)
+            </div>
+
+            <ul>
+                <li><strong>How to use as a Stack:</strong> Limit all insertions and deletions to just <i>one</i> end of the Deque. This perfectly mimics Last-In-First-Out behavior.</li>
+                <li><strong>How to use as a Queue:</strong> Restrict insertion to one end and deletion to the opposite end. This mimics standard First-In-First-Out behavior.</li>
+            </ul>
+        </article>
+
+        <!-- Section 3: Types of Deques -->
+        <article class="card">
+            <h2>3. Types of Deques</h2>
+            <p>There are two primary variations of a Deque based on applying specific constraints to either the input or the output.</p>
+
+            <h3>Type A: Input-Restricted Deque</h3>
+            <p>We put a restriction on the input (insertion). Insertion is allowed from <strong>only one end</strong>, but deletion is allowed from <strong>both ends</strong>.</p>
+            
+            <div class="whiteboard">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span style="color: var(--danger); font-size: 1.2rem; font-weight: bold;">&larr; Del</span>
+                    <div class="array" style="width: 200px;">
+                        <div class="array-cell"></div><div class="array-cell"></div><div class="array-cell"></div><div class="array-cell"></div>
+                    </div>
+                    <div style="display: flex; flex-direction: column; align-items: flex-start; line-height: 1;">
+                        <span style="color: var(--danger); font-size: 1.2rem; font-weight: bold;">Del &rarr;</span>
+                        <span style="color: var(--success); font-size: 1.2rem; font-weight: bold;">Ins &larr;</span>
+                    </div>
+                </div>
+                <div class="pointers-container" style="width: 200px;">
+                    <div class="arr-label">f</div>
+                    <div class="arr-label">R</div>
+                </div>
+            </div>
+
+            <h3>Type B: Output-Restricted Deque</h3>
+            <p>We put a restriction on the output (deletion). Deletion is allowed from <strong>only one end</strong>, but insertion is allowed from <strong>both ends</strong>.</p>
+
+            <div class="whiteboard">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="display: flex; flex-direction: column; align-items: flex-end; line-height: 1;">
+                        <span style="color: var(--success); font-size: 1.2rem; font-weight: bold;">&rarr; Ins</span>
+                        <span style="color: var(--danger); font-size: 1.2rem; font-weight: bold;">&larr; Del</span>
+                    </div>
+                    <div class="array" style="width: 200px;">
+                        <div class="array-cell"></div><div class="array-cell"></div><div class="array-cell"></div><div class="array-cell"></div>
+                    </div>
+                    <span style="color: var(--success); font-size: 1.2rem; font-weight: bold;">Ins &larr;</span>
+                </div>
+                <div class="pointers-container" style="width: 200px;">
+                    <div class="arr-label">f</div>
+                    <div class="arr-label">R</div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Section 4: Operations -->
+        <article class="card">
+            <h2>4. Operations on a Deque</h2>
+            <p>Here is the list of standard operations you can perform on a Deque. <i>(Actual code implementation is deferred to the next video lecture)</i>.</p>
+            
+            <ul class="code-list">
+                <li><span class="code-func">insertAtFront()</span></li>
+                <li><span class="code-func">deleteFromFront()</span></li>
+                <li><span class="code-func">insertAtRear()</span></li>
+                <li><span class="code-func">deleteFromRear()</span></li>
+                <li><span class="code-func">getFront()</span> <span style="color:#64748b; font-size: 0.9rem;">// Peek: view front element without removing</span></li>
+                <li><span class="code-func">getRear()</span> <span style="color:#64748b; font-size: 0.9rem;">// Peek: view rear element without removing</span></li>
+                <li><span class="code-func">isFull()</span> <span style="color:#64748b; font-size: 0.9rem;">// Returns true if no more space</span></li>
+                <li><span class="code-func">isEmpty()</span> <span style="color:#64748b; font-size: 0.9rem;">// Returns true if 0 elements</span></li>
+            </ul>
+        </article>
+
+        <!-- Section 5: Memory Representation -->
+        <article class="card">
+            <h2>5. Memory Representation</h2>
+            <p>How do we actually build this in memory? You can use a Doubly Linked List, but the most common array-based method is the <strong>Circular Array</strong>.</p>
+
+            <div class="whiteboard">
+                <div class="wb-title">The "False Full" Problem (Linear Array)</div>
+                <div class="array" style="width: 200px;">
+                    <div class="array-cell"></div>
+                    <div class="array-cell filled">3</div>
+                    <div class="array-cell filled">4</div>
+                    <div class="array-cell filled">2</div>
+                </div>
+                <div class="pointers-container" style="width: 200px;">
+                    <div class="arr-label" style="margin-left: 50px;">f</div>
+                    <div class="arr-label">R</div>
+                </div>
+                <p style="margin-top: 15px; font-size: 0.9rem; text-align: center;">
+                    If `rear` is at the last index, you can't insert a new element at the rear, <strong>even if index 0 is empty!</strong> The system will incorrectly say the Queue is Full.
+                </p>
+            </div>
+
+            <div class="whiteboard">
+                <div class="wb-title">The Circular Solution</div>
+                <svg class="circular-array" viewBox="0 0 100 100">
+                    <!-- Circle base -->
+                    <circle cx="50" cy="50" r="40" fill="none" stroke="#334155" stroke-width="2"/>
+                    <!-- Dividers -->
+                    <line x1="50" y1="10" x2="50" y2="90" stroke="#334155" stroke-width="2"/>
+                    <line x1="10" y1="50" x2="90" y2="50" stroke="#334155" stroke-width="2"/>
+                    <!-- Labels -->
+                    <text x="65" y="35" font-size="10" font-family="monospace">0</text>
+                    <text x="65" y="70" font-size="10" font-family="monospace">1</text>
+                    <text x="25" y="70" font-size="10" font-family="monospace">2</text>
+                    <text x="25" y="35" font-size="10" font-family="monospace">3</text>
+                    
+                    <!-- Curved wrapping arrow -->
+                    <path d="M 30 15 Q 50 0 70 15" fill="none" stroke="var(--accent)" stroke-width="2" marker-end="url(#arrowhead)"/>
+                    <defs>
+                        <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                            <polygon points="0 0, 10 3.5, 0 7" fill="var(--accent)" />
+                        </marker>
+                    </defs>
+                </svg>
+                <p style="margin-top: 15px; font-size: 0.9rem; text-align: center;">
+                    Logically connecting the end back to the beginning allows the <code>rear</code> pointer to wrap around to index 0. This achieves <strong>O(1) time complexity</strong> for all operations.
+                </p>
+            </div>
+        </article>
+
+        <!-- Section 6: Applications -->
+        <article class="card">
+            <h2>6. Real World Applications</h2>
+            <p>Because a Deque acts as both a stack and a queue, it inherits their applications (like Undo/Redo in editors), plus some unique ones.</p>
+
+            <h3>A. Palindrome Checker</h3>
+            <div class="whiteboard" style="padding: 1rem;">
+                <div style="font-size: 2rem; font-family: monospace; letter-spacing: 0.5rem; display: flex; align-items: center; gap: 20px;">
+                    <span style="color: var(--accent);">&rarr;</span>
+                    r a d a r
+                    <span style="color: var(--accent);">&larr;</span>
+                </div>
+                <p style="font-size: 0.9rem; margin-top: 10px;">Remove characters from both the front and rear simultaneously. If they always match, it's a palindrome.</p>
+            </div>
+
+            <h3>B. Multiprocessor Scheduling (Work Stealing)</h3>
+            <p>Also noted on the whiteboard by the instructor as the <strong>"A-steel Algorithm"</strong>. This handles load balancing between multiple computer processors.</p>
+            
+            <div class="whiteboard">
+                <div class="processor-container">
+                    <!-- Processor 1 -->
+                    <div class="processor">
+                        <div class="p-title">P1</div>
+                        <div class="array" style="width: 120px;">
+                            <div class="array-cell" style="width: 40px; height: 30px;"></div>
+                            <div class="array-cell" style="width: 40px; height: 30px;"></div>
+                            <div class="array-cell" style="width: 40px; height: 30px;"></div>
+                        </div>
+                        <div class="pointers-container" style="width: 120px; font-size: 0.8rem; margin-top: 0;">
+                            <div>F</div>
+                            <div>R</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Steal Arrow -->
+                    <svg style="position: absolute; top: 60px; left: 130px; width: 100px; height: 50px; z-index: 10;">
+                        <path d="M 80 15 Q 50 -20 10 15" fill="none" stroke="var(--danger)" stroke-width="2" stroke-dasharray="4" marker-end="url(#steal-arrow)"/>
+                        <defs>
+                            <marker id="steal-arrow" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+                                <polygon points="0 0, 10 3.5, 0 7" fill="var(--danger)" />
+                            </marker>
+                        </defs>
+                        <text x="25" y="10" font-size="10" fill="var(--danger)" font-weight="bold">"STEAL"</text>
+                    </svg>
+
+                    <!-- Processor 2 -->
+                    <div class="processor">
+                        <div class="p-title">P2</div>
+                        <div class="array" style="width: 120px;">
+                            <div class="array-cell filled" style="width: 40px; height: 30px;"></div>
+                            <div class="array-cell filled" style="width: 40px; height: 30px;"></div>
+                            <div class="array-cell filled" style="width: 40px; height: 30px;"></div>
+                        </div>
+                        <div class="pointers-container" style="width: 120px; font-size: 0.8rem; margin-top: 0;">
+                            <div>F</div>
+                            <div>R</div>
+                        </div>
+                    </div>
+                </div>
+                <ul style="margin-top: 20px; font-size: 0.9rem; text-align: left; width: 100%;">
+                    <li>Each processor has its own Deque of threads (jobs). Normally, a processor takes jobs from the <strong>front</strong> of its own Deque.</li>
+                    <li>If P1 finishes all its jobs (its deque is empty), it won't sit idle.</li>
+                    <li>P1 will "steal" a thread from the <strong>rear</strong> of P2's Deque, while P2 continues processing from its own front.</li>
+                    <li>P1 adds the stolen thread to its own front and executes it. This is why a double-ended queue is mandatory!</li>
+                </ul>
+            </div>
+        </article>
+
+    </main>
+
+    <script>
+        // Simple Intersection Observer to fade in cards as you scroll down the feed
+        document.addEventListener("DOMContentLoaded", () => {
+            const cards = document.querySelectorAll('.card');
+            
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target); // Stop observing once it's visible
+                    }
+                });
+            }, observerOptions);
+
+            cards.forEach(card => {
+                observer.observe(card);
+            });
+            
+            // Trigger first card immediately if it's already in view on load
+            setTimeout(() => {
+                if(cards[0]) cards[0].classList.add('visible');
+            }, 100);
+        });
+    </script>
+</body>
+</html>
