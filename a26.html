@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doubly Circular Linked List - Study Notes</title>
+    <style>
+        /* Modern Reset and Base Styles */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; background-color: #f4f6f8; color: #333; }
+        
+        /* Vertical Feed Layout */
+        .feed-container { max-width: 800px; margin: 0 auto; background: #fff; box-shadow: 0 0 20px rgba(0,0,0,0.05); min-height: 100vh; display: flex; flex-direction: column; }
+        
+        /* Section Styles */
+        .section { padding: 40px; border-bottom: 1px solid #eaeaea; }
+        .section:nth-child(even) { background-color: #fafbfc; }
+        .section:last-child { border-bottom: none; }
+        
+        /* Typography */
+        h1 { font-size: 2.2rem; color: #1a1a1a; margin-bottom: 10px; line-height: 1.2; }
+        h2 { font-size: 1.8rem; color: #2c3e50; margin-bottom: 20px; margin-top: 10px; border-left: 5px solid #3498db; padding-left: 15px; }
+        h3 { font-size: 1.3rem; color: #444; margin-bottom: 15px; margin-top: 25px; }
+        p { margin-bottom: 15px; font-size: 1.1rem; color: #555; }
+        ul, ol { margin-bottom: 15px; padding-left: 20px; font-size: 1.1rem; color: #555; }
+        li { margin-bottom: 8px; }
+        strong { color: #222; }
+
+        /* Highlight Boxes */
+        .instructor-tip { background-color: #fff3cd; border-left: 5px solid #e74c3c; padding: 20px; margin: 25px 0; border-radius: 0 8px 8px 0; }
+        .instructor-tip h4 { color: #c0392b; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+        
+        /* Code Blocks */
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 20px; border-radius: 8px; overflow-x: auto; font-family: "Courier New", Courier, monospace; font-size: 1rem; margin: 20px 0; box-shadow: inset 0 0 10px rgba(0,0,0,0.5); }
+        code { color: #569cd6; }
+        .comment { color: #6a9955; font-style: italic; }
+        .keyword { color: #c586c0; }
+        .function { color: #dcdcaa; }
+
+        /* Visualizations */
+        .viz-box { background: #fff; border: 2px dashed #bdc3c7; border-radius: 12px; padding: 30px; margin: 30px 0; display: flex; flex-direction: column; align-items: center; gap: 20px; overflow-x: auto; }
+        .viz-title { font-size: 0.9rem; text-transform: uppercase; letter-spacing: 2px; color: #7f8c8d; font-weight: bold; }
+        
+        .list-row { display: flex; align-items: center; justify-content: center; gap: 15px; width: 100%; min-width: 600px; }
+        
+        /* Node Styling */
+        .node-wrapper { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+        .node-label { font-size: 0.9rem; font-weight: bold; color: #34495e; background: #ecf0f1; padding: 4px 10px; border-radius: 20px; }
+        .node { display: flex; border: 2px solid #2c3e50; border-radius: 8px; overflow: hidden; background: #fff; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .node-new { border-color: #27ae60; box-shadow: 0 0 15px rgba(39, 174, 96, 0.4); }
+        .node-new .node-label { background: #27ae60; color: white; }
+        
+        .node-part { padding: 12px; text-align: center; border-right: 2px solid #2c3e50; display: flex; flex-direction: column; justify-content: center; }
+        .node-new .node-part { border-right-color: #27ae60; }
+        .node-part:last-child { border-right: none; }
+        
+        .ptr { background: #fdfefe; color: #e67e22; font-family: monospace; font-size: 0.95rem; min-width: 45px; }
+        .data { background: #ebf5fb; font-weight: bold; font-size: 1.2rem; color: #2980b9; min-width: 50px; }
+        .node-new .data { background: #e9f7ef; color: #27ae60; }
+
+        .arrow { font-size: 2rem; color: #7f8c8d; font-weight: bold; }
+        
+        /* Circular Links Display */
+        .circular-links { display: flex; justify-content: space-between; width: 100%; padding: 0 20px; margin-top: 10px; font-family: monospace; color: #8e44ad; font-weight: bold; border-top: 2px dashed #e8daef; padding-top: 15px; }
+        .circular-links span { background: #f4ecf7; padding: 5px 10px; border-radius: 5px; }
+
+        /* Step-by-Step Styling */
+        .steps { margin: 20px 0; border-left: 3px solid #3498db; padding-left: 20px; }
+        .step { margin-bottom: 15px; position: relative; }
+        .step::before { content: '👉'; position: absolute; left: -35px; top: 0; }
+        .step-code { display: inline-block; background: #ecf0f1; padding: 2px 8px; border-radius: 4px; font-family: monospace; color: #c0392b; font-weight: bold; }
+
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <!-- HEADER SECTION -->
+        <div class="section">
+            <h1>Complete Guide: Insertion in a Doubly Circular Linked List (DCLL)</h1>
+            <p>Welcome to the feed! Scroll down to explore everything taught in the lecture. We will cover the memory structure, the initial baseline list, and the step-by-step logic for inserting nodes at the beginning, at the end, and at a specific position.</p>
+        </div>
+
+        <!-- SETUP SECTION -->
+        <div class="section">
+            <h2>1. Initial Setup & Visualizing the Board</h2>
+            <p>Before writing insertion functions, we need to define what a node looks like in memory and establish a baseline list.</p>
+            
+            <h3>The Node Structure (C Code)</h3>
+            <pre><span class="keyword">struct</span> node {
+    <span class="keyword">int</span> data;
+    <span class="keyword">struct</span> node *next;
+    <span class="keyword">struct</span> node *prev;
+};
+<span class="keyword">struct</span> node *head, *tail;</pre>
+            
+            <h3>The Baseline List Visualization</h3>
+            <p>The instructor draws a list with 3 nodes. Notice how every node has a <strong>prev</strong> (pointing backward) and a <strong>next</strong> (pointing forward). Because it is circular, the Tail connects to the Head, and the Head connects back to the Tail.</p>
+
+            <div class="viz-box">
+                <div class="viz-title">Current Baseline List</div>
+                <div class="list-row">
+                    <div class="node-wrapper">
+                        <div class="node-label">Head (200)</div>
+                        <div class="node">
+                            <div class="node-part ptr">100</div>
+                            <div class="node-part data">6</div>
+                            <div class="node-part ptr">300</div>
+                        </div>
+                    </div>
+                    <div class="arrow">⇄</div>
+                    <div class="node-wrapper">
+                        <div class="node-label">Node (300)</div>
+                        <div class="node">
+                            <div class="node-part ptr">200</div>
+                            <div class="node-part data">5</div>
+                            <div class="node-part ptr">100</div>
+                        </div>
+                    </div>
+                    <div class="arrow">⇄</div>
+                    <div class="node-wrapper">
+                        <div class="node-label">Tail (100)</div>
+                        <div class="node">
+                            <div class="node-part ptr">300</div>
+                            <div class="node-part data">0</div>
+                            <div class="node-part ptr">200</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="circular-links">
+                    <span>↺ head->prev = 100 (Tail)</span>
+                    <span>tail->next = 200 (Head) ↻</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- INSERT AT BEGINNING -->
+        <div class="section">
+            <h2>2. Insertion at the Beginning</h2>
+            <p><strong>Goal:</strong> Create a new node and place it before the current <code>head</code> (Node 200).</p>
+
+            <h3>Step 1: Create the Node in Memory</h3>
+            <p>Whenever you insert, you must first allocate memory and populate the node's data.</p>
+            <pre><span class="keyword">void</span> <span class="function">insertAtBeg</span>() {
+    <span class="keyword">struct</span> node *newnode;
+    newnode = (<span class="keyword">struct</span> node *)malloc(<span class="keyword">sizeof</span>(<span class="keyword">struct</span> node));
+    
+    printf(<span class="comment">"Enter data: "</span>);
+    scanf(<span class="comment">"%d"</span>, &amp;newnode->data);</pre>
+
+            <h3>Step 2: Connect the Pointers</h3>
+            <p>If the list is empty (<code>head == 0</code>), the new node becomes both head and tail, and points to itself. Otherwise, we execute the following steps to link it to our baseline list.</p>
+
+            <div class="steps">
+                <div class="step"><strong>Step A:</strong> <span class="step-code">newnode->next = head;</span><br> The new node (500) needs to point forward to the old first node (200).</div>
+                <div class="step"><strong>Step B:</strong> <span class="step-code">head->prev = newnode;</span><br> The old first node (200) needs its <code>prev</code> to point back to the new node (500).</div>
+                <div class="step"><strong>Step C:</strong> <span class="step-code">newnode->prev = tail;</span><br> Because it's circular, the new first node (500) must have its <code>prev</code> point to the very last node (100).</div>
+                <div class="step"><strong>Step D:</strong> <span class="step-code">tail->next = newnode;</span><br> The last node (100) must have its <code>next</code> point to the new first node (500).</div>
+                <div class="step"><strong>Step E:</strong> <span class="step-code">head = newnode;</span><br> Shift the <code>head</code> pointer to recognize 500 as the official start.</div>
+            </div>
+
+            <div class="instructor-tip">
+                <h4>⚠️ Instructor Warning: Order Matters!</h4>
+                <p>Look at <strong>Step E</strong>. You <em>must</em> update <code>head = newnode;</code> at the very end. If you move the head pointer first, you lose your only reference to address 200, and you will break the rest of the list!</p>
+            </div>
+
+            <div class="viz-box">
+                <div class="viz-title">After Insertion at Beginning</div>
+                <div class="list-row">
+                    <div class="node-wrapper node-new">
+                        <div class="node-label">NEW Head (500)</div>
+                        <div class="node">
+                            <div class="node-part ptr">100</div>
+                            <div class="node-part data">7</div>
+                            <div class="node-part ptr">200</div>
+                        </div>
+                    </div>
+                    <div class="arrow">⇄</div>
+                    <div class="node-wrapper">
+                        <div class="node-label">Old Head (200)</div>
+                        <div class="node">
+                            <div class="node-part ptr">500</div>
+                            <div class="node-part data">6</div>
+                            <div class="node-part ptr">...</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INSERT AT END -->
+        <div class="section">
+            <h2>3. Insertion at the End</h2>
+            <p><strong>Goal:</strong> Create a new node and place it after the current <code>tail</code>.</p>
+            <p>Assuming we are back to our baseline list, let's create a new node at Address <strong>700</strong> with data <strong>8</strong>.</p>
+
+            <pre><span class="keyword">void</span> <span class="function">insertAtEnd</span>() {
+    <span class="comment">// ... [Memory allocation code] ...</span>
+    <span class="keyword">if</span>(head == <span class="keyword">0</span>) {
+        <span class="comment">// ... [Same empty list code as Part 1] ...</span>
+    }
+    <span class="keyword">else</span> {
+        newnode->prev = tail;       <span class="comment">// Step A</span>
+        tail->next = newnode;       <span class="comment">// Step B</span>
+        newnode->next = head;       <span class="comment">// Step C</span>
+        head->prev = newnode;       <span class="comment">// Step D</span>
+        tail = newnode;             <span class="comment">// Step E</span>
+    }
+}</pre>
+
+            <div class="steps">
+                <div class="step"><strong>Step A:</strong> The new node (700) points its <code>prev</code> back to the current last node (100).</div>
+                <div class="step"><strong>Step B:</strong> The current last node (100) points its <code>next</code> forward to the new node (700).</div>
+                <div class="step"><strong>Step C:</strong> Because it's circular, the new last node (700) must point its <code>next</code> to the very first node (head).</div>
+                <div class="step"><strong>Step D:</strong> The first node (head) must point its <code>prev</code> to the new last node (700).</div>
+                <div class="step"><strong>Step E:</strong> Shift the <code>tail</code> pointer to recognize 700 as the official end.</div>
+            </div>
+
+            <div class="viz-box">
+                <div class="viz-title">After Insertion at End</div>
+                <div class="list-row">
+                    <div class="node-wrapper">
+                        <div class="node-label">Old Tail (100)</div>
+                        <div class="node">
+                            <div class="node-part ptr">...</div>
+                            <div class="node-part data">0</div>
+                            <div class="node-part ptr">700</div>
+                        </div>
+                    </div>
+                    <div class="arrow">⇄</div>
+                    <div class="node-wrapper node-new">
+                        <div class="node-label">NEW Tail (700)</div>
+                        <div class="node">
+                            <div class="node-part ptr">100</div>
+                            <div class="node-part data">8</div>
+                            <div class="node-part ptr">200</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INSERT AT SPECIFIC POSITION -->
+        <div class="section">
+            <h2>4. Insertion at a Specific Position</h2>
+            <p><strong>Goal:</strong> Traverse the list and insert a node exactly where the user requests (e.g., Position 3).</p>
+
+            <h3>Step 1: Setup and Validation</h3>
+            <pre><span class="keyword">void</span> <span class="function">insertAtPos</span>() {
+    <span class="keyword">struct</span> node *newnode, *temp;
+    <span class="keyword">int</span> pos, i = <span class="keyword">1</span>, l;
+    
+    printf(<span class="comment">"Enter position: "</span>);
+    scanf(<span class="comment">"%d"</span>, &amp;pos);
+    
+    l = getLength(); <span class="comment">// Custom func to count nodes</span>
+    
+    <span class="keyword">if</span>(pos &lt; <span class="keyword">1</span> || pos > l) {
+        printf(<span class="comment">"Invalid position"</span>);
+    }
+    <span class="keyword">else if</span>(pos == <span class="keyword">1</span>) {
+        insertAtBeg(); <span class="comment">// Reuse existing logic!</span>
+    }</pre>
+
+            <h3>Step 2: Traverse and Insert</h3>
+            <p>If the user enters <code>pos = 3</code>, we need to stop at position 2. We use a <code>while</code> loop running while <code>i &lt; pos - 1</code>.</p>
+
+            <pre>    <span class="keyword">else</span> {
+        <span class="comment">// ... [Allocate memory for newnode (Addr: 400, Data: -1)] ...</span>
+        
+        temp = head;
+        <span class="keyword">while</span>(i &lt; pos - <span class="keyword">1</span>) {
+            temp = temp->next;
+            i++;
+        }
+        
+        <span class="comment">// Update Pointers</span>
+        newnode->prev = temp;                 <span class="comment">// Step A</span>
+        newnode->next = temp->next;           <span class="comment">// Step B</span>
+        temp->next->prev = newnode;           <span class="comment">// Step C</span>
+        temp->next = newnode;                 <span class="comment">// Step D</span>
+    }
+}</pre>
+
+            <div class="steps">
+                <div class="step"><strong>The Traversal:</strong> <code>temp</code> stops at Node 2 (address 300). We are inserting 400 between 300 and 100.</div>
+                <div class="step"><strong>Step A & B:</strong> Set up the new node first. <span class="step-code">newnode->prev = temp</span> (points to 300). <span class="step-code">newnode->next = temp->next</span> (points to 100).</div>
+                <div class="step"><strong>Step C:</strong> Update the node after. <span class="step-code">temp->next->prev = newnode</span> (Node 100's prev points to 400).</div>
+                <div class="step"><strong>Step D:</strong> Update the node before. <span class="step-code">temp->next = newnode</span> (Node 300's next points to 400).</div>
+            </div>
+
+            <div class="instructor-tip">
+                <h4>⚠️ Instructor Warning: Protect the Chain!</h4>
+                <p>Always set the <code>next</code> and <code>prev</code> of your <strong>newly created node first</strong> (Steps A & B). If you accidentally overwrite <code>temp->next</code> too early, you break the chain and completely lose access to the rest of your list!</p>
+            </div>
+
+            <div class="viz-box">
+                <div class="viz-title">Insertion at Position 3</div>
+                <div class="list-row">
+                    <div class="node-wrapper">
+                        <div class="node-label">Pos 2 (temp)</div>
+                        <div class="node">
+                            <div class="node-part ptr">200</div>
+                            <div class="node-part data">5</div>
+                            <div class="node-part ptr" style="color: #27ae60; font-weight:bold;">400</div>
+                        </div>
+                    </div>
+                    <div class="arrow">⇄</div>
+                    <div class="node-wrapper node-new">
+                        <div class="node-label">Pos 3 (NEW)</div>
+                        <div class="node">
+                            <div class="node-part ptr">300</div>
+                            <div class="node-part data">-1</div>
+                            <div class="node-part ptr">100</div>
+                        </div>
+                    </div>
+                    <div class="arrow">⇄</div>
+                    <div class="node-wrapper">
+                        <div class="node-label">Pos 4 (temp->next)</div>
+                        <div class="node">
+                            <div class="node-part ptr" style="color: #27ae60; font-weight:bold;">400</div>
+                            <div class="node-part data">0</div>
+                            <div class="node-part ptr">200</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
