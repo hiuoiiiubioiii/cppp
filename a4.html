@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Notes: Arrays & Pointers in C</title>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --primary: #4A90E2;
+            --code-bg: #282c34;
+            --valid-bg: #d4edda;
+            --valid-text: #155724;
+            --invalid-bg: #f8d7da;
+            --invalid-text: #721c24;
+            --warning-bg: #fff3cd;
+            --warning-text: #856404;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.7;
+            padding: 20px;
+        }
+
+        /* Continuous Vertical Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px; /* Space between topics */
+        }
+
+        /* Feed Header */
+        .feed-header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #4A90E2, #50E3C2);
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .feed-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .feed-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Topic Cards */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.03);
+            border: 1px solid #e1e4e8;
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .card h3 {
+            margin: 20px 0 10px;
+            font-size: 1.3rem;
+            color: #444;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        /* Memory Tape Visualization */
+        .memory-tape {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 30px 0;
+            justify-content: center;
+        }
+
+        .memory-cell {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #fdfdfd;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            width: 80px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .memory-cell .index {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            background: #e1e4e8;
+            width: 100%;
+            text-align: center;
+            padding: 4px 0;
+            border-top-left-radius: 6px;
+            border-top-right-radius: 6px;
+            font-family: monospace;
+        }
+
+        .memory-cell .value {
+            font-size: 1.8rem;
+            font-weight: bold;
+            padding: 15px 0;
+            color: var(--primary);
+        }
+
+        .memory-cell .address {
+            font-size: 0.85rem;
+            color: #d9534f;
+            width: 100%;
+            text-align: center;
+            padding: 4px 0;
+            border-top: 1px dotted #cbd5e1;
+            font-family: monospace;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: #abb2bf;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: "Fira Code", Consolas, monospace;
+            font-size: 0.95rem;
+            margin: 20px 0;
+        }
+        
+        code .keyword { color: #c678dd; }
+        code .type { color: #e5c07b; }
+        code .string { color: #98c379; }
+        code .comment { color: #7f848e; font-style: italic; }
+
+        /* Status Blocks (Valid/Invalid/Warnings) */
+        .status-block {
+            padding: 15px 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .status-valid {
+            background-color: var(--valid-bg);
+            color: var(--valid-text);
+            border-left: 5px solid #28a745;
+        }
+
+        .status-invalid {
+            background-color: var(--invalid-bg);
+            color: var(--invalid-text);
+            border-left: 5px solid #dc3545;
+        }
+
+        .status-warning {
+            background-color: var(--warning-bg);
+            color: var(--warning-text);
+            border-left: 5px solid #ffc107;
+        }
+
+        .formula-box {
+            background: #eef2f5;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.2rem;
+            font-family: monospace;
+            border: 2px dashed var(--primary);
+            margin: 20px 0;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        /* Responsiveness */
+        @media (max-width: 600px) {
+            .feed-header h1 { font-size: 2rem; }
+            .card { padding: 25px; }
+            .memory-cell { width: 65px; }
+            .memory-cell .value { font-size: 1.4rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+
+        <!-- Header -->
+        <header class="feed-header">
+            <h1>Arrays & Pointers in C</h1>
+            <p>Masterclass Breakdown: Memory tapes, Pointer Arithmetic, and the Golden Rules</p>
+        </header>
+
+        <!-- Topic 1 -->
+        <article class="card">
+            <h2>1. How Arrays are Stored in Memory</h2>
+            <p>When you declare an array, the compiler allocates contiguous (side-by-side) blocks of memory.</p>
+            <pre><code><span class="type">int</span> a[<span class="keyword">5</span>] = {<span class="keyword">6</span>, <span class="keyword">2</span>, <span class="keyword">1</span>, <span class="keyword">5</span>, <span class="keyword">3</span>};</code></pre>
+            
+            <p><strong>The Audio Context:</strong> If you initialize the array immediately like above, writing the size <code>[5]</code> is actually optional. The compiler figures it out automatically!</p>
+
+            <h3>Visualizing the "Tape of Bytes"</h3>
+            <p>Assuming a typical compiler where an <code>int</code> takes <strong>4 bytes</strong>, and assuming the computer starts storing our array at memory address <strong>100</strong>, here is what memory looks like:</p>
+            
+            <!-- Visualization -->
+            <div class="memory-tape">
+                <div class="memory-cell">
+                    <span class="index">a[0]</span>
+                    <span class="value">6</span>
+                    <span class="address">100</span>
+                </div>
+                <div class="memory-cell">
+                    <span class="index">a[1]</span>
+                    <span class="value">2</span>
+                    <span class="address">104</span>
+                </div>
+                <div class="memory-cell">
+                    <span class="index">a[2]</span>
+                    <span class="value">1</span>
+                    <span class="address">108</span>
+                </div>
+                <div class="memory-cell">
+                    <span class="index">a[3]</span>
+                    <span class="value">5</span>
+                    <span class="address">112</span>
+                </div>
+                <div class="memory-cell">
+                    <span class="index">a[4]</span>
+                    <span class="value">3</span>
+                    <span class="address">116</span>
+                </div>
+            </div>
+            
+            <div class="status-warning">
+                💡 <strong>Notice:</strong> The addresses jump by 4 (100 → 104 → 108). This is because every integer requires exactly 4 bytes of space.
+            </div>
+        </article>
+
+        <!-- Topic 2 -->
+        <article class="card">
+            <h2>2. Pointer Basics Refresher</h2>
+            <p>Before linking arrays to pointers, we must remember how standard pointers work.</p>
+            <pre><code><span class="type">int</span> *p;    <span class="comment">// Pointer to an integer</span>
+<span class="type">float</span> *q;  <span class="comment">// Pointer to a float</span>
+<span class="type">char</span> *c;   <span class="comment">// Pointer to a character</span></code></pre>
+
+            <div class="status-warning">
+                ⚠️ <strong>Crucial Audio Concept:</strong> The data type of a pointer itself is <em>not</em> an integer or a float. A pointer <strong>always stores a memory address</strong> (a long hexadecimal number). The <code>int</code> simply tells the compiler the data type of the variable that lives at that address.
+            </div>
+
+            <h3>Valid vs. Invalid Operations</h3>
+            <p>Assume we have <code>int b = 10;</code> stored at address <strong>200</strong>, and a pointer <code>int *p;</code>.</p>
+            
+            <div class="status-valid">
+                ✅ <code>p = &b;</code> <br>
+                <strong>Valid:</strong> This reads as "p equals the address of b". <code>p</code> now correctly holds the address `200`.
+            </div>
+            
+            <div class="status-invalid">
+                ❌ <code>p = b;</code> <br>
+                <strong>Invalid:</strong> A pointer cannot hold a standard integer value like 10. It strictly expects memory addresses.
+            </div>
+
+            <h3>How to Print Them</h3>
+            <ul>
+                <li><code>printf("%d", b);</code> → Prints <strong>10</strong></li>
+                <li><code>printf("%p", &b);</code> → Prints <strong>200</strong> (Address of b)</li>
+                <li><code>printf("%p", p);</code> → Prints <strong>200</strong> (Because p holds the address of b)</li>
+                <li><code>printf("%d", *p);</code> → Prints <strong>10</strong> (<strong>*</strong> is the Dereferencing Operator. "Give me the value at the address p is holding")</li>
+            </ul>
+        </article>
+
+        <!-- Topic 3 -->
+        <article class="card">
+            <h2>3. The Golden Rule: Arrays ARE Pointers</h2>
+            <p>Here is the most important concept in the lecture: <strong>The name of an array acts as a pointer to its base address.</strong></p>
+
+            <p>If you write <code>printf("%p", a);</code> it will output <strong>100</strong> (the exact same thing as writing <code>&a[0]</code>).</p>
+
+            <h3>Assigning Arrays to Pointer Variables</h3>
+            <p>Because <code>a</code> is essentially an address, you can assign it directly to a pointer without needing the <code>&</code> symbol.</p>
+            
+            <pre><code><span class="type">int</span> *q;
+q = a;        <span class="comment">// ✅ VALID. q now holds 100.</span>
+q = &a[<span class="keyword">2</span>];    <span class="comment">// ✅ VALID. q now holds 108.</span>
+q = a[<span class="keyword">2</span>];     <span class="comment">// ❌ INVALID. You can't put the value '1' into a pointer.</span></code></pre>
+        </article>
+
+        <!-- Topic 4 -->
+        <article class="card">
+            <h2>4. Pointer Arithmetic</h2>
+            <p>You can add or subtract integers from pointers, but the math is different from standard algebra. It is based on the <strong>size of the data type</strong>.</p>
+
+            <h3>The Math behind <code>q++</code></h3>
+            <p>If <code>q</code> currently holds <code>100</code> (pointing to <code>a[0]</code>), and you write <code>q++</code> (which means <code>q = q + 1</code>):</p>
+            <ul>
+                <li><strong>Normal Math:</strong> 100 + 1 = 101</li>
+                <li><strong>Pointer Math:</strong> 100 + (1 * size of data type).</li>
+                <li>Because integers are 4 bytes: <strong>100 + (1 * 4) = 104</strong>.</li>
+            </ul>
+            <p><code>q</code> now points to <code>a[1]</code>. <em>(Note: If it were a character pointer, the size is 1 byte, so 100 + 1 would equal 101).</em></p>
+
+            <h3>The Fatal Error: <code>a++</code></h3>
+            <div class="status-invalid">
+                ❌ <code>a++;</code> is strictly prohibited!
+            </div>
+            <p><strong>Why?</strong> <code>q</code> is a <em>pointer variable</em>; you can change what it points to. But <code>a</code> (the array name) is a <strong>constant pointer</strong>. Once the array is created in memory, you cannot physically move its base address. </p>
+        </article>
+
+        <!-- Topic 5 -->
+        <article class="card">
+            <h2>5. The Syntax "Cheat Sheet"</h2>
+            <p>The instructor writes out different ways to access the exact same array elements. Assuming <code>int *q = a;</code>, memorize these equivalents:</p>
+
+            <h3>1. Getting Addresses (e.g., pointing to the 3rd element: 108)</h3>
+            <ul>
+                <li>Standard Array Format: <code>&a[2]</code></li>
+                <li>Pointer Arithmetic on Array Name: <code>(a + 2)</code></li>
+                <li>Using Pointer Variable: <code>(q + 2)</code></li>
+            </ul>
+
+            <h3>2. Getting Actual Values (e.g., getting the value: 1)</h3>
+            <ul>
+                <li>Standard Array Format: <code>a[2]</code></li>
+                <li>Dereferencing Array Name: <code>*(a + 2)</code></li>
+                <li>Dereferencing Pointer Variable: <code>*(q + 2)</code></li>
+                <li>Index notation on a Pointer: <code>q[2]</code></li>
+            </ul>
+
+            <h3>3. The Weird "C Language" Quirk</h3>
+            <p>Because addition is commutative (<code>a + i</code> is the exact same as <code>i + a</code>), the C compiler allows a very strange syntax:</p>
+            
+            <div class="formula-box">
+                a[i] == *(a + i) == *(i + a) == i[a]
+            </div>
+            <p>Yes, writing <code>2[a]</code> is perfectly valid C code and will successfully print the value <strong>1</strong>.</p>
+        </article>
+
+        <!-- Topic 6 -->
+        <article class="card">
+            <h2>6. Practical Code Example</h2>
+            <p>How does this look in a real program? Here is how to use pointers inside <code>for</code> loops to read user input and print it back to the screen.</p>
+
+            <pre><code><span class="type">int</span> a[<span class="keyword">5</span>];       <span class="comment">// Declare array</span>
+<span class="type">int</span> *q = a;     <span class="comment">// Create pointer q, pointing to base address of a (100)</span>
+<span class="type">int</span> i;
+
+<span class="comment">// 1. TAKING INPUT FROM USER</span>
+<span class="keyword">for</span>(i = <span class="keyword">0</span>; i < <span class="keyword">5</span>; i++) {
+    <span class="comment">// Normal way: scanf("%d", &a[i]);</span>
+    
+    <span class="comment">// Pointer way using array name:</span>
+    scanf(<span class="string">"%d"</span>, (a + i)); 
+    
+    <span class="comment">// OR you could write: scanf("%d", (q + i));</span>
+}
+
+<span class="comment">// 2. PRINTING VALUES TO SCREEN</span>
+<span class="keyword">for</span>(i = <span class="keyword">0</span>; i < <span class="keyword">5</span>; i++) {
+    <span class="comment">// Normal way: printf("%d", a[i]);</span>
+    
+    <span class="comment">// Pointer way using pointer variable:</span>
+    printf(<span class="string">"%d "</span>, *(q + i)); 
+    
+    <span class="comment">// OR you could write: printf("%d ", *(a + i));</span>
+}</code></pre>
+
+            <div class="status-valid">
+                🎓 <strong>Summary:</strong> Always remember that <strong>values</strong> require asterisks <code>*</code> or brackets <code>[]</code>. <strong>Addresses</strong> require ampersands <code>&</code> or bare pointers/array names.
+            </div>
+        </article>
+
+    </div>
+
+</body>
+</html>
