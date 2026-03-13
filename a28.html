@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>In-Depth Notes: Stack Data Structure</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #333333;
+            --text-light: #555555;
+            --accent-blue: #2563eb;
+            --accent-light: #dbeafe;
+            --alert-red: #ef4444;
+            --success-green: #10b981;
+            --card-bg: #ffffff;
+            --border-color: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Vertical Feed Layout Container */
+        .feed-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Header Styling */
+        header {
+            text-align: center;
+            padding: 3rem 1rem;
+            background: linear-gradient(135deg, #1e3a8a, var(--accent-blue));
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            margin-bottom: 1rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Content Cards */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+        }
+
+        .card h2 {
+            color: var(--accent-blue);
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid var(--accent-light);
+            padding-bottom: 0.5rem;
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            margin: 1.5rem 0 0.5rem 0;
+            color: #1f2937;
+        }
+
+        .card p {
+            margin-bottom: 1rem;
+            color: var(--text-light);
+            font-size: 1.05rem;
+        }
+
+        .highlight {
+            background-color: #fef08a;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-weight: bold;
+            color: #854d0e;
+        }
+
+        code {
+            background-color: #f1f5f9;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            color: #c026d3;
+            font-weight: bold;
+        }
+
+        ul, ol {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text-light);
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* --- VISUALIZATIONS CSS --- */
+        
+        /* 1. Stack Logical Representation */
+        .visual-container {
+            background-color: var(--bg-color);
+            padding: 2rem;
+            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 1.5rem 0;
+            gap: 4rem;
+            flex-wrap: wrap;
+        }
+
+        .logical-stack {
+            width: 150px;
+            height: 200px;
+            border-left: 4px solid var(--text-main);
+            border-right: 4px solid var(--text-main);
+            border-bottom: 4px solid var(--text-main);
+            border-radius: 0 0 8px 8px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 5px;
+            position: relative;
+            background: linear-gradient(to top, #ffffff, transparent);
+        }
+
+        .stack-element {
+            background-color: var(--accent-light);
+            border: 2px solid var(--accent-blue);
+            color: var(--accent-blue);
+            text-align: center;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 4px;
+            font-weight: bold;
+            animation: dropIn 0.5s ease-out;
+        }
+
+        .top-pointer {
+            position: absolute;
+            right: -80px;
+            top: 10px;
+            color: var(--alert-red);
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .top-pointer::before {
+            content: "←";
+            font-size: 1.5rem;
+        }
+
+        .io-arrows {
+            text-align: center;
+            font-weight: bold;
+            color: var(--text-main);
+            margin-bottom: 15px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* 2. Step-by-Step Simulation */
+        .simulation-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            margin-top: 1.5rem;
+        }
+
+        .sim-step {
+            background-color: white;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .sim-step-desc {
+            text-align: center;
+            font-weight: bold;
+            margin-top: 10px;
+            font-size: 0.9rem;
+        }
+
+        .sim-stack-container {
+            width: 100px;
+            height: 150px;
+            border: 3px solid #374151;
+            border-top: none;
+            display: flex;
+            flex-direction: column-reverse;
+            padding: 2px;
+            background-color: #f9fafb;
+        }
+
+        .sim-cell {
+            height: 20%;
+            border: 1px dashed #d1d5db;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.9rem;
+            color: #9ca3af;
+        }
+
+        .sim-cell.filled {
+            background-color: var(--accent-blue);
+            color: white;
+            border: 1px solid #1e3a8a;
+            font-weight: bold;
+        }
+
+        .sim-cell.garbage {
+            background-color: #fca5a5;
+            color: #7f1d1d;
+            text-decoration: line-through;
+            border: 1px solid #ef4444;
+        }
+
+        /* Application Tags */
+        .app-tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin-top: 1rem;
+        }
+
+        .app-tag {
+            background-color: var(--accent-light);
+            color: var(--accent-blue);
+            padding: 8px 15px;
+            border-radius: 20px;
+            font-size: 0.95rem;
+            font-weight: 500;
+            border: 1px solid #bfdbfe;
+        }
+
+        /* Animations */
+        @keyframes dropIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <header>
+            <h1>Introduction to Stack</h1>
+            <p>Data Structures & Algorithms Breakdown</p>
+        </header>
+
+        <!-- Section 1: Definition -->
+        <section class="card">
+            <h2>🧠 1. What is a Stack?</h2>
+            <p>Unlike <strong>Arrays</strong> (which allow random access) and <strong>Linked Lists</strong> (which allow sequential access), a Stack is a <strong>linear data structure with restricted access</strong>.</p>
+            <p>It is an ordered list, collection, or container of elements (of the <em>same data type</em>) that follows a strict rule for how data is inserted and deleted.</p>
+            
+            <div class="visual-container" style="padding: 1rem; border-left: 4px solid var(--accent-blue); background-color: var(--accent-light);">
+                <p style="margin: 0; color: var(--accent-blue); font-weight: bold;">
+                    The Golden Rule: Insertion and Deletion can only happen from ONE end.
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 2: Principle -->
+        <section class="card">
+            <h2>📦 2. Real-Life Examples & The Core Principle</h2>
+            <p>To understand the rule, imagine a <strong>CD spindle</strong> or a <strong>stack of cafeteria plates</strong>. You can only place a new plate on the top. If you want a plate from the bottom, you must remove every plate above it first.</p>
+            
+            <div style="display: flex; justify-content: space-around; margin: 2rem 0;">
+                <div style="text-align: center;">
+                    <h3 style="color: var(--alert-red); margin: 0; font-size: 2rem;">LIFO</h3>
+                    <p><strong>L</strong>ast <strong>I</strong>n, <strong>F</strong>irst <strong>O</strong>ut</p>
+                    <p style="font-size: 0.85rem; color: var(--text-light);">(The last plate you put down is the first one you pick up)</p>
+                </div>
+                <div style="text-align: center;">
+                    <h3 style="color: var(--success-green); margin: 0; font-size: 2rem;">FILO</h3>
+                    <p><strong>F</strong>irst <strong>I</strong>n, <strong>L</strong>ast <strong>O</strong>ut</p>
+                    <p style="font-size: 0.85rem; color: var(--text-light);">(The first plate you put down is trapped until the end)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3: Logical Representation -->
+        <section class="card">
+            <h2>📐 3. Logical Representation</h2>
+            <p>In Computer Science, we logically represent a stack as a vertical container with only one opening at the top. Data enters and exits through this exact same opening.</p>
+            
+            <div class="visual-container">
+                <div>
+                    <div class="io-arrows">
+                        <span>Insert (Push) ↓</span>
+                        <span>↑ Delete (Pop)</span>
+                    </div>
+                    <div class="logical-stack">
+                        <div class="top-pointer">top</div>
+                        <div class="stack-element" style="opacity: 0.4;">Data 3</div>
+                        <div class="stack-element" style="opacity: 0.7;">Data 2</div>
+                        <div class="stack-element">Data 1</div>
+                    </div>
+                </div>
+                <div style="max-width: 300px;">
+                    <p><strong>Notice:</strong> The bottom is sealed. The pointer named <code>top</code> always tracks the highest piece of data in the container.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4: Operations -->
+        <section class="card">
+            <h2>⚙️ 4. Fundamental Operations</h2>
+            <p>We manipulate the stack using specific built-in functions. <em>(Note: You can only insert elements of similar data types, e.g., all integers or all characters).</em></p>
+            
+            <ul>
+                <li><code>Push(x)</code> : Inserts element 'x' onto the top of the stack.</li>
+                <li><code>Pop()</code> : Removes the topmost element. <br><span style="font-size: 0.9rem; color: var(--text-light);"><em>Notice it takes no arguments (like 'x') because you don't get to choose what to remove; it's always the top item!</em></span></li>
+                <li><code>Peek()</code> or <code>top()</code> : Returns the value of the top element <strong>without</strong> removing it from the stack.</li>
+                <li><code>isEmpty()</code> : Returns <strong>True</strong> if the stack has zero elements, otherwise False.</li>
+                <li><code>isFull()</code> : Returns <strong>True</strong> if the stack has reached its maximum capacity.</li>
+            </ul>
+            <p><em>*Less common operations she mentioned: Search, Traverse, Find Min, Find Max.</em></p>
+        </section>
+
+        <!-- Section 5: Memory -->
+        <section class="card">
+            <h2>💾 5. Memory Allocation</h2>
+            <p>Before using a stack, you must allocate memory to it. There are two primary ways to build a stack in programming:</p>
+            
+            <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                <div style="flex: 1; padding: 1.5rem; background-color: #f1f5f9; border-radius: 8px;">
+                    <h3 style="margin-top: 0; color: #334155;">1. Static Implementation</h3>
+                    <p>Built using <strong>Arrays</strong>. The size is fixed and must be defined ahead of time (e.g., Size = 5).</p>
+                </div>
+                <div style="flex: 1; padding: 1.5rem; background-color: #f1f5f9; border-radius: 8px;">
+                    <h3 style="margin-top: 0; color: #334155;">2. Dynamic Implementation</h3>
+                    <p>Built using <strong>Linked Lists</strong>. The size is flexible and can grow or shrink as the program runs.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6: Dry Run Visualization -->
+        <section class="card">
+            <h2>🕹️ 6. The "Dry Run" (Step-by-Step Simulation)</h2>
+            <p>Let's visually simulate a <strong>Static (Array-based) Stack</strong> with a maximum capacity of 5. Because it's an array, the indices go from <code>0</code> to <code>4</code>.</p>
+            
+            <div class="simulation-grid">
+                <!-- State 1 -->
+                <div class="sim-step">
+                    <div class="sim-stack-container">
+                        <div class="sim-cell">4</div>
+                        <div class="sim-cell">3</div>
+                        <div class="sim-cell">2</div>
+                        <div class="sim-cell">1</div>
+                        <div class="sim-cell">0</div>
+                    </div>
+                    <p class="sim-step-desc">
+                        <strong>1. Empty Stack</strong><br>
+                        <code>top = -1</code><br>
+                        <span style="color: var(--alert-red); font-size: 0.8rem;">Pop() = Underflow!</span>
+                    </p>
+                </div>
+
+                <!-- State 2 -->
+                <div class="sim-step">
+                    <div class="sim-stack-container">
+                        <div class="sim-cell">4</div>
+                        <div class="sim-cell">3</div>
+                        <div class="sim-cell">2</div>
+                        <div class="sim-cell">1</div>
+                        <div class="sim-cell filled">Val: 2</div>
+                    </div>
+                    <p class="sim-step-desc">
+                        <strong>2. Push(2)</strong><br>
+                        First: <code>top++</code> (now 0)<br>
+                        Then insert 2.
+                    </p>
+                </div>
+
+                <!-- State 3 -->
+                <div class="sim-step">
+                    <div class="sim-stack-container">
+                        <div class="sim-cell">4</div>
+                        <div class="sim-cell">3</div>
+                        <div class="sim-cell">2</div>
+                        <div class="sim-cell filled">Val: 3</div>
+                        <div class="sim-cell filled">Val: 2</div>
+                    </div>
+                    <p class="sim-step-desc">
+                        <strong>3. Push(3)</strong><br>
+                        First: <code>top++</code> (now 1)<br>
+                        Then insert 3.
+                    </p>
+                </div>
+
+                <!-- State 4 -->
+                <div class="sim-step">
+                    <div class="sim-stack-container">
+                        <div class="sim-cell">4</div>
+                        <div class="sim-cell">3</div>
+                        <div class="sim-cell">2</div>
+                        <div class="sim-cell garbage">Val: 3</div>
+                        <div class="sim-cell filled">Val: 2</div>
+                    </div>
+                    <p class="sim-step-desc">
+                        <strong>4. Pop()</strong><br>
+                        Action: <code>top--</code> (now 0)<br>
+                        <em>Note: The 3 becomes "Garbage Data". The stack ignores it.</em>
+                    </p>
+                </div>
+
+                <!-- State 5 -->
+                <div class="sim-step">
+                    <div class="sim-stack-container">
+                        <div class="sim-cell filled">Val: 8</div>
+                        <div class="sim-cell filled">Val: 7</div>
+                        <div class="sim-cell filled">Val: 6</div>
+                        <div class="sim-cell filled">Val: 5</div>
+                        <div class="sim-cell filled">Val: 2</div>
+                    </div>
+                    <p class="sim-step-desc">
+                        <strong>5. Full Stack</strong><br>
+                        <code>top = 4</code> (size - 1)<br>
+                        <span style="color: var(--alert-red); font-size: 0.8rem;">Push(9) = Overflow!</span>
+                    </p>
+                </div>
+            </div>
+            
+            <div style="background-color: var(--accent-light); padding: 1rem; border-radius: 8px; margin-top: 1.5rem;">
+                <p style="margin: 0;"><strong>🔥 Key Exam Concepts:</strong></p>
+                <ul style="margin-bottom: 0;">
+                    <li><strong>Underflow:</strong> Attempting to <code>Pop()</code> when <code>top == -1</code>.</li>
+                    <li><strong>Overflow:</strong> Attempting to <code>Push()</code> when <code>top == size - 1</code>.</li>
+                    <li><strong>Garbage Data:</strong> When you Pop, you don't actually have to delete the data in memory. You just lower the <code>top</code> pointer. If you Push again, the new data simply overwrites the old garbage data.</li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- Section 7: Applications -->
+        <section class="card">
+            <h2>🌍 7. Real-World Applications</h2>
+            <p>Stacks are heavily used behind the scenes in software engineering, operating systems, and compiler design. Here are the 9 applications explicitly taught in the video:</p>
+
+            <div class="app-tags">
+                <span class="app-tag">1. Reversing a String ("abcd" → "dcba")</span>
+                <span class="app-tag">2. Undo Mechanism (Ctrl+Z)</span>
+                <span class="app-tag">3. Recursion / Function Calls</span>
+                <span class="app-tag">4. Verifying Balanced Parentheses { [ ] }</span>
+                <span class="app-tag">5. Infix to Postfix/Prefix Conversion</span>
+                <span class="app-tag">6. Postfix Expression Evaluation</span>
+                <span class="app-tag">7. Topological Sorting</span>
+                <span class="app-tag">8. DFS (Depth First Search) Algorithm</span>
+                <span class="app-tag">9. Tower of Hanoi Puzzle</span>
+                <span class="app-tag">10. Tree Traversals</span>
+            </div>
+
+            <h3 style="margin-top: 2rem;">How "Reversing a String" works:</h3>
+            <p>If you have the string <code>"abcd"</code>, you iterate through it and push each letter into the stack. <code>'a'</code> goes to the bottom, and <code>'d'</code> sits at the top. When you <code>Pop()</code> them out one by one, they naturally come out in the order: <code>'d'</code>, <code>'c'</code>, <code>'b'</code>, <code>'a'</code>.</p>
+        </section>
+
+    </div>
+
+</body>
+</html>
