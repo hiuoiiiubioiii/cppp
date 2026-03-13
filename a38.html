@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Expression Conversions: Postfix & Prefix to Infix</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #f4f7fa;
+            --text-color: #333;
+            --card-bg: #fff;
+            --primary: #4a90e2;
+            --secondary: #50e3c2;
+            --accent: #ff6b6b;
+            --stack-border: #2c3e50;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        h1, h2, h3 {
+            color: #1a252f;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #7f8c8d;
+            margin-bottom: 50px;
+            font-size: 1.1rem;
+        }
+
+        .section-header {
+            background: linear-gradient(135deg, var(--primary), #8e44ad);
+            color: white;
+            padding: 20px 30px;
+            border-radius: 12px;
+            margin: 60px 0 30px 0;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        .section-header.prefix {
+            background: linear-gradient(135deg, #16a085, #2ecc71);
+        }
+
+        .rules-card {
+            background: #fff3cd;
+            border-left: 5px solid #ffc107;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 40px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .expression-box {
+            background: #2c3e50;
+            color: #ecf0f1;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.8rem;
+            text-align: center;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 30px;
+            letter-spacing: 5px;
+        }
+
+        /* Step Card Styling */
+        .step-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease, transform 0.6s ease;
+        }
+
+        .step-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .step-info {
+            flex: 1;
+        }
+
+        .step-number {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--primary);
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .scanned-char {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2rem;
+            font-weight: bold;
+            color: var(--accent);
+            background: #ffeaea;
+            padding: 5px 15px;
+            border-radius: 8px;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+
+        .formula-box {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+        }
+
+        .formula-box span.var-a { color: #e74c3c; font-weight: bold; }
+        .formula-box span.var-b { color: #3498db; font-weight: bold; }
+
+        /* Stack Visualizer (Mirrors Whiteboard) */
+        .stack-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 140px;
+        }
+
+        .stack-container {
+            width: 100%;
+            min-height: 180px;
+            border: 3px solid var(--stack-border);
+            border-top: none; /* Open top box */
+            border-bottom-left-radius: 8px;
+            border-bottom-right-radius: 8px;
+            display: flex;
+            flex-direction: column-reverse; /* Bottom items stay at bottom */
+            padding: 10px;
+            background: #fdfdfd;
+            box-sizing: border-box;
+            gap: 5px;
+        }
+
+        .stack-item {
+            background: var(--primary);
+            color: white;
+            font-family: 'JetBrains Mono', monospace;
+            font-weight: bold;
+            text-align: center;
+            padding: 8px 5px;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            animation: dropIn 0.3s ease-out;
+            word-break: break-all;
+        }
+
+        .stack-wrapper.prefix .stack-item {
+            background: #2ecc71;
+        }
+
+        .stack-label {
+            margin-top: 10px;
+            font-weight: bold;
+            color: var(--stack-border);
+            text-transform: uppercase;
+            font-size: 0.85rem;
+        }
+
+        /* Summary Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-top: 30px;
+        }
+
+        th, td {
+            padding: 15px 20px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+
+        th {
+            background: #2c3e50;
+            color: white;
+        }
+
+        @keyframes dropIn {
+            from { transform: translateY(-50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @media(max-width: 600px) {
+            .step-card {
+                flex-direction: column;
+            }
+            .stack-wrapper {
+                margin-top: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    <h1>Expression Conversions</h1>
+    <div class="subtitle">Complete visual study notes: Postfix & Prefix to Infix (Using a Stack)</div>
+
+    <!-- ========================================== -->
+    <!-- SECTION 1: POSTFIX TO INFIX                -->
+    <!-- ========================================== -->
+    <div class="section-header">
+        <h2>Part 1: Postfix to Infix Conversion</h2>
+        <p>Operators come <strong>after</strong> their operands.</p>
+    </div>
+
+    <div class="expression-box">ab + ef / *</div>
+
+    <div class="rules-card">
+        <h3>📝 The Rules for Postfix:</h3>
+        <ol>
+            <li><strong>Scan Direction:</strong> Left to Right ( &rarr; ).</li>
+            <li><strong>If Operand (Letter):</strong> <code>Push</code> it into the stack.</li>
+            <li><strong>If Operator (Symbol):</strong> 
+                <ul>
+                    <li><code>Pop</code> the top 2 elements.</li>
+                    <li>Top element = Variable <span style="color:#e74c3c; font-weight:bold;">A</span>. Next element = Variable <span style="color:#3498db; font-weight:bold;">B</span>.</li>
+                    <li>Combine as: <strong><code>(B operator A)</code></strong> <em>*Always add parentheses!*</em></li>
+                    <li><code>Push</code> the result back to the stack.</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <!-- Step 1 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 1</div>
+            <div class="scanned-char">a</div>
+            <p><strong>Action:</strong> It's an operand. Simply push it onto the stack.</p>
+        </div>
+        <div class="stack-wrapper">
+            <div class="stack-container">
+                <div class="stack-item">a</div>
+            </div>
+            <div class="stack-label">Stack</div>
+        </div>
+    </div>
+
+    <!-- Step 2 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 2</div>
+            <div class="scanned-char">b</div>
+            <p><strong>Action:</strong> It's an operand. Simply push it onto the stack.</p>
+        </div>
+        <div class="stack-wrapper">
+            <div class="stack-container">
+                <div class="stack-item">b</div>
+                <div class="stack-item">a</div>
+            </div>
+            <div class="stack-label">Stack</div>
+        </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 3</div>
+            <div class="scanned-char">+</div>
+            <p><strong>Action:</strong> Operator! Pop two items from the stack.</p>
+            <div class="formula-box">
+                <span class="var-a">A = b</span> (Top item)<br>
+                <span class="var-b">B = a</span> (Second item)<br><br>
+                Rule: <span class="var-b">B</span> + <span class="var-a">A</span> &rarr; <strong>(a+b)</strong><br>
+                <em>Push result back to stack.</em>
+            </div>
+        </div>
+        <div class="stack-wrapper">
+            <div class="stack-container">
+                <div class="stack-item">(a+b)</div>
+            </div>
+            <div class="stack-label">Stack</div>
+        </div>
+    </div>
+
+    <!-- Step 4 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 4</div>
+            <div class="scanned-char">e</div>
+            <p><strong>Action:</strong> It's an operand. Push it onto the stack.</p>
+        </div>
+        <div class="stack-wrapper">
+            <div class="stack-container">
+                <div class="stack-item">e</div>
+                <div class="stack-item">(a+b)</div>
+            </div>
+            <div class="stack-label">Stack</div>
+        </div>
+    </div>
+
+    <!-- Step 5 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 5</div>
+            <div class="scanned-char">f</div>
+            <p><strong>Action:</strong> It's an operand. Push it onto the stack.</p>
+        </div>
+        <div class="stack-wrapper">
+            <div class="stack-container">
+                <div class="stack-item">f</div>
+                <div class="stack-item">e</div>
+                <div class="stack-item">(a+b)</div>
+            </div>
+            <div class="stack-label">Stack</div>
+        </div>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 6</div>
+            <div class="scanned-char">/</div>
+            <p><strong>Action:</strong> Operator! Pop two items.</p>
+            <div class="formula-box">
+                <span class="var-a">A = f</span> (Top item)<br>
+                <span class="var-b">B = e</span> (Second item)<br><br>
+                Rule: <span class="var-b">B</span> / <span class="var-a">A</span> &rarr; <strong>(e/f)</strong><br>
+                <em>Push result back to stack.</em>
+            </div>
+        </div>
+        <div class="stack-wrapper">
+            <div class="stack-container">
+                <div class="stack-item">(e/f)</div>
+                <div class="stack-item">(a+b)</div>
+            </div>
+            <div class="stack-label">Stack</div>
+        </div>
+    </div>
+
+    <!-- Step 7 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 7 (Final)</div>
+            <div class="scanned-char">*</div>
+            <p><strong>Action:</strong> Operator! Pop our last two complex operands.</p>
+            <div class="formula-box">
+                <span class="var-a">A = (e/f)</span> (Top item)<br>
+                <span class="var-b">B = (a+b)</span> (Second item)<br><br>
+                Rule: <span class="var-b">B</span> * <span class="var-a">A</span> &rarr; <strong>(a+b)*(e/f)</strong><br>
+                <em>This is our final Infix answer!</em>
+            </div>
+        </div>
+        <div class="stack-wrapper">
+            <div class="stack-container">
+                <div class="stack-item">(a+b)*(e/f)</div>
+            </div>
+            <div class="stack-label">Final Stack</div>
+        </div>
+    </div>
+
+
+    <!-- ========================================== -->
+    <!-- SECTION 2: PREFIX TO INFIX                 -->
+    <!-- ========================================== -->
+    <div class="section-header prefix">
+        <h2>Part 2: Prefix to Infix Conversion</h2>
+        <p>Operators come <strong>before</strong> their operands.</p>
+    </div>
+
+    <div class="expression-box">* + ab / ef</div>
+
+    <div class="rules-card">
+        <h3>📝 The Rules for Prefix (Notice the differences!):</h3>
+        <ol>
+            <li><strong>Scan Direction:</strong> Right to Left ( &larr; ). <em>*Different!*</em></li>
+            <li><strong>If Operand (Letter):</strong> <code>Push</code> it into the stack.</li>
+            <li><strong>If Operator (Symbol):</strong> 
+                <ul>
+                    <li><code>Pop</code> the top 2 elements.</li>
+                    <li>Top element = Variable <span style="color:#e74c3c; font-weight:bold;">A</span>. Next element = Variable <span style="color:#3498db; font-weight:bold;">B</span>.</li>
+                    <li>Combine as: <strong><code>(A operator B)</code></strong> <em>*Different Formula!*</em></li>
+                    <li><code>Push</code> the result back to the stack.</li>
+                </ul>
+            </li>
+        </ol>
+    </div>
+
+    <!-- P-Step 1 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 1 (Scanning backwards!)</div>
+            <div class="scanned-char">f</div>
+            <p><strong>Action:</strong> It's an operand. Simply push it onto the stack.</p>
+        </div>
+        <div class="stack-wrapper prefix">
+            <div class="stack-container">
+                <div class="stack-item">f</div>
+            </div>
+            <div class="stack-label">Stack</div>
+        </div>
+    </div>
+
+    <!-- P-Step 2 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 2</div>
+            <div class="scanned-char">e</div>
+            <p><strong>Action:</strong> It's an operand. Push it onto the stack.</p>
+        </div>
+        <div class="stack-wrapper prefix">
+            <div class="stack-container">
+                <div class="stack-item">e</div>
+                <div class="stack-item">f</div>
+            </div>
+            <div class="stack-label">Stack</div>
+        </div>
+    </div>
+
+    <!-- P-Step 3 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 3</div>
+            <div class="scanned-char">/</div>
+            <p><strong>Action:</strong> Operator! Pop two items from the stack.</p>
+            <div class="formula-box">
+                <span class="var-a">A = e</span> (Top item)<br>
+                <span class="var-b">B = f</span> (Second item)<br><br>
+                Rule: <span class="var-a">A</span> / <span class="var-b">B</span> &rarr; <strong>(e/f)</strong><br>
+                <em>Push result back to stack.</em>
+            </div>
+        </div>
+        <div class="stack-wrapper prefix">
+            <div class="stack-container">
+                <div class="stack-item">(e/f)</div>
+            </div>
+            <div class="stack-label">Stack</div>
+        </div>
+    </div>
+
+    <!-- P-Step 4 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 4</div>
+            <div class="scanned-char">b</div>
+            <p><strong>Action:</strong> It's an operand. Push it onto the stack.</p>
+        </div>
+        <div class="stack-wrapper prefix">
+            <div class="stack-container">
+                <div class="stack-item">b</div>
+                <div class="stack-item">(e/f)</div>
+            </div>
+            <div class="stack-label">Stack</div>
+        </div>
+    </div>
+
+    <!-- P-Step 5 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 5</div>
+            <div class="scanned-char">a</div>
+            <p><strong>Action:</strong> It's an operand. Push it onto the stack.</p>
+        </div>
+        <div class="stack-wrapper prefix">
+            <div class="stack-container">
+                <div class="stack-item">a</div>
+                <div class="stack-item">b</div>
+                <div class="stack-item">(e/f)</div>
+            </div>
+            <div class="stack-label">Stack</div>
+        </div>
+    </div>
+
+    <!-- P-Step 6 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 6</div>
+            <div class="scanned-char">+</div>
+            <p><strong>Action:</strong> Operator! Pop two items.</p>
+            <div class="formula-box">
+                <span class="var-a">A = a</span> (Top item)<br>
+                <span class="var-b">B = b</span> (Second item)<br><br>
+                Rule: <span class="var-a">A</span> + <span class="var-b">B</span> &rarr; <strong>(a+b)</strong><br>
+                <em>Push result back to stack.</em>
+            </div>
+        </div>
+        <div class="stack-wrapper prefix">
+            <div class="stack-container">
+                <div class="stack-item">(a+b)</div>
+                <div class="stack-item">(e/f)</div>
+            </div>
+            <div class="stack-label">Stack</div>
+        </div>
+    </div>
+
+    <!-- P-Step 7 -->
+    <div class="step-card reveal">
+        <div class="step-info">
+            <div class="step-number">Step 7 (Final)</div>
+            <div class="scanned-char">*</div>
+            <p><strong>Action:</strong> Operator! Pop our last two complex operands.</p>
+            <div class="formula-box">
+                <span class="var-a">A = (a+b)</span> (Top item)<br>
+                <span class="var-b">B = (e/f)</span> (Second item)<br><br>
+                Rule: <span class="var-a">A</span> * <span class="var-b">B</span> &rarr; <strong>(a+b)*(e/f)</strong><br>
+                <em>This is our final Infix answer!</em>
+            </div>
+        </div>
+        <div class="stack-wrapper prefix">
+            <div class="stack-container">
+                <div class="stack-item">(a+b)*(e/f)</div>
+            </div>
+            <div class="stack-label">Final Stack</div>
+        </div>
+    </div>
+
+    <!-- ========================================== -->
+    <!-- SUMMARY CHEAT SHEET                        -->
+    <!-- ========================================== -->
+    <div class="section-header" style="background: #34495e;">
+        <h2>📌 Ultimate Cheat Sheet</h2>
+        <p>Review the differences side-by-side.</p>
+    </div>
+    
+    <div class="step-card reveal" style="padding: 0;">
+        <table>
+            <thead>
+                <tr>
+                    <th>Rule Feature</th>
+                    <th>Postfix to Infix</th>
+                    <th>Prefix to Infix</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>Scan Direction</strong></td>
+                    <td>Left to Right (&rarr;)</td>
+                    <td>Right to Left (&larr;)</td>
+                </tr>
+                <tr>
+                    <td><strong>Formula Order</strong><br><small>(A = top, B = second)</small></td>
+                    <td><code>B operator A</code></td>
+                    <td><code>A operator B</code></td>
+                </tr>
+                <tr>
+                    <td><strong>Parentheses</strong></td>
+                    <td>Always surround new formula</td>
+                    <td>Always surround new formula</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</div>
+
+<!-- Logic to create a smooth "reveal on scroll" effect -->
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                }
+            });
+        }, { threshold: 0.1 }); // Triggers when 10% of the card is visible
+
+        const hiddenElements = document.querySelectorAll('.reveal');
+        hiddenElements.forEach((el) => observer.observe(el));
+    });
+</script>
+
+</body>
+</html>
