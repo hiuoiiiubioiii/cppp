@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red-Black Tree Insertion - Study Feed</title>
+    
+    <!-- Import Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Fira+Code:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Import Mermaid.js for Tree Visualizations -->
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <script>
+        mermaid.initialize({ 
+            startOnLoad: true, 
+            theme: 'default',
+            flowchart: { curve: 'linear' }
+        });
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f4f4f9;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --card-bg: #ffffff;
+            --accent-black: #1a202c;
+            --accent-red: #e53e3e;
+            --highlight: #ebf8ff;
+            --highlight-border: #3182ce;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        /* The Vertical Feed Container */
+        .feed-container {
+            max-width: 760px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 32px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--accent-black);
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        .subtitle {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Card Styling */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 15px;
+            color: var(--accent-black);
+        }
+
+        .step-badge {
+            background: var(--accent-black);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+        }
+
+        /* Rules Box */
+        .rules-box {
+            background-color: var(--highlight);
+            border-left: 4px solid var(--highlight-border);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin-bottom: 20px;
+        }
+
+        .rules-box h3 {
+            margin-top: 0;
+            color: var(--highlight-border);
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+        li {
+            margin-bottom: 10px;
+        }
+
+        /* Typography for code/nodes */
+        code, .node-ref {
+            font-family: 'Fira Code', monospace;
+            background: rgba(0,0,0,0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-size: 0.9em;
+        }
+
+        .node-ref.red { color: var(--accent-red); font-weight: bold; background: rgba(229, 62, 62, 0.1); }
+        .node-ref.black { color: var(--accent-black); font-weight: bold; background: rgba(26, 32, 44, 0.1); }
+
+        /* Visualization Container */
+        .viz-container {
+            display: flex;
+            justify-content: center;
+            background: #fafafa;
+            border-radius: 12px;
+            padding: 20px;
+            margin-top: 20px;
+            border: 1px solid #edf2f7;
+            overflow-x: auto;
+        }
+
+        .action-block {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fffafa;
+            border-left: 4px solid var(--accent-red);
+            border-radius: 0 8px 8px 0;
+        }
+
+        .hw-box {
+            background-color: #2d3748;
+            color: white;
+            text-align: center;
+        }
+
+        .hw-box h2 {
+            color: white;
+            border-bottom: 1px solid #4a5568;
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <header>
+        <h1>Red-Black Tree Masterclass</h1>
+        <p class="subtitle">Continuous Study Feed • Scroll to learn step-by-step</p>
+    </header>
+
+    <!-- TOPIC 1: THE RULES -->
+    <div class="card">
+        <h2>The Whiteboard Rules</h2>
+        <p>Before inserting data, you must memorize the three core properties of a Red-Black tree and the 4-step insertion algorithm written on the board.</p>
+        
+        <div class="rules-box">
+            <h3>3 Core Properties</h3>
+            <ul>
+                <li><strong>1. Root = Black:</strong> The top node must always be colored black.</li>
+                <li><strong>2. No two adjacent Red nodes:</strong> A Red parent cannot have a Red child. (Resolving this is the main goal of our algorithm).</li>
+                <li><strong>3. Black Depth:</strong> Every path from any node to a descendant `NULL` node must contain the exact same number of Black nodes.</li>
+            </ul>
+        </div>
+
+        <div class="rules-box" style="background: #fff5f5; border-color: #e53e3e;">
+            <h3 style="color: #e53e3e;">The Insertion Algorithm</h3>
+            <ul>
+                <li><strong>Step 1:</strong> If tree is empty, create <code>newnode</code> as root with color <span class="node-ref black">Black</span>.</li>
+                <li><strong>Step 2:</strong> If not empty, insert <code>newnode</code> (standard BST rule) as a leaf and color it <span class="node-ref red">Red</span>.</li>
+                <li><strong>Step 3:</strong> If parent of <code>newnode</code> is Black, exit. (No conflict).</li>
+                <li><strong>Step 4:</strong> If parent is Red, check the <strong>Uncle</strong> (parent's sibling):
+                    <ul>
+                        <li><strong>4(a) If Uncle is Black or Null:</strong> Perform suitable AVL rotation (LL, RR, LR, RL) and recolor the new root and old root of that sub-tree.</li>
+                        <li><strong>4(b) If Uncle is Red:</strong> Recolor Parent and Uncle to Black. Recolor Grandparent to Red. <em>Recheck</em> for conflicts starting from the Grandparent. (Note: Never recolor the absolute root to Red).</li>
+                    </ul>
+                </li>
+            </ul>
+        </div>
+    </div>
+
+    <!-- TRACE STARTS HERE -->
+
+    <div class="card">
+        <h2><span class="step-badge">1 & 2</span> Inserting 10 & 18</h2>
+        <p>Data to insert: <code>10, 18, 7, 15, 16, 30, 25, 40, 60, 2, 1, 70</code></p>
+        <ul>
+            <li><strong>Insert 10:</strong> Tree is empty. Apply <strong>Rule 1</strong>. <span class="node-ref black">10</span> becomes the root.</li>
+            <li><strong>Insert 18:</strong> Tree not empty. Goes right of 10. Color is <span class="node-ref red">Red</span>. Parent (10) is Black, so apply <strong>Rule 3</strong> and exit.</li>
+        </ul>
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                    10:::black --> Null1[Null]:::hidden
+                    10 --> 18:::red
+                    classDef black fill:#1a202c,color:#fff,stroke:none
+                    classDef red fill:#e53e3e,color:#fff,stroke:none
+                    classDef hidden display:none;
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2><span class="step-badge">3</span> Inserting 7</h2>
+        <ul>
+            <li><strong>Action:</strong> 7 is less than 10. Goes left. Color is <span class="node-ref red">Red</span>.</li>
+            <li><strong>Check:</strong> Parent (10) is Black. Apply <strong>Rule 3</strong>. Exit.</li>
+        </ul>
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                    10:::black --> 7:::red
+                    10 --> 18:::red
+                    classDef black fill:#1a202c,color:#fff,stroke:none
+                    classDef red fill:#e53e3e,color:#fff,stroke:none
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2><span class="step-badge">4</span> Inserting 15 (First Conflict!)</h2>
+        <ul>
+            <li><strong>Action:</strong> 15 goes left of 18. Colored <span class="node-ref red">Red</span>.</li>
+            <li><strong>Conflict:</strong> Parent 18 is Red. We have a Red-Red conflict.</li>
+        </ul>
+        <div class="action-block">
+            <strong>Resolution (Rule 4b):</strong> Check the Uncle (sibling of 18). The Uncle is 7, which is <strong>Red</strong>. <br><br>
+            Recolor Parent (18) and Uncle (7) to Black. Grandparent (10) should become Red, but because 10 is the Root, Property 1 prevents it. It stays Black.
+        </div>
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                    10:::black --> 7:::black
+                    10 --> 18:::black
+                    18 --> 15:::red
+                    18 --> Null1[Null]:::hidden
+                    classDef black fill:#1a202c,color:#fff,stroke:none
+                    classDef red fill:#e53e3e,color:#fff,stroke:none
+                    classDef hidden display:none;
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2><span class="step-badge">5</span> Inserting 16 (Rotation Required)</h2>
+        <ul>
+            <li><strong>Action:</strong> 16 goes right of 15. Colored <span class="node-ref red">Red</span>.</li>
+            <li><strong>Conflict:</strong> Parent 15 is Red.</li>
+        </ul>
+        <div class="action-block">
+            <strong>Resolution (Rule 4a):</strong> Check Uncle (right child of 18). It is Null (Black). <br><br>
+            The nodes 18 -> 15 -> 16 form a <strong>Left-Right (LR)</strong> imbalance. Perform an LR rotation: 16 moves up to replace 18. Recolor the new root (16) to Black, and old root (18) to Red.
+        </div>
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                    10:::black --> 7:::black
+                    10 --> 16:::black
+                    16 --> 15:::red
+                    16 --> 18:::red
+                    classDef black fill:#1a202c,color:#fff,stroke:none
+                    classDef red fill:#e53e3e,color:#fff,stroke:none
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2><span class="step-badge">6</span> Inserting 30</h2>
+        <ul>
+            <li><strong>Action:</strong> 30 goes right of 18. Colored <span class="node-ref red">Red</span>.</li>
+            <li><strong>Conflict:</strong> Parent 18 is Red.</li>
+        </ul>
+        <div class="action-block">
+            <strong>Resolution (Rule 4b):</strong> Check Uncle (15). It is <strong>Red</strong>. <br><br>
+            Recolor Parent (18) and Uncle (15) to Black. Recolor Grandparent (16) to Red. <br>
+            <em>Recheck:</em> Grandparent 16 is Red, but its parent 10 is Black. No further conflict!
+        </div>
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                    10:::black --> 7:::black
+                    10 --> 16:::red
+                    16 --> 15:::black
+                    16 --> 18:::black
+                    18 --> Null1[Null]:::hidden
+                    18 --> 30:::red
+                    classDef black fill:#1a202c,color:#fff,stroke:none
+                    classDef red fill:#e53e3e,color:#fff,stroke:none
+                    classDef hidden display:none;
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2><span class="step-badge">7</span> Inserting 25</h2>
+        <ul>
+            <li><strong>Action:</strong> 25 goes left of 30. Colored <span class="node-ref red">Red</span>.</li>
+            <li><strong>Conflict:</strong> Parent 30 is Red.</li>
+        </ul>
+        <div class="action-block">
+            <strong>Resolution (Rule 4a):</strong> Check Uncle (left child of 18). Null (Black). <br><br>
+            Nodes 18 -> 30 -> 25 form a <strong>Right-Left (RL)</strong> imbalance. Perform an RL rotation: 25 moves up. Recolor the new root (25) to Black, and old root (18) to Red.
+        </div>
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                    10:::black --> 7:::black
+                    10 --> 16:::red
+                    16 --> 15:::black
+                    16 --> 25:::black
+                    25 --> 18:::red
+                    25 --> 30:::red
+                    classDef black fill:#1a202c,color:#fff,stroke:none
+                    classDef red fill:#e53e3e,color:#fff,stroke:none
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2><span class="step-badge">8</span> Inserting 40 (Chain Reaction!)</h2>
+        <ul>
+            <li><strong>Action:</strong> 40 goes right of 30. Colored <span class="node-ref red">Red</span>.</li>
+            <li><strong>Conflict 1:</strong> Parent 30 is Red. Uncle 18 is Red. Apply Rule 4(b): Recolor 30 & 18 to Black. Grandparent 25 becomes Red.</li>
+            <li><strong>Conflict 2 (Recheck):</strong> Now 25 is Red, but its parent 16 is ALSO Red! New conflict higher up.</li>
+        </ul>
+        <div class="action-block">
+            <strong>Resolving Higher Conflict (Rule 4a):</strong> Check Uncle of 25 (which is 7). 7 is <strong>Black</strong>. <br><br>
+            Nodes 10 -> 16 -> 25 form a <strong>Right-Right (RR)</strong> imbalance. Perform Left rotation on 10. 16 becomes the absolute root. Recolor new root (16) to Black, and old root (10) to Red.
+        </div>
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                    16:::black --> 10:::red
+                    16 --> 25:::red
+                    10 --> 7:::black
+                    10 --> 15:::black
+                    25 --> 18:::black
+                    25 --> 30:::black
+                    30 --> Null1[Null]:::hidden
+                    30 --> 40:::red
+                    classDef black fill:#1a202c,color:#fff,stroke:none
+                    classDef red fill:#e53e3e,color:#fff,stroke:none
+                    classDef hidden display:none;
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2><span class="step-badge">9 & 10 & 11</span> Inserting 60, 2, and 1</h2>
+        <ul>
+            <li><strong>Insert 60:</strong> Goes right of 40 (Red). Uncle is Null (Black). RR imbalance on 30-40-60. Rotate Left. 40 becomes Black, 30 becomes Red.</li>
+            <li><strong>Insert 2:</strong> Goes left of 7. Parent 7 is Black. Exit.</li>
+            <li><strong>Insert 1:</strong> Goes left of 2 (Red). Uncle Null (Black). LL imbalance on 7-2-1. Rotate Right. 2 becomes Black, 7 becomes Red.</li>
+        </ul>
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                    16:::black --> 10:::red
+                    16 --> 25:::red
+                    10 --> 2:::black
+                    10 --> 15:::black
+                    2 --> 1:::red
+                    2 --> 7:::red
+                    25 --> 18:::black
+                    25 --> 40:::black
+                    40 --> 30:::red
+                    40 --> 60:::red
+                    classDef black fill:#1a202c,color:#fff,stroke:none
+                    classDef red fill:#e53e3e,color:#fff,stroke:none
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2><span class="step-badge">12</span> Inserting 70 (Final Chain Reaction)</h2>
+        <ul>
+            <li><strong>Action:</strong> 70 goes right of 60. Colored <span class="node-ref red">Red</span>.</li>
+            <li><strong>Conflict 1:</strong> Parent 60 is Red. Uncle 30 is Red. Rule 4b: Recolor 60 and 30 to Black. Grandparent 40 becomes Red.</li>
+            <li><strong>Conflict 2 (Recheck):</strong> 40 is Red, Parent 25 is Red. Red-Red conflict!</li>
+        </ul>
+        <div class="action-block">
+            <strong>Resolving Final Conflict (Rule 4a):</strong> Check Uncle of 40 (which is 10). 10 is <strong>Black</strong> (Look back at the previous tree, 10 was recolored earlier). <br><br>
+            Nodes 16 -> 25 -> 40 form an <strong>RR imbalance</strong>. Left rotation on 16. 25 becomes the new absolute root! Recolor new root (25) to Black, old root (16) to Red.
+        </div>
+        
+        <h3>Final Balanced Red-Black Tree</h3>
+        <div class="viz-container">
+            <div class="mermaid">
+                graph TD
+                    25:::black --> 16:::red
+                    25 --> 40:::red
+                    16 --> 10:::black
+                    16 --> 18:::black
+                    10 --> 2:::black
+                    10 --> 15:::red
+                    2 --> 1:::red
+                    2 --> 7:::red
+                    18 --> Null1[Null]:::hidden
+                    18 --> Null2[Null]:::hidden
+                    40 --> 30:::black
+                    40 --> 60:::black
+                    60 --> Null3[Null]:::hidden
+                    60 --> 70:::red
+                    classDef black fill:#1a202c,color:#fff,stroke:none
+                    classDef red fill:#e53e3e,color:#fff,stroke:none
+                    classDef hidden display:none;
+            </div>
+        </div>
+        <p style="margin-top: 15px;"><em>Note: The instructor verifies here that no Red parent has a Red child, the root is Black, and every path to the bottom has exactly 2 Black nodes.</em></p>
+    </div>
+
+    <div class="card hw-box">
+        <h2>Instructor's Homework Question</h2>
+        <p style="font-size: 1.2rem; font-weight: 300;">"Is it possible to have a Red-Black tree where ALL nodes are colored Black?"</p>
+        <p style="color: #cbd5e0; font-size: 0.9rem;">Think about Property #3 (Black Depth). How would a perfectly balanced tree behave versus an unbalanced one if all nodes were forced to be black?</p>
+    </div>
+
+</div>
+
+</body>
+</html>
