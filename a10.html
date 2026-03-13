@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Singly Linked List Implementation in C</title>
+    <style>
+        /* Base Styling & Vertical Feed Layout */
+        :root {
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #555555;
+            --primary: #2563eb;
+            --secondary: #3b82f6;
+            --accent: #10b981;
+            --code-bg: #1e293b;
+            --node-border: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        header {
+            text-align: center;
+            padding: 60px 20px 40px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px 60px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* Card Styling */
+        .feed-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 40px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .feed-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .feed-card h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.8rem;
+        }
+
+        .feed-card h3 {
+            color: var(--text-main);
+            margin: 25px 0 10px;
+            font-size: 1.3rem;
+        }
+
+        .feed-card p {
+            margin-bottom: 15px;
+            color: var(--text-muted);
+        }
+
+        .highlight {
+            background-color: #e0f2fe;
+            color: #0369a1;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+
+        /* Code Block Styling */
+        pre {
+            background-color: var(--code-bg);
+            color: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-size: 0.95rem;
+            margin: 20px 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        code {
+            font-family: "Consolas", "Courier New", monospace;
+        }
+
+        .code-comment { color: #64748b; font-style: italic; }
+        .code-keyword { color: #c678dd; }
+        .code-type { color: #38bdf8; }
+        .code-string { color: #a3e635; }
+        .code-function { color: #facc15; }
+
+        /* Pro-Tip Box */
+        .pro-tip {
+            background-color: #ecfdf5;
+            border-left: 5px solid var(--accent);
+            padding: 20px;
+            border-radius: 0 8px 8px 0;
+            margin-top: 20px;
+        }
+        
+        .pro-tip h4 {
+            color: #047857;
+            margin-bottom: 10px;
+        }
+
+        /* Visualizations - Whiteboard Mimic */
+        .visualization-board {
+            background-color: #ffffff;
+            border: 2px dashed var(--node-border);
+            border-radius: 8px;
+            padding: 40px 20px;
+            margin: 20px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 20px;
+            position: relative;
+        }
+
+        .pointer-box {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-right: 10px;
+        }
+
+        .pointer-label {
+            font-weight: bold;
+            color: var(--primary);
+            margin-bottom: 5px;
+        }
+
+        .pointer-val {
+            background: #e2e8f0;
+            padding: 5px 15px;
+            border-radius: 4px;
+            border: 1px solid #94a3b8;
+            font-family: monospace;
+        }
+
+        .arrow {
+            font-size: 2rem;
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .ll-node-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .ll-node {
+            display: flex;
+            border: 2px solid var(--text-main);
+            border-radius: 4px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .ll-data {
+            padding: 15px 20px;
+            border-right: 2px solid var(--text-main);
+            font-size: 1.2rem;
+            font-weight: bold;
+        }
+
+        .ll-next {
+            padding: 15px;
+            background-color: #f8fafc;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .ll-address {
+            margin-top: 8px;
+            font-family: monospace;
+            color: var(--secondary);
+            font-size: 0.9rem;
+        }
+
+        .null-node {
+            color: #ef4444;
+            font-weight: bold;
+            font-family: monospace;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Implementation of a Linked List</h1>
+        <p>Continuous Scroll Study Guide • Based on Instructor's Whiteboard Breakdown</p>
+    </header>
+
+    <main class="feed-container">
+
+        <!-- Card 1: Logical View -->
+        <article class="feed-card">
+            <h2>1. The Logical View (Whiteboard)</h2>
+            <p>Before writing code, we need to understand what a Singly Linked List looks like conceptually. It is a chain of nodes. Each node has two parts: the <strong>data</strong> (actual value) and the <strong>address</strong> of the next node.</p>
+            <p>We must maintain a <span class="highlight">head</span> pointer, which always stores the address of the very first node. The last node points to <span class="highlight">0 (NULL)</span>.</p>
+            
+            <div class="visualization-board">
+                <!-- Head Pointer -->
+                <div class="pointer-box">
+                    <div class="pointer-label">Head</div>
+                    <div class="pointer-val">100</div>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <!-- Node 1 -->
+                <div class="ll-node-container">
+                    <div class="ll-node">
+                        <div class="ll-data">5</div>
+                        <div class="ll-next">200</div>
+                    </div>
+                    <div class="ll-address">Address: 100</div>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <!-- Node 2 -->
+                <div class="ll-node-container">
+                    <div class="ll-node">
+                        <div class="ll-data">4</div>
+                        <div class="ll-next">300</div>
+                    </div>
+                    <div class="ll-address">Address: 200</div>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <!-- Node 3 -->
+                <div class="ll-node-container">
+                    <div class="ll-node">
+                        <div class="ll-data">9</div>
+                        <div class="ll-next null-node">0</div>
+                    </div>
+                    <div class="ll-address">Address: 300</div>
+                </div>
+            </div>
+            
+            <div class="pro-tip">
+                <h4>Instructor's Golden Rule:</h4>
+                <p>Never move the head pointer during traversal or insertion. If you lose the head pointer, you lose access to your entire linked list!</p>
+            </div>
+        </article>
+
+        <!-- Card 2: Struct Definition -->
+        <article class="feed-card">
+            <h2>2. Defining the Blueprint (Struct)</h2>
+            <p>To create a node that can hold both an integer and a pointer to another node, we must create a custom data type in C using the <span class="highlight">struct</span> keyword.</p>
+            
+<pre><code><span class="code-keyword">struct</span> <span class="code-type">node</span> {
+    <span class="code-type">int</span> data;
+    <span class="code-keyword">struct</span> <span class="code-type">node</span> *next;
+};</code></pre>
+
+            <h3>Why `struct node *next`?</h3>
+            <p>The `next` part is a pointer. It stores a memory address. Because it stores the address of <em>another node</em> of this exact same structure, its data type must be a pointer to `struct node`.</p>
+        </article>
+
+        <!-- Card 3: Pointers & Initialization -->
+        <article class="feed-card">
+            <h2>3. Declaring Pointers & Initialization</h2>
+            <p>To build the list, we need three specific pointers in our program.</p>
+
+<pre><code><span class="code-keyword">struct</span> <span class="code-type">node</span> *head, *newnode, *temp;
+head = <span class="code-keyword">0</span>; <span class="code-comment">// Same as NULL</span></code></pre>
+
+            <ul>
+                <li><strong>head:</strong> Will permanently store the address of the first node.</li>
+                <li><strong>newnode:</strong> Will store the address of the node we are currently creating.</li>
+                <li><strong>temp:</strong> A temporary pointer used to traverse the list and link new nodes without moving `head`.</li>
+            </ul>
+            <p>Initially, we set `head = 0` because our list is empty. There are no nodes yet.</p>
+        </article>
+
+        <!-- Card 4: malloc deep dive -->
+        <article class="feed-card">
+            <h2>4. Dynamic Memory Allocation (malloc)</h2>
+            <p>Nodes aren't created automatically. We have to request memory dynamically while the program is running using the <span class="highlight">malloc()</span> function.</p>
+
+<pre><code>newnode = (<span class="code-keyword">struct</span> <span class="code-type">node</span> *)<span class="code-function">malloc</span>(<span class="code-keyword">sizeof</span>(<span class="code-keyword">struct</span> <span class="code-type">node</span>));</code></pre>
+
+            <h3>Breaking down this line:</h3>
+            <ol>
+                <li><span class="highlight">sizeof(struct node)</span> calculates how many bytes we need. (e.g., 4 bytes for int + 4 bytes for pointer = 8 bytes).</li>
+                <li><span class="highlight">malloc(8)</span> finds an 8-byte block in memory and returns a <code>void</code> pointer to its starting address.</li>
+                <li><span class="highlight">(struct node *)</span> is <strong>Typecasting</strong>. It tells the compiler, "Treat this generic void pointer as a pointer to a node structure."</li>
+                <li>Finally, that starting address is stored in <span class="highlight">newnode</span>.</li>
+            </ol>
+
+            <div class="visualization-board">
+                <div class="pointer-box">
+                    <div class="pointer-label">newnode</div>
+                    <div class="pointer-val">400</div>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="ll-node-container">
+                    <div class="ll-node" style="border-color: var(--accent);">
+                        <div class="ll-data" style="border-color: var(--accent); color: var(--text-muted);">?</div>
+                        <div class="ll-next">?</div>
+                    </div>
+                    <div class="ll-address">Address: 400 (Just Created)</div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 5: Populating Data & The Arrow Operator -->
+        <article class="feed-card">
+            <h2>5. Inserting Data (The Arrow Operator)</h2>
+            <p>Once memory is allocated, we need to put data into it. Because `newnode` is a pointer, we cannot use the standard dot (`.`) operator to access the struct members. We must use the <span class="highlight">-></span> (arrow) operator.</p>
+
+<pre><code><span class="code-function">printf</span>(<span class="code-string">"Enter data: "</span>);
+<span class="code-function">scanf</span>(<span class="code-string">"%d"</span>, &newnode->data);
+newnode->next = <span class="code-keyword">0</span>; <span class="code-comment">// Initialize next as NULL</span></code></pre>
+
+            <p>At the moment of creation, the new node isn't attached to anything, so its `next` pointer should safely point to `0`.</p>
+        </article>
+
+        <!-- Card 6: Linking Nodes Together -->
+        <article class="feed-card">
+            <h2>6. The Core Logic: Linking the Nodes</h2>
+            <p>When attaching a node, we have two scenarios: is it the <strong>first node</strong> ever created, or is it a <strong>subsequent node</strong>?</p>
+
+<pre><code><span class="code-keyword">if</span> (head == <span class="code-keyword">0</span>) {
+    head = temp = newnode;
+} <span class="code-keyword">else</span> {
+    temp->next = newnode;
+    temp = newnode;
+}</code></pre>
+
+            <h3>Visualizing the Logic</h3>
+            <p><strong>If `head == 0` (First Node):</strong> The list is empty. Both `head` and `temp` point to this brand new node.</p>
+            <div class="visualization-board">
+                <div class="pointer-box">
+                    <div class="pointer-label" style="color: var(--accent)">Head & Temp</div>
+                    <div class="pointer-val">100</div>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="ll-node-container">
+                    <div class="ll-node">
+                        <div class="ll-data">5</div>
+                        <div class="ll-next null-node">0</div>
+                    </div>
+                    <div class="ll-address">Address: 100</div>
+                </div>
+            </div>
+
+            <p><strong>Else (Subsequent Nodes):</strong> `temp` is sitting on the old last node. We tell the old last node's `next` to point to the new node (`temp->next = newnode`). Then, we move `temp` to sit on the new last node (`temp = newnode`).</p>
+             <div class="visualization-board">
+                <div class="ll-node-container">
+                    <div class="ll-node">
+                        <div class="ll-data">5</div>
+                        <div class="ll-next" style="background: #bbf7d0; color: #166534; font-weight:bold;">200</div>
+                    </div>
+                    <div class="ll-address">Address: 100</div>
+                </div>
+                <div class="arrow">&rarr;</div>
+                <div class="ll-node-container">
+                    <div class="ll-node">
+                        <div class="ll-data">4</div>
+                        <div class="ll-next null-node">0</div>
+                    </div>
+                    <div class="ll-address">Address: 200 (newnode)</div>
+                </div>
+                <div class="arrow" style="transform: scaleX(-1); margin-left:20px;">&larr;</div>
+                <div class="pointer-box">
+                    <div class="pointer-label" style="color: var(--accent)">Temp (moved here)</div>
+                    <div class="pointer-val">200</div>
+                </div>
+            </div>
+
+        </article>
+
+        <!-- Card 7: Traversing the List -->
+        <article class="feed-card">
+            <h2>7. Traversing & Printing the List</h2>
+            <p>Once the user stops adding nodes, we want to print them all out. We reset our `temp` pointer to the `head` and loop until we hit the end (`0`).</p>
+
+<pre><code>temp = head; <span class="code-comment">// Reset temp to start</span>
+<span class="code-keyword">while</span> (temp != <span class="code-keyword">0</span>) {
+    <span class="code-function">printf</span>(<span class="code-string">"%d "</span>, temp->data);
+    temp = temp->next; <span class="code-comment">// Move to the next node</span>
+}</code></pre>
+            
+            <div class="pro-tip">
+                <h4>Understanding `temp = temp->next;`</h4>
+                <p>This is the standard line to traverse a linked list. It literally translates to: "Take the address stored in the current node's 'next' block, and make that my new current location."</p>
+            </div>
+        </article>
+
+        <!-- Card 8: Complete Code -->
+        <article class="feed-card">
+            <h2>8. The Complete Source Code</h2>
+            <p>Here is the full, combined C program written by the instructor on the whiteboard.</p>
+
+<pre><code><span class="code-keyword">#include</span> &lt;stdio.h&gt;
+<span class="code-keyword">#include</span> &lt;stdlib.h&gt;
+
+<span class="code-comment">// Define the structure</span>
+<span class="code-keyword">struct</span> <span class="code-type">node</span> {
+    <span class="code-type">int</span> data;
+    <span class="code-keyword">struct</span> <span class="code-type">node</span> *next;
+};
+
+<span class="code-type">void</span> <span class="code-function">main</span>() {
+    <span class="code-keyword">struct</span> <span class="code-type">node</span> *head, *newnode, *temp;
+    head = <span class="code-keyword">0</span>; 
+    <span class="code-type">int</span> choice = <span class="code-keyword">1</span>;
+
+    <span class="code-comment">// Node Creation Loop</span>
+    <span class="code-keyword">while</span> (choice) {
+        newnode = (<span class="code-keyword">struct</span> <span class="code-type">node</span> *)<span class="code-function">malloc</span>(<span class="code-keyword">sizeof</span>(<span class="code-keyword">struct</span> <span class="code-type">node</span>));
+        
+        <span class="code-function">printf</span>(<span class="code-string">"Enter data: "</span>);
+        <span class="code-function">scanf</span>(<span class="code-string">"%d"</span>, &newnode->data);
+        newnode->next = <span class="code-keyword">0</span>;
+        
+        <span class="code-keyword">if</span> (head == <span class="code-keyword">0</span>) {
+            head = temp = newnode;
+        } <span class="code-keyword">else</span> {
+            temp->next = newnode;
+            temp = newnode;
+        }
+        
+        <span class="code-function">printf</span>(<span class="code-string">"Do you want to continue (0,1)? "</span>);
+        <span class="code-function">scanf</span>(<span class="code-string">"%d"</span>, &choice);
+    }
+    
+    <span class="code-comment">// Traversal and Printing</span>
+    temp = head;
+    <span class="code-function">printf</span>(<span class="code-string">"\nLinked List data: "</span>);
+    <span class="code-keyword">while</span> (temp != <span class="code-keyword">0</span>) {
+        <span class="code-function">printf</span>(<span class="code-string">"%d "</span>, temp->data);
+        temp = temp->next;
+    }
+    
+    <span class="code-function">getch</span>();
+}</code></pre>
+        </article>
+
+    </main>
+
+    <script>
+        // Intersection Observer to trigger fade-in animations on scroll
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.feed-card');
+
+            const observerOptions = {
+                root: null, // use the viewport
+                rootMargin: '0px',
+                threshold: 0.15 // trigger when 15% of the card is visible
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        // Optional: stop observing once it has faded in
+                        // observer.unobserve(entry.target); 
+                    }
+                });
+            }, observerOptions);
+
+            cards.forEach(card => {
+                observer.observe(card);
+            });
+            
+            // Instantly show the first card
+            if(cards.length > 0) {
+                cards[0].classList.add('visible');
+            }
+        });
+    </script>
+</body>
+</html>
