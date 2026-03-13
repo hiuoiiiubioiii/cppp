@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linked List Insertion Notes</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Prism.js for code syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+    
+    <style>
+        /* Custom Styles for Linked List Visualizations */
+        body { background-color: #f8fafc; font-family: 'Inter', sans-serif; }
+        
+        .ll-container { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 10px; padding: 20px; background: white; border-radius: 8px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-top: 1rem; margin-bottom: 1rem;}
+        
+        .ll-node-wrapper { display: flex; flex-direction: column; align-items: center; }
+        
+        .ll-pointer { font-size: 0.85rem; font-weight: bold; color: #ef4444; margin-bottom: 4px; height: 20px; display: flex; align-items: flex-end;}
+        .ll-pointer.temp { color: #8b5cf6; }
+        .ll-pointer.newnode { color: #10b981; }
+        
+        .ll-node { display: flex; width: 100px; border: 2px solid #1f2937; border-radius: 6px; overflow: hidden; background: white; }
+        
+        .ll-data { width: 50%; padding: 8px 0; text-align: center; font-weight: bold; font-size: 1.1rem; border-right: 2px solid #1f2937; background: #e5e7eb; }
+        .ll-next { width: 50%; padding: 8px 0; text-align: center; font-size: 0.85rem; color: #4b5563; background: #f9fafb; display: flex; align-items: center; justify-content: center;}
+        
+        .ll-address { font-size: 0.75rem; color: #6b7280; margin-top: 4px; font-family: monospace; }
+        
+        .ll-arrow { font-size: 1.5rem; color: #3b82f6; font-weight: bold; margin: 0 4px; padding-top: 20px;}
+        .ll-arrow-down { font-size: 1.5rem; color: #10b981; font-weight: bold; margin: 4px 0; transform: rotate(90deg);}
+        
+        /* Feed line indicator */
+        .feed-line { border-left: 4px solid #e5e7eb; position: absolute; left: 2rem; top: 0; bottom: 0; z-index: -1; }
+        .feed-section { position: relative; z-index: 1; margin-bottom: 4rem; }
+        
+        /* Highlight notes */
+        .warning-box { border-left: 4px solid #ef4444; background: #fef2f2; padding: 1rem; border-radius: 0 8px 8px 0; }
+        .tip-box { border-left: 4px solid #3b82f6; background: #eff6ff; padding: 1rem; border-radius: 0 8px 8px 0; }
+    </style>
+</head>
+<body class="text-gray-800 antialiased relative">
+
+    <div class="max-w-4xl mx-auto px-4 py-12 relative">
+        <!-- Vertical Feed Line -->
+        <div class="feed-line hidden md:block"></div>
+
+        <!-- 🚀 HEADER -->
+        <header class="feed-section pl-0 md:pl-16">
+            <div class="inline-block bg-blue-600 text-white px-4 py-1 rounded-full text-sm font-bold tracking-wider mb-4 uppercase">Topic Outline</div>
+            <h1 class="text-4xl md:text-5xl font-extrabold text-gray-900 leading-tight mb-4">Insertion in a Singly Linked List</h1>
+            <p class="text-lg text-gray-600 leading-relaxed mb-6">
+                A complete breakdown of inserting nodes into a linked list in C. We will cover three scenarios: inserting at the <strong>beginning</strong>, at the <strong>end</strong>, and <strong>after a specific position</strong>. Just scroll down to follow the lesson sequentially.
+            </p>
+        </header>
+
+        <!-- 🛠️ 1. SETUP & THE NODE -->
+        <section class="feed-section pl-0 md:pl-16">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-full bg-gray-800 text-white flex items-center justify-center font-bold text-xl z-10 shadow-lg">1</div>
+                <h2 class="text-3xl font-bold text-gray-800">The Setup & The Node Structure</h2>
+            </div>
+            
+            <p class="text-lg mb-4 text-gray-700">Before we insert anything, we must define what a "Node" looks like in C and set up our global pointers.</p>
+            
+            <pre class="rounded-lg shadow-md"><code class="language-c">
+struct node {
+    int data;           // The actual value stored
+    struct node *next;  // Pointer to the next node's address
+};
+
+// Global pointers needed for our operations
+struct node *head = NULL; 
+struct node *newnode;
+            </code></pre>
+
+            <div class="tip-box mt-6">
+                <p class="font-semibold text-blue-800 mb-1">💡 The Golden Rule of `head`:</p>
+                <p class="text-blue-900">The <code>head</code> pointer always points to the first node. <strong>Never use <code>head</code> to traverse the list!</strong> If you change the value of <code>head</code> to move forward, you will permanently lose the starting address of your linked list.</p>
+            </div>
+
+            <h3 class="text-xl font-bold mt-8 mb-4 border-b pb-2">Initial Whiteboard Visualization</h3>
+            <p class="text-gray-700 mb-4">Let's assume we have already created a linked list with 3 nodes. This is what our starting state looks like:</p>
+            
+            <div class="ll-container">
+                <div class="ll-node-wrapper">
+                    <div class="ll-pointer">head</div>
+                    <div class="bg-gray-800 text-white text-xs px-2 py-1 rounded mb-2">100</div>
+                </div>
+                <div class="ll-arrow" style="padding-top: 0;">&rarr;</div>
+
+                <!-- Node 1 -->
+                <div class="ll-node-wrapper">
+                    <div class="ll-pointer"></div>
+                    <div class="ll-node">
+                        <div class="ll-data">7</div>
+                        <div class="ll-next">200</div>
+                    </div>
+                    <div class="ll-address">Add: 100</div>
+                </div>
+                <div class="ll-arrow">&rarr;</div>
+
+                <!-- Node 2 -->
+                <div class="ll-node-wrapper">
+                    <div class="ll-pointer"></div>
+                    <div class="ll-node">
+                        <div class="ll-data">1</div>
+                        <div class="ll-next">300</div>
+                    </div>
+                    <div class="ll-address">Add: 200</div>
+                </div>
+                <div class="ll-arrow">&rarr;</div>
+
+                <!-- Node 3 -->
+                <div class="ll-node-wrapper">
+                    <div class="ll-pointer"></div>
+                    <div class="ll-node">
+                        <div class="ll-data">9</div>
+                        <div class="ll-next font-bold">0</div>
+                    </div>
+                    <div class="ll-address">Add: 300</div>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500 text-center italic mt-2">Note: '0' in the last node represents NULL.</p>
+        </section>
+
+        <!-- 🧱 MEMORY ALLOCATION -->
+        <section class="feed-section pl-0 md:pl-16">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">Creating the New Node (The Common Step)</h2>
+            <p class="text-lg text-gray-700 mb-4">Regardless of <em>where</em> you are inserting the node, you always have to allocate memory for it dynamically and ask the user for data.</p>
+            
+            <pre class="rounded-lg shadow-md"><code class="language-c">
+// 1. Allocate memory dynamically (returns void pointer, so we typecast)
+newnode = (struct node *)malloc(sizeof(struct node));
+
+// 2. Ask user for data and store it using the arrow operator (->)
+printf("Enter data you want to insert: ");
+scanf("%d", &newnode->data);
+            </code></pre>
+            
+            <p class="text-gray-700 mt-4">For our visualizations below, let's assume <code>malloc</code> allocates memory at address <strong>500</strong>, and the user enters the data <strong>2</strong>.</p>
+        </section>
+
+        <!-- 🟢 CASE 1: BEGINNING -->
+        <section class="feed-section pl-0 md:pl-16">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-xl z-10 shadow-lg">2</div>
+                <h2 class="text-3xl font-bold text-gray-800">Case 1: Insert at Beginning</h2>
+            </div>
+
+            <p class="text-lg text-gray-700 mb-4">We want to make our newly created node the very first node in the list.</p>
+
+            <div class="warning-box mb-6">
+                <p class="font-semibold text-red-800 mb-1">⚠️ Warning: Order of Operations Matters!</p>
+                <p class="text-red-900">You must connect the new node to the list <strong>BEFORE</strong> you update the <code>head</code> pointer. If you update <code>head</code> first, you lose the address of the original list!</p>
+            </div>
+
+            <pre class="rounded-lg shadow-md"><code class="language-c">
+// Step 1: New node points to the current first node
+newnode->next = head; 
+
+// Step 2: Head is updated to point to the new node
+head = newnode;       
+            </code></pre>
+
+            <h3 class="text-xl font-bold mt-8 mb-4 border-b pb-2">Visualizing the Insertion</h3>
+            
+            <div class="ll-container items-start">
+                <!-- Head -->
+                <div class="flex flex-col items-center">
+                    <div class="ll-node-wrapper">
+                        <div class="ll-pointer">head</div>
+                        <!-- Head now holds 500 -->
+                        <div class="bg-gray-800 text-white text-xs px-2 py-1 rounded mb-2 transition-all border-2 border-green-500">500</div>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col items-center justify-center pt-8">
+                    <div class="ll-arrow" style="padding-top:0;">&rarr;</div>
+                </div>
+
+                <!-- New Node -->
+                <div class="flex flex-col items-center relative top-[-10px]">
+                    <div class="ll-node-wrapper">
+                        <div class="ll-pointer newnode">newnode</div>
+                        <div class="ll-node border-green-500 border-4">
+                            <div class="ll-data bg-green-100">2</div>
+                            <!-- Next holds 100 -->
+                            <div class="ll-next bg-green-50">100</div> 
+                        </div>
+                        <div class="ll-address">Add: 500</div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col items-center justify-center pt-8">
+                    <div class="ll-arrow" style="padding-top:0;">&rarr;</div>
+                </div>
+
+                <!-- Old Node 1 -->
+                <div class="flex flex-col items-center mt-6 opacity-70">
+                    <div class="ll-node-wrapper">
+                        <div class="ll-pointer"></div>
+                        <div class="ll-node">
+                            <div class="ll-data">7</div>
+                            <div class="ll-next">200</div>
+                        </div>
+                        <div class="ll-address">Add: 100</div>
+                    </div>
+                </div>
+                
+                <div class="flex flex-col items-center justify-center pt-14 opacity-70">
+                    <div class="ll-arrow" style="padding-top:0;">&rarr;</div>
+                </div>
+                
+                <!-- Old Node 2 -->
+                <div class="flex flex-col items-center mt-6 opacity-70">
+                    <div class="ll-node-wrapper">
+                        <div class="ll-pointer"></div>
+                        <div class="ll-node">
+                            <div class="ll-data">1</div>
+                            <div class="ll-next">...</div>
+                        </div>
+                        <div class="ll-address">Add: 200</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 🔵 CASE 2: END -->
+        <section class="feed-section pl-0 md:pl-16">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold text-xl z-10 shadow-lg">3</div>
+                <h2 class="text-3xl font-bold text-gray-800">Case 2: Insert at End</h2>
+            </div>
+
+            <p class="text-lg text-gray-700 mb-4">To attach a node to the very end, its <code>next</code> pointer must be set to <code>0</code> (NULL). Because we only have the <code>head</code>, we must traverse the entire list to find the last node.</p>
+
+            <div class="tip-box mb-6">
+                <p class="font-semibold text-blue-800 mb-1">💡 Traversal Pointer:</p>
+                <p class="text-blue-900">We create a temporary pointer (<code>temp</code>) and set it equal to <code>head</code>. We use <code>temp</code> to travel through the list. We stop traversing when <code>temp->next</code> is <code>0</code> (meaning we are standing ON the last node).</p>
+            </div>
+
+            <pre class="rounded-lg shadow-md"><code class="language-c">
+struct node *temp;
+
+// Step 1: Because this is the new last node, its next is NULL
+newnode->next = 0; 
+
+// Step 2: Start traversing from the beginning
+temp = head;
+
+// Step 3: Traverse until temp points to the currently last node
+while (temp->next != 0) {
+    temp = temp->next;
+}
+
+// Step 4: Link the old last node to our new node
+temp->next = newnode; 
+            </code></pre>
+
+            <h3 class="text-xl font-bold mt-8 mb-4 border-b pb-2">Visualizing the Insertion</h3>
+            <p class="text-sm text-gray-600 mb-2">Assume <code>newnode</code> is created at address <strong>400</strong> with data <strong>5</strong>. The <code>temp</code> pointer travels until it hits Address 300.</p>
+            
+            <div class="ll-container">
+                <!-- Node 2 (Skipping early nodes for visual clarity) -->
+                <div class="ll-node-wrapper opacity-70">
+                    <div class="ll-pointer"></div>
+                    <div class="ll-node">
+                        <div class="ll-data">1</div>
+                        <div class="ll-next">300</div>
+                    </div>
+                    <div class="ll-address">Add: 200</div>
+                </div>
+                <div class="ll-arrow">&rarr;</div>
+
+                <!-- Node 3 (Old Last Node) -->
+                <div class="ll-node-wrapper">
+                    <div class="ll-pointer temp animate-pulse">temp</div>
+                    <div class="ll-node">
+                        <div class="ll-data">9</div>
+                        <!-- Updated from 0 to 400 -->
+                        <div class="ll-next bg-indigo-100 text-indigo-800 font-bold border-2 border-indigo-400">400</div>
+                    </div>
+                    <div class="ll-address">Add: 300</div>
+                </div>
+                
+                <div class="ll-arrow text-indigo-600">&rarr;</div>
+
+                <!-- New Node -->
+                <div class="ll-node-wrapper">
+                    <div class="ll-pointer newnode">newnode</div>
+                    <div class="ll-node border-indigo-500 border-4">
+                        <div class="ll-data bg-indigo-50">5</div>
+                        <div class="ll-next font-bold">0</div>
+                    </div>
+                    <div class="ll-address">Add: 400</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 🟣 CASE 3: AFTER GIVEN LOCATION -->
+        <section class="feed-section pl-0 md:pl-16">
+            <div class="flex items-center gap-3 mb-6">
+                <div class="w-10 h-10 rounded-full bg-purple-600 text-white flex items-center justify-center font-bold text-xl z-10 shadow-lg">4</div>
+                <h2 class="text-3xl font-bold text-gray-800">Case 3: Insert After a Location</h2>
+            </div>
+
+            <p class="text-lg text-gray-700 mb-4">We want to insert the new node immediately after a specific position provided by the user (e.g., after position 2). We must traverse up to that position using a counter variable (<code>i</code>).</p>
+
+            <div class="warning-box mb-6">
+                <p class="font-semibold text-red-800 mb-1">⚠️ Warning: Right Link First!</p>
+                <p class="text-red-900">When splicing a node into the middle of a list, you must make the <strong>Right Link</strong> (new node pointing to the rest of the list) before the <strong>Left Link</strong> (previous node pointing to new node). If you do the Left Link first, the rest of the list is severed and lost.</p>
+            </div>
+
+            <pre class="rounded-lg shadow-md"><code class="language-c">
+int pos, i = 1;
+struct node *temp;
+
+printf("Enter the position:");
+scanf("%d", &pos); // Assume user enters 2
+
+// Edge case: Check if position is valid (assuming 'count' holds total length)
+if (pos > count) {
+    printf("Invalid Position");
+} else {
+    temp = head;
+    
+    // Traverse until temp sits ON the target position node
+    while (i < pos) {
+        temp = temp->next;
+        i++;
+    }
+    
+    // Step 1: RIGHT LINK (newnode -> next node)
+    newnode->next = temp->next;
+    
+    // Step 2: LEFT LINK (current node -> newnode)
+    temp->next = newnode;
+}
+            </code></pre>
+
+            <h3 class="text-xl font-bold mt-8 mb-4 border-b pb-2">Visualizing the Insertion (Splicing)</h3>
+            <p class="text-sm text-gray-600 mb-4">Assume <code>pos = 2</code>. <code>temp</code> stops at Node 2 (Address 200). We are inserting <code>newnode</code> (Address 400).</p>
+
+            <div class="ll-container items-start relative pb-16">
+                <!-- Node 1 -->
+                <div class="ll-node-wrapper opacity-70">
+                    <div class="ll-pointer"></div>
+                    <div class="ll-node">
+                        <div class="ll-data">7</div>
+                        <div class="ll-next">200</div>
+                    </div>
+                    <div class="ll-address">Add: 100</div>
+                </div>
+                <div class="ll-arrow" style="padding-top:0; margin-top:20px;">&rarr;</div>
+
+                <!-- Node 2 (Temp stops here) -->
+                <div class="ll-node-wrapper relative">
+                    <div class="ll-pointer temp">temp (pos 2)</div>
+                    <div class="ll-node">
+                        <div class="ll-data">1</div>
+                        <!-- Updated to point to newnode -->
+                        <div class="ll-next bg-purple-100 text-purple-800 font-bold border-2 border-purple-400">400</div>
+                    </div>
+                    <div class="ll-address">Add: 200</div>
+                    <!-- Diagonal down arrow to new node -->
+                    <svg class="absolute w-12 h-12 text-purple-500 -bottom-10 -right-8" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 14l-7 7m0 0l-7-7m7 7V3"></path></svg>
+                </div>
+
+                <!-- Empty space holder for top row -->
+                <div class="w-16"></div>
+
+                <!-- Node 3 (The node getting pushed back) -->
+                <div class="ll-node-wrapper relative">
+                    <div class="ll-pointer"></div>
+                    <div class="ll-node">
+                        <div class="ll-data">9</div>
+                        <div class="ll-next">0</div>
+                    </div>
+                    <div class="ll-address">Add: 300</div>
+                    <!-- Diagonal up arrow from new node -->
+                    <svg class="absolute w-12 h-12 text-purple-500 -bottom-10 -left-12 transform -rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 10l7-7m0 0l7 7m-7-7v18"></path></svg>
+                </div>
+
+                <!-- Spliced Node placed below -->
+                <div class="absolute -bottom-6 left-1/2 transform -translate-x-1/2 ml-4">
+                    <div class="ll-node-wrapper">
+                        <div class="ll-pointer newnode">newnode</div>
+                        <div class="ll-node border-purple-500 border-4">
+                            <div class="ll-data bg-purple-50">5</div>
+                            <!-- Right link connecting to node 300 -->
+                            <div class="ll-next bg-purple-100">300</div>
+                        </div>
+                        <div class="ll-address">Add: 400</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="bg-gray-100 p-4 rounded-lg mt-12 border border-gray-200">
+                <p class="text-gray-800 font-medium">Step-by-step resolution of the code:</p>
+                <ol class="list-decimal list-inside text-sm text-gray-700 mt-2 space-y-1">
+                    <li><code>newnode->next = temp->next;</code> <span class="text-gray-500">→ `newnode` (400) next becomes 300.</span></li>
+                    <li><code>temp->next = newnode;</code> <span class="text-gray-500">→ Node at 200 next becomes 400.</span></li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- 🏁 FOOTER -->
+        <footer class="text-center text-gray-500 py-8 border-t border-gray-200 mt-12">
+            <p>End of Insertion Chapter. Up next: Deleting nodes from a linked list.</p>
+        </footer>
+
+    </div>
+
+</body>
+</html>
