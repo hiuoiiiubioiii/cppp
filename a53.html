@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Tree Traversals - Study Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --primary: #3b82f6;
+            --inorder-color: #0ea5e9;
+            --preorder-color: #10b981;
+            --postorder-color: #8b5cf6;
+            --border-color: #e5e7eb;
+            --tip-bg: #fffbeb;
+            --tip-border: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        header {
+            max-width: 1200px;
+            margin: 0 auto 30px auto;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--text-main);
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Feed Layout */
+        .layout-container {
+            display: flex;
+            max-width: 1200px;
+            margin: 0 auto;
+            gap: 30px;
+            align-items: flex-start;
+        }
+
+        /* Sticky Tree Visualization */
+        .tree-container {
+            flex: 0 0 450px;
+            position: sticky;
+            top: 20px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .tree-title {
+            font-size: 1.2rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--primary);
+        }
+
+        svg.tree {
+            width: 100%;
+            height: auto;
+            max-width: 400px;
+        }
+
+        svg.tree circle {
+            fill: #fff;
+            stroke: var(--text-main);
+            stroke-width: 3;
+            transition: all 0.3s;
+        }
+
+        svg.tree circle:hover {
+            fill: #e0f2fe;
+            stroke: var(--primary);
+        }
+
+        svg.tree text {
+            font-family: 'Inter', sans-serif;
+            font-weight: 700;
+            font-size: 18px;
+            fill: var(--text-main);
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+
+        svg.tree line {
+            stroke: var(--text-main);
+            stroke-width: 2;
+        }
+
+        /* Vertical Feed */
+        .feed-container {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border: 1px solid var(--border-color);
+        }
+
+        .card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .rule-box {
+            display: inline-block;
+            padding: 8px 16px;
+            border-radius: 8px;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 20px;
+            color: #fff;
+        }
+
+        .rule-inorder { background-color: var(--inorder-color); }
+        .rule-preorder { background-color: var(--preorder-color); }
+        .rule-postorder { background-color: var(--postorder-color); }
+
+        .tip-box {
+            background-color: var(--tip-bg);
+            border-left: 5px solid var(--tip-border);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+
+        .tip-box strong {
+            color: #b45309;
+        }
+
+        ol.steps {
+            margin-left: 20px;
+            margin-bottom: 25px;
+        }
+
+        ol.steps li {
+            margin-bottom: 10px;
+            padding-left: 10px;
+        }
+
+        ol.steps li mark {
+            background-color: #fef08a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .final-answer {
+            background: #f9fafb;
+            border: 2px dashed var(--border-color);
+            padding: 20px;
+            border-radius: 12px;
+            text-align: center;
+            font-size: 1.3rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .final-answer span {
+            color: var(--primary);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1000px) {
+            .layout-container {
+                flex-direction: column;
+            }
+
+            .tree-container {
+                position: relative;
+                top: 0;
+                width: 100%;
+                flex: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Binary Tree Traversals</h1>
+        <p>In-depth Study Notes: Inorder, Preorder, & Postorder Walkthroughs</p>
+    </header>
+
+    <div class="layout-container">
+        
+        <!-- STICKY VISUALIZATION -->
+        <div class="tree-container">
+            <div class="tree-title">Reference Tree</div>
+            <svg class="tree" viewBox="0 0 500 320" xmlns="http://www.w3.org/2000/svg">
+                <!-- Lines -->
+                <line x1="250" y1="40" x2="150" y2="120" /> <!-- A to B -->
+                <line x1="250" y1="40" x2="350" y2="120" /> <!-- A to C -->
+                <line x1="150" y1="120" x2="210" y2="200" /> <!-- B to D (Right) -->
+                <line x1="350" y1="120" x2="290" y2="200" /> <!-- C to E (Left) -->
+                <line x1="350" y1="120" x2="430" y2="200" /> <!-- C to F (Right) -->
+                <line x1="290" y1="200" x2="230" y2="280" /> <!-- E to G (Left) -->
+                <line x1="430" y1="200" x2="370" y2="280" /> <!-- F to H (Left) -->
+                <line x1="430" y1="200" x2="480" y2="280" /> <!-- F to I (Right) -->
+
+                <!-- Nodes -->
+                <circle cx="250" cy="40" r="20" /> <text x="250" y="40">A</text>
+                <circle cx="150" cy="120" r="20" /> <text x="150" y="120">B</text>
+                <circle cx="350" cy="120" r="20" /> <text x="350" y="120">C</text>
+                <circle cx="210" cy="200" r="20" /> <text x="210" y="200">D</text>
+                <circle cx="290" cy="200" r="20" /> <text x="290" y="200">E</text>
+                <circle cx="430" cy="200" r="20" /> <text x="430" y="200">F</text>
+                <circle cx="230" cy="280" r="20" /> <text x="230" y="280">G</text>
+                <circle cx="370" cy="280" r="20" /> <text x="370" y="280">H</text>
+                <circle cx="480" cy="280" r="20" /> <text x="480" y="280">I</text>
+            </svg>
+            <div class="tip-box" style="width: 100%; margin-bottom: 0;">
+                <strong>Sticky View:</strong> Keep an eye on this tree as you scroll through the steps below. The letters map exactly to the instructor's whiteboard drawing.
+            </div>
+        </div>
+
+        <!-- VERTICAL FEED -->
+        <div class="feed-container">
+            
+            <!-- SECTION: INTRO & RULES -->
+            <section class="card">
+                <h2 style="color: var(--primary);">The Core Rules</h2>
+                <p>The instructor explains that the name of the traversal tells you exactly where the <strong>Root</strong> goes. Memorize these formulas:</p>
+                <div class="tip-box">
+                    <strong>Instructor's Tip:</strong> 
+                    <ul>
+                        <li><strong>IN</strong>order: The root is <em>IN</em> the middle.</li>
+                        <li><strong>PRE</strong>order: The root is <em>PRE</em> (before) everything else.</li>
+                        <li><strong>POST</strong>order: The root is <em>POST</em> (after) everything else.</li>
+                    </ul>
+                </div>
+            </section>
+
+            <!-- SECTION: INORDER -->
+            <section class="card">
+                <h2>1. Inorder Traversal</h2>
+                <div class="rule-box rule-inorder">Formula: Left ➔ Root ➔ Right</div>
+                
+                <p>Starting at the very top of the tree (Root A), we follow the rule rigidly for every single node.</p>
+                
+                <ol class="steps">
+                    <li>Start at <strong>A</strong>. Rule says go Left. Go to <strong>B</strong>.</li>
+                    <li>At <strong>B</strong>, rule says go Left. There is nothing (Null) to the left of B.</li>
+                    <li>Since Left is done, we print the Root of this sub-tree: <mark>Write B</mark>.</li>
+                    <li>Rule says go Right. Go to <strong>D</strong>. <mark>Write D</mark>. <em>(D has no children, so it's done)</em>.</li>
+                    <li>Backtrack to <strong>A</strong>. The entire left side of A is now done. Next step in the rule is Root. <mark>Write A</mark>.</li>
+                    <li>Rule says go Right. Go to <strong>C</strong>.</li>
+                    <li>At <strong>C</strong>, rule says go Left. Go to <strong>E</strong>.</li>
+                    <li>At <strong>E</strong>, rule says go Left. Go to <strong>G</strong>.</li>
+                    <li>At <strong>G</strong>, there is no Left. Print the root: <mark>Write G</mark>.</li>
+                    <li>Backtrack to <strong>E</strong>. Left is done, so print the root: <mark>Write E</mark>. (E has no right child).</li>
+                    <li>Backtrack to <strong>C</strong>. Left side of C is done. Print the root: <mark>Write C</mark>.</li>
+                    <li>Rule says go Right. Go to <strong>F</strong>.</li>
+                    <li>At <strong>F</strong>, rule says go Left. Go to <strong>H</strong>. <mark>Write H</mark>.</li>
+                    <li>Backtrack to <strong>F</strong>. Left is done, print the root: <mark>Write F</mark>.</li>
+                    <li>Rule says go Right. Go to <strong>I</strong>. <mark>Write I</mark>.</li>
+                </ol>
+
+                <div class="final-answer">
+                    Final Inorder: <br>
+                    <span style="color: var(--inorder-color);">B, D, A, G, E, C, H, F, I</span>
+                </div>
+            </section>
+
+            <!-- SECTION: PREORDER -->
+            <section class="card">
+                <h2>2. Preorder Traversal</h2>
+                <div class="rule-box rule-preorder">Formula: Root ➔ Left ➔ Right</div>
+                
+                <p>Because the Root comes first, you write the node down <strong>as soon as you visit it for the first time</strong>.</p>
+                
+                <ol class="steps">
+                    <li>Start at the top. Print the root immediately: <mark>Write A</mark>.</li>
+                    <li>Rule says go Left. Go to <strong>B</strong>. Print the root: <mark>Write B</mark>.</li>
+                    <li>Rule says go Left. It's Null. Go Right. Go to <strong>D</strong>. Print the root: <mark>Write D</mark>.</li>
+                    <li>The entire left side of A is done. Backtrack to A and go Right to <strong>C</strong>.</li>
+                    <li>Print the root: <mark>Write C</mark>.</li>
+                    <li>Rule says go Left. Go to <strong>E</strong>. Print the root: <mark>Write E</mark>.</li>
+                    <li>Rule says go Left. Go to <strong>G</strong>. Print the root: <mark>Write G</mark>.</li>
+                    <li>Backtrack up to C, then go Right. Go to <strong>F</strong>. Print the root: <mark>Write F</mark>.</li>
+                    <li>Rule says go Left. Go to <strong>H</strong>. Print the root: <mark>Write H</mark>.</li>
+                    <li>Backtrack to F, go Right. Go to <strong>I</strong>. Print the root: <mark>Write I</mark>.</li>
+                </ol>
+
+                <div class="final-answer">
+                    Final Preorder: <br>
+                    <span style="color: var(--preorder-color);">A, B, D, C, E, G, F, H, I</span>
+                </div>
+            </section>
+
+            <!-- SECTION: POSTORDER -->
+            <section class="card">
+                <h2>3. Postorder Traversal</h2>
+                <div class="rule-box rule-postorder">Formula: Left ➔ Right ➔ Root</div>
+                
+                <p>The root is printed <strong>last</strong>. You can only write a node down when you have fully checked its left and right children.</p>
+                
+                <ol class="steps">
+                    <li>Start at <strong>A</strong>. Go Left to <strong>B</strong>.</li>
+                    <li>At <strong>B</strong>, go Left (Null). Go Right to <strong>D</strong>.</li>
+                    <li><strong>D</strong> has no children. Left and Right are done. Print root: <mark>Write D</mark>.</li>
+                    <li>Backtrack to <strong>B</strong>. Left and Right are now done. Print root: <mark>Write B</mark>.</li>
+                    <li>Backtrack to <strong>A</strong>. The whole left side is done. Go Right to <strong>C</strong>.</li>
+                    <li>At <strong>C</strong>, go Left to <strong>E</strong>.</li>
+                    <li>At <strong>E</strong>, go Left to <strong>G</strong>. Left/Right of G are null. Print root: <mark>Write G</mark>.</li>
+                    <li>Backtrack to <strong>E</strong>. Right is null. Left/Right are done. Print root: <mark>Write E</mark>.</li>
+                    <li>Backtrack to <strong>C</strong>. Left is done. Go Right to <strong>F</strong>.</li>
+                    <li>At <strong>F</strong>, go Left to <strong>H</strong>. Left/Right of H are null. Print root: <mark>Write H</mark>.</li>
+                    <li>Backtrack to <strong>F</strong>. Go Right to <strong>I</strong>. Left/Right of I are null. Print root: <mark>Write I</mark>.</li>
+                    <li>Backtrack to <strong>F</strong>. Left and Right are done. Print root: <mark>Write F</mark>.</li>
+                    <li>Backtrack to <strong>C</strong>. Left and Right are done. Print root: <mark>Write C</mark>.</li>
+                    <li>Backtrack to <strong>A</strong>. The entire Left and Right sides of the tree are done. Finally, print the ultimate root: <mark>Write A</mark>.</li>
+                </ol>
+
+                <div class="final-answer">
+                    Final Postorder: <br>
+                    <span style="color: var(--postorder-color);">D, B, G, E, H, I, F, C, A</span>
+                </div>
+            </section>
+
+            <!-- SECTION: CHEAT SHEET -->
+            <section class="card" style="background-color: var(--text-main); color: white;">
+                <h2 style="border-bottom-color: #4b5563;">Final Cheat Sheet</h2>
+                <p style="margin-bottom: 15px; color: #d1d5db;">Here is the summary exactly as written on the instructor's whiteboard at the end of the lecture:</p>
+                
+                <div style="font-family: monospace; font-size: 1.2rem; line-height: 2;">
+                    <strong>Inorder:</strong> &nbsp;&nbsp;<span style="color: var(--inorder-color);">B D A G E C H F I</span><br>
+                    <strong>Preorder:</strong> &nbsp;<span style="color: var(--preorder-color);">A B D C E G F H I</span><br>
+                    <strong>Postorder:</strong> <span style="color: #a78bfa;">D B G E H I F C A</span>
+                </div>
+            </section>
+
+        </div>
+    </div>
+
+</body>
+</html>
