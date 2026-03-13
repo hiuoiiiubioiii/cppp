@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Notes: Length of a Linked List</title>
+    <style>
+        /* --- GLOBAL STYLES & FEED LAYOUT --- */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@400;500&display=swap');
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* The Continuous Vertical Feed Container */
+        .feed-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px; /* Space between each lesson block */
+        }
+
+        /* --- CARD STYLES --- */
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            line-height: 1.6;
+        }
+
+        h1 { font-size: 2.2rem; color: #1a1a1a; margin-top: 0; }
+        h2 { font-size: 1.5rem; color: #2c3e50; border-bottom: 2px solid #eee; padding-bottom: 10px;}
+        h3 { font-size: 1.2rem; color: #34495e; }
+        p { font-size: 1.05rem; color: #555; }
+        
+        .highlight {
+            background: #fff3cd;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+            color: #856404;
+        }
+
+        .danger {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-left: 5px solid #dc3545;
+            border-radius: 4px;
+            margin: 20px 0;
+        }
+
+        /* --- CODE BLOCK STYLES --- */
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .code-comment { color: #6a9955; }
+        .code-keyword { color: #569cd6; }
+        .code-func { color: #dcdcaa; }
+
+        /* --- VISUALIZATION STYLES --- */
+        .viz-container {
+            background: #eef2f5;
+            border-radius: 8px;
+            padding: 40px 20px;
+            position: relative;
+            overflow-x: auto;
+            margin-bottom: 20px;
+        }
+
+        .linked-list {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 20px;
+            margin-top: 40px;
+            padding-bottom: 20px;
+        }
+
+        .node-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .address {
+            font-family: 'Fira Code', monospace;
+            font-size: 0.85rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .node {
+            display: flex;
+            border: 2px solid #2c3e50;
+            border-radius: 6px;
+            background: white;
+            overflow: hidden;
+            width: 120px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .node.active {
+            border-color: #e74c3c;
+            box-shadow: 0 0 15px rgba(231, 76, 60, 0.4);
+            transform: translateY(-5px);
+        }
+
+        .data-part {
+            flex: 1;
+            padding: 15px 0;
+            text-align: center;
+            border-right: 2px solid #2c3e50;
+            font-weight: 600;
+            background: #ecf0f1;
+        }
+
+        .next-part {
+            flex: 1;
+            padding: 15px 0;
+            text-align: center;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            background: #fff;
+        }
+
+        .arrow {
+            font-size: 1.5rem;
+            color: #2c3e50;
+            font-weight: bold;
+        }
+
+        /* Pointers */
+        .pointer {
+            position: absolute;
+            top: -45px;
+            background: #3498db;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: bold;
+            transition: all 0.4s ease;
+        }
+        .pointer::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 50%;
+            transform: translateX(-50%);
+            border-width: 5px 5px 0;
+            border-style: solid;
+            border-color: #3498db transparent transparent transparent;
+        }
+
+        #head-ptr { left: 50%; transform: translateX(-50%); background: #2ecc71; }
+        #head-ptr::after { border-color: #2ecc71 transparent transparent transparent; }
+        
+        #temp-ptr { 
+            background: #e74c3c; 
+            top: 75px; /* Below the node */
+        }
+        #temp-ptr::after { 
+            top: -5px;
+            bottom: auto;
+            border-width: 0 5px 5px;
+            border-color: transparent transparent #e74c3c transparent;
+        }
+
+        /* Dashboard for tracking state */
+        .state-dashboard {
+            display: flex;
+            justify-content: space-around;
+            background: #2c3e50;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-top: 20px;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .viz-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover { background: #2980b9; }
+        button:disabled { background: #bdc3c7; cursor: not-allowed; }
+
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <!-- HEADER -->
+        <div class="card" style="text-align: center; background: #2c3e50; color: white;">
+            <h1 style="color: white; margin-bottom: 10px;">Find Length of a Linked List</h1>
+            <p style="color: #bdc3c7; margin: 0;">In-depth Video Breakdown & Study Notes</p>
+        </div>
+
+        <!-- SECTION 1 -->
+        <div class="card">
+            <h2>1. Visualizing the Problem</h2>
+            <p>To calculate the length of a linked list, we must count the number of nodes. The instructor draws a linked list with <strong>3 nodes</strong> on the whiteboard. Let's look at how it is structured in memory.</p>
+            
+            <ul>
+                <li><strong>Head Pointer:</strong> Resides at address <span class="highlight">200</span> and points to the first node.</li>
+                <li><strong>Node 1:</strong> Data is <code>-1</code>, Next points to <code>100</code>.</li>
+                <li><strong>Node 2:</strong> Data is <code>1</code>, Next points to <code>150</code>.</li>
+                <li><strong>Node 3:</strong> Data is <code>9</code>, Next is <code>0</code> (which means <code>NULL</code>, marking the end).</li>
+            </ul>
+        </div>
+
+        <!-- SECTION 2 -->
+        <div class="card">
+            <h2>2. The Core Concept & Golden Rule</h2>
+            <p>To count the nodes, we need to traverse (walk through) the list from the first node to the last.</p>
+            
+            <div class="danger">
+                <strong>🚨 THE GOLDEN RULE OF LINKED LISTS:</strong><br>
+                Never use the <code>head</code> pointer to traverse the list! If you write <code>head = head->next</code>, you will lose the address of your first node forever. Your list will be lost in memory (a memory leak).
+            </div>
+
+            <p><strong>The Solution:</strong> Create a temporary pointer called <code>temp</code>. Point it to the start of the list (<code>temp = head;</code>), and move <code>temp</code> forward while counting.</p>
+        </div>
+
+        <!-- SECTION 3: CODE -->
+        <div class="card">
+            <h2>3. The C Code Breakdown</h2>
+            <p>Here is the exact code written on the whiteboard during the lecture, formatted for readability:</p>
+<pre>
+<span class="code-keyword">void</span> <span class="code-func">getLength</span>() {
+    <span class="code-comment">// 1. Initialize a counter</span>
+    <span class="code-keyword">int</span> count = 0; 
+    
+    <span class="code-comment">// 2. Create temp pointer for traversal</span>
+    <span class="code-keyword">struct</span> node *temp; 
+    temp = head; <span class="code-comment">// Both head and temp now point to address 200</span>
+    
+    <span class="code-comment">// 3. Loop until temp reaches the end (0 / NULL)</span>
+    <span class="code-keyword">while</span> (temp != 0) { 
+        count++;               <span class="code-comment">// Count the current node</span>
+        temp = temp->next;     <span class="code-comment">// Move temp to the next node</span>
+    }
+    
+    <span class="code-comment">// 4. Print final result</span>
+    <span class="code-func">printf</span>("Length is %d", count); 
+}
+</pre>
+            <p><em>Instructor Note:</em> In C, the instructor uses <code>0</code> to represent <code>NULL</code>. Writing <code>temp != NULL</code> means the exact same thing.</p>
+        </div>
+
+        <!-- SECTION 4: INTERACTIVE VISUALIZATION -->
+        <div class="card">
+            <h2>4. Interactive Dry Run</h2>
+            <p>Click "Step Forward" to trace the execution of the <code>while</code> loop exactly as the instructor did on the whiteboard.</p>
+            
+            <div class="viz-container">
+                <div class="linked-list" id="ll-container">
+                    
+                    <!-- Node 1 -->
+                    <div class="node-wrapper" id="nw-0">
+                        <div class="pointer" id="head-ptr">head</div>
+                        <div class="pointer" id="temp-ptr" style="display: none;">temp</div>
+                        <div class="address">200</div>
+                        <div class="node" id="node-0">
+                            <div class="data-part">-1</div>
+                            <div class="next-part">100</div>
+                        </div>
+                    </div>
+                    
+                    <div class="arrow">→</div>
+
+                    <!-- Node 2 -->
+                    <div class="node-wrapper" id="nw-1">
+                        <div class="address">100</div>
+                        <div class="node" id="node-1">
+                            <div class="data-part">1</div>
+                            <div class="next-part">150</div>
+                        </div>
+                    </div>
+
+                    <div class="arrow">→</div>
+
+                    <!-- Node 3 -->
+                    <div class="node-wrapper" id="nw-2">
+                        <div class="address">150</div>
+                        <div class="node" id="node-2">
+                            <div class="data-part">9</div>
+                            <div class="next-part">0</div>
+                        </div>
+                    </div>
+
+                    <div class="arrow">→</div>
+                    
+                    <!-- NULL -->
+                    <div class="node-wrapper" id="nw-3">
+                        <div class="address">NULL</div>
+                        <div style="padding: 15px; font-weight: bold; color: #7f8c8d;">0</div>
+                    </div>
+
+                </div>
+
+                <div class="state-dashboard">
+                    <div><code>temp</code> Address: <span id="dash-temp">---</span></div>
+                    <div><code>count</code>: <span id="dash-count">0</span></div>
+                    <div>Condition <code>temp != 0</code>: <span id="dash-cond">---</span></div>
+                </div>
+
+                <p id="viz-explanation" style="text-align: center; margin-top: 20px; font-weight: 600; color: #2980b9;">
+                    Click "Start Dry Run" to begin.
+                </p>
+
+                <div class="viz-controls">
+                    <button id="btn-reset" onclick="resetViz()">Reset</button>
+                    <button id="btn-next" onclick="nextStep()">Start Dry Run</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SECTION 5 -->
+        <div class="card">
+            <h2>5. Edge Cases Addressed</h2>
+            <p>Around 2:40 in the video, the instructor mentions checking for an empty list. How does our code handle it?</p>
+            <ul>
+                <li>If the list is empty, <code>head</code> is <code>0</code> (NULL).</li>
+                <li><code>temp</code> becomes <code>0</code> immediately.</li>
+                <li>The condition <code>while(temp != 0)</code> is evaluated as <code>0 != 0</code>, which is <strong>False</strong>.</li>
+                <li>The loop is skipped entirely.</li>
+                <li>The code drops down and safely prints: <code>Length is 0</code>.</li>
+            </ul>
+            <p>No special <code>if</code> statement is actually required because the <code>while</code> loop naturally handles the empty state perfectly!</p>
+        </div>
+
+    </div>
+
+    <!-- JAVASCRIPT FOR VISUALIZATION -->
+    <script>
+        let currentStep = -1;
+        
+        // Data states representing the instructor's dry run on the board
+        const runData = [
+            {
+                // Step 0: Initialization
+                targetNode: 0,
+                tempAddr: "200",
+                count: 0,
+                cond: "True (200 != 0)",
+                desc: "temp = head; Both point to address 200. We check the while loop: temp is not 0, so we enter the loop."
+            },
+            {
+                // Step 1: Count 1, Move to 100
+                targetNode: 1,
+                tempAddr: "100",
+                count: 1,
+                cond: "True (100 != 0)",
+                desc: "count++ makes count = 1. Then, temp = temp->next (100). Next loop check: temp is 100, which is not 0."
+            },
+            {
+                // Step 2: Count 2, Move to 150
+                targetNode: 2,
+                tempAddr: "150",
+                count: 2,
+                cond: "True (150 != 0)",
+                desc: "count++ makes count = 2. Then, temp = temp->next (150). Next loop check: temp is 150, which is not 0."
+            },
+            {
+                // Step 3: Count 3, Move to NULL
+                targetNode: 3,
+                tempAddr: "0 (NULL)",
+                count: 3,
+                cond: "FALSE (0 == 0)",
+                desc: "count++ makes count = 3. Then, temp = temp->next (0). Next loop check: temp is 0! The condition fails."
+            },
+            {
+                // Step 4: Finished
+                targetNode: 3,
+                tempAddr: "0 (NULL)",
+                count: 3,
+                cond: "Loop Terminated",
+                desc: "We exit the loop and print: 'Length is 3'. The dry run is complete!"
+            }
+        ];
+
+        function updateUI(stepIndex) {
+            const data = runData[stepIndex];
+            
+            // Dashboard updates
+            document.getElementById('dash-temp').innerText = data.tempAddr;
+            document.getElementById('dash-count').innerText = data.count;
+            document.getElementById('dash-cond').innerText = data.cond;
+            document.getElementById('viz-explanation').innerText = data.desc;
+
+            // Remove active classes from all nodes
+            document.querySelectorAll('.node').forEach(el => el.classList.remove('active'));
+            
+            // Move the temp pointer visually
+            const tempPtr = document.getElementById('temp-ptr');
+            tempPtr.style.display = 'block';
+            
+            // Append temp pointer to the current target node wrapper
+            const targetWrapper = document.getElementById('nw-' + data.targetNode);
+            targetWrapper.appendChild(tempPtr);
+
+            // Highlight active node (if not NULL)
+            if(data.targetNode < 3) {
+                document.getElementById('node-' + data.targetNode).classList.add('active');
+            }
+
+            // Button management
+            const btnNext = document.getElementById('btn-next');
+            if(stepIndex === 0) {
+                btnNext.innerText = "Step Forward (count++)";
+            } else if (stepIndex === runData.length - 1) {
+                btnNext.innerText = "Finished";
+                btnNext.disabled = true;
+                document.getElementById('dash-cond').style.color = "#e74c3c";
+            }
+        }
+
+        function nextStep() {
+            if (currentStep < runData.length - 1) {
+                currentStep++;
+                updateUI(currentStep);
+            }
+        }
+
+        function resetViz() {
+            currentStep = -1;
+            document.getElementById('dash-temp').innerText = "---";
+            document.getElementById('dash-count').innerText = "0";
+            document.getElementById('dash-cond').innerText = "---";
+            document.getElementById('dash-cond').style.color = "white";
+            document.getElementById('viz-explanation').innerText = 'Click "Start Dry Run" to begin.';
+            
+            document.querySelectorAll('.node').forEach(el => el.classList.remove('active'));
+            
+            const tempPtr = document.getElementById('temp-ptr');
+            tempPtr.style.display = 'none';
+            document.getElementById('nw-0').appendChild(tempPtr); // put it back to start in DOM
+
+            const btnNext = document.getElementById('btn-next');
+            btnNext.innerText = "Start Dry Run";
+            btnNext.disabled = false;
+        }
+    </script>
+</body>
+</html>
