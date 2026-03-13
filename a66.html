@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Red-Black Tree Deletion | In-Depth Study Notes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+        }
+        code {
+            font-family: 'JetBrains Mono', monospace;
+        }
+        /* Custom styling for the feed cards */
+        .feed-card {
+            background: white;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e5e7eb;
+            margin-bottom: 2.5rem;
+            overflow: hidden;
+            transition: transform 0.2s ease-in-out;
+        }
+        .feed-card:hover {
+            transform: translateY(-2px);
+        }
+        .card-header {
+            padding: 1.5rem 2rem;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .card-body {
+            padding: 2rem;
+        }
+        .highlight-red { color: #dc2626; font-weight: 700; }
+        .highlight-black { color: #111827; font-weight: 700; }
+        
+        /* SVG Tree Elements */
+        .svg-container {
+            background: #f9fafb;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            border: 1px dashed #d1d5db;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 1.5rem 0;
+        }
+        text { font-family: 'Inter', sans-serif; font-weight: bold; font-size: 14px; fill: white; text-anchor: middle; dominant-baseline: central; }
+        .text-black { fill: #111827; }
+        line { stroke: #9ca3af; stroke-width: 2; }
+    </style>
+</head>
+<body class="antialiased pb-20">
+
+    <!-- Top Banner -->
+    <header class="bg-gray-900 text-white py-12 px-4 mb-8 text-center sticky top-0 z-50 shadow-md">
+        <div class="max-w-3xl mx-auto">
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mb-3">Red-Black Tree Deletion</h1>
+            <p class="text-gray-400 text-lg">Continuous Vertical Study Feed • Scroll to Learn</p>
+        </div>
+    </header>
+
+    <!-- Main Feed Container -->
+    <main class="max-w-3xl mx-auto px-4">
+
+        <!-- Card 1: Prerequisites -->
+        <article class="feed-card">
+            <div class="card-header bg-blue-50 border-blue-100">
+                <h2 class="text-2xl font-bold text-blue-900">1. Prerequisites & The Core Problem</h2>
+            </div>
+            <div class="card-body space-y-4 text-gray-700 leading-relaxed">
+                <p>Before deleting, we must remember the <strong>3 Golden Rules</strong> of a Red-Black Tree that keep its operations at <code>O(log n)</code>:</p>
+                <ul class="list-disc pl-6 space-y-2">
+                    <li><strong>Root Property:</strong> The root node must always be <span class="highlight-black">Black</span>.</li>
+                    <li><strong>No Red-Red Conflict:</strong> If a parent is <span class="highlight-red">Red</span>, its children MUST be <span class="highlight-black">Black</span>.</li>
+                    <li><strong>Black Height Property:</strong> Every path from a node down to its descendant <code>NIL</code> nodes must contain the <strong>exact same number of Black nodes</strong>.</li>
+                </ul>
+                <div class="bg-red-50 border border-red-200 p-4 rounded-lg mt-6">
+                    <h3 class="font-bold text-red-800 mb-2">⚠️ Why is Deletion Tricky?</h3>
+                    <p class="text-red-700">Deleting a <span class="highlight-red">Red</span> node is easy—it doesn't affect the Black Height. But deleting a <span class="highlight-black">Black</span> node breaks Rule #3 by reducing the black-height of that specific path by 1. We have to fix this imbalance.</p>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 2: Standard BST Deletion -->
+        <article class="feed-card">
+            <div class="card-header bg-gray-50 border-gray-200">
+                <h2 class="text-2xl font-bold text-gray-900">2. Step One: Standard BST Deletion</h2>
+            </div>
+            <div class="card-body space-y-4 text-gray-700 leading-relaxed">
+                <p>Before applying any Red-Black rules, you must delete the node using standard Binary Search Tree (BST) logic.</p>
+                <ul class="list-decimal pl-6 space-y-3">
+                    <li><strong>Target is a Leaf:</strong> Simply delete it.</li>
+                    <li><strong>Target has One Child:</strong> Replace the target node with its child, then delete the target.</li>
+                    <li><strong>Target has Two Children:</strong> Find the <strong>In-order Successor</strong> (smallest value in the right subtree). Copy its value to the target node, then delete the original successor node.</li>
+                </ul>
+                <p class="italic text-sm text-gray-500 mt-4">*Note: The instructor always uses the In-Order Successor for two-child deletions in this lecture.*</p>
+            </div>
+        </article>
+
+        <!-- Card 3: The Simple Cases -->
+        <article class="feed-card">
+            <div class="card-header bg-green-50 border-green-100">
+                <h2 class="text-2xl font-bold text-green-900">3. The Simple Deletion Cases</h2>
+            </div>
+            <div class="card-body space-y-6">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Simple Case A: Delete a RED Leaf</h3>
+                    <p class="text-gray-700 mb-4">If the node to be deleted is a <span class="highlight-red">Red Leaf</span>, just delete it. No properties are violated.</p>
+                    <div class="svg-container">
+                        <svg width="300" height="150" viewBox="0 0 300 150">
+                            <!-- Lines -->
+                            <line x1="150" y1="30" x2="100" y2="100" />
+                            <line x1="150" y1="30" x2="200" y2="100" />
+                            <!-- Nodes -->
+                            <circle cx="150" cy="30" r="20" fill="#111827"/>
+                            <text x="150" y="30">20</text>
+                            <circle cx="100" cy="100" r="20" fill="#111827"/>
+                            <text x="100" y="100">10</text>
+                            
+                            <circle cx="200" cy="100" r="20" fill="#dc2626" stroke="#fca5a5" stroke-width="3" stroke-dasharray="5,5"/>
+                            <text x="200" y="100">30</text>
+                            <text x="200" y="135" class="text-black" style="font-size:12px; font-weight:normal;">Just delete 30</text>
+                        </svg>
+                    </div>
+                </div>
+
+                <div class="border-t border-gray-100 pt-6">
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Simple Case B: Black Node with ONE Red Child</h3>
+                    <p class="text-gray-700 mb-4">If you delete a <span class="highlight-black">Black</span> node that has one <span class="highlight-red">Red</span> child, the Red child moves up to replace it. <strong>Rule: The child must take the color of the node it replaced.</strong> So, color it Black.</p>
+                    <div class="svg-container">
+                        <svg width="400" height="150" viewBox="0 0 400 150">
+                            <!-- Before -->
+                            <line x1="100" y1="30" x2="100" y2="100" />
+                            <circle cx="100" cy="30" r="20" fill="#111827" stroke="#9ca3af" stroke-width="2" stroke-dasharray="4,4"/>
+                            <text x="100" y="30">20</text>
+                            <circle cx="100" cy="100" r="20" fill="#dc2626"/>
+                            <text x="100" y="100">30</text>
+                            
+                            <!-- Arrow -->
+                            <text x="200" y="65" class="text-black" style="font-size:24px;">→</text>
+
+                            <!-- After -->
+                            <circle cx="300" cy="65" r="20" fill="#111827"/>
+                            <text x="300" y="65">30</text>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 4: The Double Black Problem -->
+        <article class="feed-card">
+            <div class="card-header bg-gray-900 border-gray-900 text-white">
+                <h2 class="text-2xl font-bold">4. The Problem: "Double Black" (DB)</h2>
+            </div>
+            <div class="card-body space-y-4">
+                <p class="text-gray-700">What happens if you delete a <span class="highlight-black">Black Leaf</span> node?</p>
+                <p class="text-gray-700">It is replaced by a <code>NIL</code> node. To prevent the Black Height from changing, the deleted node passes its "blackness" down to the `NIL` node. Since `NIL` is already Black, it absorbs the extra blackness and becomes a <strong>Double Black (DB)</strong> node.</p>
+                
+                <div class="svg-container">
+                    <svg width="150" height="80" viewBox="0 0 150 80">
+                        <!-- Double Black Representation -->
+                        <circle cx="75" cy="40" r="24" fill="#111827"/>
+                        <circle cx="75" cy="40" r="18" fill="white"/>
+                        <circle cx="75" cy="40" r="14" fill="#111827"/>
+                        <text x="75" y="40" style="font-size: 10px;">NIL</text>
+                        <text x="125" y="40" class="text-black">DB</text>
+                    </svg>
+                </div>
+                <p class="font-bold text-center text-red-600">A Double Black node is illegal. The goal of the algorithm is to convert the DB node back into a Single Black node.</p>
+            </div>
+        </article>
+
+        <!-- Card 5: Terminology -->
+        <article class="feed-card">
+            <div class="card-header bg-purple-50 border-purple-100">
+                <h2 class="text-2xl font-bold text-purple-900">5. Algorithm Terminology</h2>
+            </div>
+            <div class="card-body">
+                <p class="text-gray-700 mb-4">To resolve a DB, you must ALWAYS look at its <strong>Sibling</strong>.</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-white border border-gray-200 p-4 rounded text-sm">
+                        <strong class="text-purple-700 block mb-1">DB:</strong> The Double Black node.
+                    </div>
+                    <div class="bg-white border border-gray-200 p-4 rounded text-sm">
+                        <strong class="text-purple-700 block mb-1">Sibling (S):</strong> The node sharing the same parent as DB.
+                    </div>
+                    <div class="bg-white border border-gray-200 p-4 rounded text-sm">
+                        <strong class="text-purple-700 block mb-1">Near Child:</strong> The child of the sibling closest to the DB node. (If DB is left, Near child is Sibling's left child).
+                    </div>
+                    <div class="bg-white border border-gray-200 p-4 rounded text-sm">
+                        <strong class="text-purple-700 block mb-1">Far Child:</strong> The child of the sibling furthest from the DB node.
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 6: Case 1 & 2 -->
+        <article class="feed-card border-l-4 border-l-gray-900">
+            <div class="card-body space-y-6">
+                <div>
+                    <h3 class="text-xl font-bold text-gray-900 mb-2">Case 1 & 2: The Easy Outs</h3>
+                    <div class="space-y-4">
+                        <div class="bg-gray-50 p-4 rounded">
+                            <strong class="text-black block mb-1">Case 1: Node to delete is RED.</strong>
+                            <p class="text-sm text-gray-600">Just delete it. We already covered this.</p>
+                        </div>
+                        <div class="bg-gray-50 p-4 rounded">
+                            <strong class="text-black block mb-1">Case 2: Root is Double Black.</strong>
+                            <p class="text-sm text-gray-600">If the DB node bubbles all the way up to become the Root, simply <strong>remove the Double Black</strong> and make it a Single Black root. The black height of the entire tree uniformly decreases by 1.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 7: Case 3 -->
+        <article class="feed-card border-l-4 border-l-black">
+            <div class="card-body space-y-4">
+                <h3 class="text-xl font-bold text-gray-900">Case 3: Sibling is BLACK, both Sibling's children are BLACK</h3>
+                <p class="text-gray-700 text-sm mb-4"><strong>Action:</strong> Remove DB status (make it single black). Make the Sibling <span class="highlight-red">Red</span>. Add a layer of "Blackness" to the Parent. If parent was Red, it becomes Black (done). If parent was Black, it becomes Double Black (re-apply cases to parent).</p>
+                
+                <div class="svg-container">
+                    <svg width="400" height="150" viewBox="0 0 400 150">
+                        <!-- Before -->
+                        <line x1="100" y1="30" x2="60" y2="90" />
+                        <line x1="100" y1="30" x2="140" y2="90" />
+                        <circle cx="100" cy="30" r="18" fill="#111827"/>
+                        <text x="100" y="30">P</text>
+                        <!-- DB -->
+                        <circle cx="60" cy="90" r="18" fill="#111827"/>
+                        <circle cx="60" cy="90" r="13" fill="white"/>
+                        <circle cx="60" cy="90" r="9" fill="#111827"/>
+                        <text x="60" y="125" class="text-black" style="font-size: 12px">DB</text>
+                        <!-- Sib -->
+                        <circle cx="140" cy="90" r="18" fill="#111827"/>
+                        <text x="140" y="90">S</text>
+
+                        <!-- Arrow -->
+                        <text x="200" y="75" class="text-black" style="font-size:24px;">→</text>
+
+                        <!-- After -->
+                        <line x1="300" y1="30" x2="260" y2="90" />
+                        <line x1="300" y1="30" x2="340" y2="90" />
+                        <circle cx="300" cy="30" r="22" fill="#111827"/>
+                        <circle cx="300" cy="30" r="16" fill="white"/>
+                        <circle cx="300" cy="30" r="12" fill="#111827"/>
+                        <text x="300" y="30" style="font-size: 11px">P(DB)</text>
+                        <!-- Resolved DB -->
+                        <circle cx="260" cy="90" r="18" fill="#111827"/>
+                        <!-- Sib is Red -->
+                        <circle cx="340" cy="90" r="18" fill="#dc2626"/>
+                        <text x="340" y="90">S</text>
+                    </svg>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 8: Case 4 -->
+        <article class="feed-card border-l-4 border-l-red-600">
+            <div class="card-body space-y-4">
+                <h3 class="text-xl font-bold text-gray-900">Case 4: Sibling is RED</h3>
+                <p class="text-gray-700 text-sm mb-4"><strong>Action:</strong> Swap colors of Parent and Sibling. Rotate Parent in the direction of the DB. <strong>Result:</strong> DB is not resolved, but it shifts the tree into Case 3, 5, or 6. Re-apply rules.</p>
+                
+                <div class="svg-container">
+                    <svg width="400" height="150" viewBox="0 0 400 150">
+                        <!-- Before -->
+                        <line x1="100" y1="30" x2="60" y2="90" />
+                        <line x1="100" y1="30" x2="140" y2="90" />
+                        <circle cx="100" cy="30" r="18" fill="#111827"/>
+                        <text x="100" y="30">P</text>
+                        <!-- DB -->
+                        <circle cx="60" cy="90" r="18" fill="#111827"/>
+                        <circle cx="60" cy="90" r="13" fill="white"/>
+                        <circle cx="60" cy="90" r="9" fill="#111827"/>
+                        <!-- Sib -->
+                        <circle cx="140" cy="90" r="18" fill="#dc2626"/>
+                        <text x="140" y="90">S</text>
+
+                        <!-- Arrow -->
+                        <text x="200" y="75" class="text-black" style="font-size:24px;">→</text>
+
+                        <!-- After (Rotate Left) -->
+                        <line x1="300" y1="30" x2="260" y2="90" />
+                        <line x1="260" y1="90" x2="230" y2="130" />
+                        <circle cx="300" cy="30" r="18" fill="#111827"/>
+                        <text x="300" y="30">S</text>
+                        <circle cx="260" cy="90" r="18" fill="#dc2626"/>
+                        <text x="260" y="90">P</text>
+                        <!-- DB -->
+                        <circle cx="230" cy="130" r="14" fill="#111827"/>
+                        <circle cx="230" cy="130" r="10" fill="white"/>
+                        <circle cx="230" cy="130" r="6" fill="#111827"/>
+                    </svg>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 9: Case 5 -->
+        <article class="feed-card border-l-4 border-l-black">
+            <div class="card-body space-y-4">
+                <h3 class="text-xl font-bold text-gray-900">Case 5: Sibling is BLACK, "Near" child RED, "Far" child BLACK</h3>
+                <p class="text-gray-700 text-sm mb-4"><strong>Action:</strong> Swap colors of Sibling and Near Child. Rotate Sibling away from the DB. <strong>Result:</strong> This perfectly transforms the tree into Case 6. Proceed immediately to Case 6.</p>
+            </div>
+        </article>
+
+        <!-- Card 10: Case 6 -->
+        <article class="feed-card border-l-4 border-l-green-500 relative overflow-hidden">
+            <div class="absolute top-0 right-0 bg-green-500 text-white text-xs font-bold px-3 py-1 rounded-bl-lg">TERMINAL CASE</div>
+            <div class="card-body space-y-4">
+                <h3 class="text-xl font-bold text-gray-900">Case 6: Sibling is BLACK, "Far" child is RED</h3>
+                <p class="text-gray-700 text-sm mb-4"><strong>Action:</strong> Swap colors of Parent and Sibling. Color the Far Child <span class="highlight-black">Black</span>. Rotate Parent in the direction of the DB. Remove DB status. <strong>Problem completely solved!</strong></p>
+                
+                <div class="svg-container">
+                    <svg width="450" height="180" viewBox="0 0 450 180">
+                        <!-- Before -->
+                        <line x1="100" y1="30" x2="50" y2="80" />
+                        <line x1="100" y1="30" x2="150" y2="80" />
+                        <line x1="150" y1="80" x2="190" y2="130" />
+                        <circle cx="100" cy="30" r="18" fill="#111827"/>
+                        <text x="100" y="30">P</text>
+                        <!-- DB -->
+                        <circle cx="50" cy="80" r="18" fill="#111827"/>
+                        <circle cx="50" cy="80" r="13" fill="white"/>
+                        <circle cx="50" cy="80" r="9" fill="#111827"/>
+                        <!-- Sib -->
+                        <circle cx="150" cy="80" r="18" fill="#111827"/>
+                        <text x="150" y="80">S</text>
+                        <!-- Far Red -->
+                        <circle cx="190" cy="130" r="18" fill="#dc2626"/>
+                        <text x="190" y="130">F</text>
+
+                        <!-- Arrow -->
+                        <text x="230" y="80" class="text-black" style="font-size:24px;">→</text>
+
+                        <!-- After (Rotate Left, Recolor) -->
+                        <line x1="330" y1="30" x2="280" y2="80" />
+                        <line x1="330" y1="30" x2="380" y2="80" />
+                        <line x1="280" y1="80" x2="240" y2="130" />
+                        
+                        <!-- S becomes root of subtree (takes P's color, here Black) -->
+                        <circle cx="330" cy="30" r="18" fill="#111827"/>
+                        <text x="330" y="30">S</text>
+                        
+                        <!-- P moves down -->
+                        <circle cx="280" cy="80" r="18" fill="#111827"/>
+                        <text x="280" y="80">P</text>
+
+                        <!-- DB is resolved -->
+                        <circle cx="240" cy="130" r="18" fill="#111827"/>
+                        <text x="240" y="130" style="font-size:10px;">NIL</text>
+
+                        <!-- Far Child becomes Black -->
+                        <circle cx="380" cy="80" r="18" fill="#111827"/>
+                        <text x="380" y="80">F</text>
+                    </svg>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 11: Master Example Walkthrough -->
+        <article class="feed-card">
+            <div class="card-header bg-indigo-50 border-indigo-100">
+                <h2 class="text-2xl font-bold text-indigo-900">6. Master Walkthrough</h2>
+            </div>
+            <div class="card-body space-y-6">
+                <p class="text-gray-700">Follow the mental loop: <em>1. Standard Delete -> 2. Was it red? (Done) -> 3. Was it black? (Place DB) -> 4. What color is Sibling? -> 5. Apply Case.</em></p>
+                
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h4 class="font-bold text-lg mb-2 text-indigo-800">Operation 1: Delete 55 (Red Leaf)</h4>
+                    <p class="text-sm text-gray-700">It is a Red leaf node. <strong>Apply Case 1.</strong> Just delete it. The tree remains balanced.</p>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h4 class="font-bold text-lg mb-2 text-indigo-800">Operation 2: Delete 15 (Black Leaf)</h4>
+                    <ul class="text-sm text-gray-700 space-y-2 list-disc pl-5">
+                        <li>Deleting 15 leaves a `NIL` <strong>Double Black</strong> node.</li>
+                        <li><strong>Check Sibling:</strong> Sibling is `25`, which is <span class="highlight-red">Red</span>.</li>
+                        <li><strong>Match:</strong> This is <strong>Case 4</strong>.</li>
+                        <li><strong>Action:</strong> Swap colors of Parent (20) and Sibling (25). Rotate Parent left.</li>
+                        <li><strong>Re-check:</strong> DB still exists. New sibling is `28(B)`. Both of `28`'s children are `NIL` (Black).</li>
+                        <li><strong>Match:</strong> This is now <strong>Case 3</strong>.</li>
+                        <li><strong>Action:</strong> Make Sibling (28) Red. Remove DB. Pass blackness to Parent (20). Since Parent is Red, it absorbs it and becomes Black. Problem Solved.</li>
+                    </ul>
+                </div>
+
+                <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                    <h4 class="font-bold text-lg mb-2 text-indigo-800">Operation 3: Delete 80 (Black Leaf)</h4>
+                    <ul class="text-sm text-gray-700 space-y-2 list-disc pl-5">
+                        <li>Deleting 80 leaves a `NIL` <strong>Double Black</strong> node.</li>
+                        <li><strong>Check Sibling:</strong> Sibling is `65(B)`. Sibling's "Near" child is `70(R)`. Sibling's "Far" child is `NIL(B)`.</li>
+                        <li><strong>Match:</strong> Near is Red, Far is Black. This is <strong>Case 5</strong>.</li>
+                        <li><strong>Action:</strong> Swap colors of Sibling (65) and Near child (70). Rotate Sibling right.</li>
+                        <li><strong>Re-check:</strong> Sibling is now `70(B)`, and "Far" child is `65(R)`.</li>
+                        <li><strong>Match:</strong> Far is Red. This perfectly transforms into <strong>Case 6</strong>.</li>
+                        <li><strong>Action:</strong> Swap colors of Parent (68) and Sibling (70). Color Far child (65) Black. Rotate Parent left. Remove DB. Problem Solved.</li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+    </main>
+
+    <footer class="text-center text-gray-500 text-sm mt-12 pb-8">
+        Designed for in-depth algorithmic study. Visualizations conceptualized from lecture instructions.
+    </footer>
+
+</body>
+</html>
