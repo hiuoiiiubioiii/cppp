@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Study Notes: Reversing a Circular Linked List</title>
+    <style>
+        /* Modern CSS Variables */
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --primary: #4299e1;
+            --secondary: #e53e3e;
+            --code-bg: #1a202c;
+            --border-radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Sticky Header */
+        header {
+            width: 100%;
+            background: #ffffff;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        header h1 {
+            font-size: 1.8rem;
+            color: var(--text-main);
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+            margin-top: 5px;
+        }
+
+        /* Vertical Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            width: 95%;
+            margin: 40px auto;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--primary);
+            border-bottom: 2px solid #edf2f7;
+            padding-bottom: 10px;
+        }
+
+        .card p, .card li {
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        ul, ol {
+            padding-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            background-color: #ebf8ff;
+            color: #2b6cb0;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* Code Block Styling */
+        pre {
+            background-color: var(--code-bg);
+            color: #e2e8f0;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+            line-height: 1.5;
+            margin: 20px 0;
+        }
+        
+        .c-keyword { color: #f6ad55; }
+        .c-type { color: #63b3ed; }
+        .c-comment { color: #a0aec0; font-style: italic; }
+        .c-variable { color: #cbd5e0; }
+        .c-func { color: #feb2b2; }
+
+        /* Visualization Styling */
+        .viz-container {
+            background: #edf2f7;
+            padding: 30px 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .node-row {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .node-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .node {
+            display: flex;
+            border: 2px solid #4a5568;
+            border-radius: 6px;
+            width: 120px;
+            background: #fff;
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .node-data {
+            width: 50%;
+            padding: 10px 0;
+            text-align: center;
+            font-weight: bold;
+            background: #e2e8f0;
+            border-right: 2px solid #4a5568;
+        }
+
+        .node-next {
+            width: 50%;
+            padding: 10px 0;
+            text-align: center;
+            color: var(--secondary);
+            font-weight: bold;
+        }
+
+        .node-addr {
+            margin-top: 8px;
+            background: #4a5568;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-family: monospace;
+        }
+
+        .arrow {
+            font-size: 1.5rem;
+            color: #718096;
+            font-weight: bold;
+        }
+
+        .pointer-box {
+            background: white;
+            border: 2px dashed var(--primary);
+            padding: 5px 15px;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+            color: var(--primary);
+            margin: 10px;
+        }
+
+        .tail-indicator {
+            background: var(--secondary);
+            color: white;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Study Notes: Reversing a Circular Linked List</h1>
+        <p>Scroll down to explore the concepts, visualizations, and code breakdown step-by-step.</p>
+    </header>
+
+    <div class="feed-container">
+
+        <!-- Card 1: Core Concept -->
+        <div class="card">
+            <h2>1. The Core Concept</h2>
+            <p>What does "Reversing" mean in the context of a Linked List?</p>
+            <ul>
+                <li><span class="highlight">Do not swap the data.</span> We only reverse the <strong>links</strong> (the pointers) between the nodes.</li>
+                <li>In a Circular Linked List (CLL), the last node points back to the first node. We usually only maintain a `tail` pointer pointing to the last node.</li>
+                <li><strong>The Goal:</strong> Make node 2 point to node 1, node 3 to node 2, etc. Finally, update the `tail` pointer so it points to the <em>original</em> first node (which becomes the new last node).</li>
+            </ul>
+        </div>
+
+        <!-- Card 2: Initial Whiteboard State -->
+        <div class="card">
+            <h2>2. The Initial Whiteboard State</h2>
+            <p>Let's map out the 4-node Circular Linked List exactly as the instructor drew it.</p>
+            
+            <div class="viz-container">
+                <div class="node-wrapper" style="align-self: flex-end; margin-bottom: 10px;">
+                    <div class="tail-indicator">tail pointer = 600</div>
+                </div>
+                <div class="node-row">
+                    <div class="node-wrapper">
+                        <div class="node">
+                            <div class="node-data">7</div>
+                            <div class="node-next">200</div>
+                        </div>
+                        <div class="node-addr">Addr: 500</div>
+                    </div>
+                    <div class="arrow">➔</div>
+                    
+                    <div class="node-wrapper">
+                        <div class="node">
+                            <div class="node-data">1</div>
+                            <div class="node-next">150</div>
+                        </div>
+                        <div class="node-addr">Addr: 200</div>
+                    </div>
+                    <div class="arrow">➔</div>
+
+                    <div class="node-wrapper">
+                        <div class="node">
+                            <div class="node-data">6</div>
+                            <div class="node-next">600</div>
+                        </div>
+                        <div class="node-addr">Addr: 150</div>
+                    </div>
+                    <div class="arrow">➔</div>
+
+                    <div class="node-wrapper">
+                        <div class="node" style="border-color: var(--secondary);">
+                            <div class="node-data">-3</div>
+                            <div class="node-next">500</div>
+                        </div>
+                        <div class="node-addr">Addr: 600 (Tail)</div>
+                    </div>
+                </div>
+                <p style="text-align: center; color: var(--text-muted); margin-top: 10px;">
+                    <em>* Node 600's 'next' is 500, creating the circular loop back to the start.</em>
+                </p>
+            </div>
+        </div>
+
+        <!-- Card 3: The Setup & Strategy -->
+        <div class="card">
+            <h2>3. The Strategy & Three Pointers</h2>
+            <p>If we just break a link to reverse it, we immediately lose the address of the rest of the list. To solve this, the instructor introduces <strong>three temporary pointers</strong>:</p>
+            <div style="display: flex; justify-content: center; gap: 20px; flex-wrap: wrap; margin: 20px 0;">
+                <div class="pointer-box">prev</div>
+                <div class="pointer-box">current</div>
+                <div class="pointer-box">nextnode</div>
+            </div>
+            <p>These will slide across the list together. <code>nextnode</code> jumps ahead to hold the rest of the list, allowing <code>current</code> to safely turn around and point to <code>prev</code>.</p>
+        </div>
+
+        <!-- Card 4: Step-by-Step Code Walkthrough -->
+        <div class="card">
+            <h2>4. Step-by-Step Code Walkthrough</h2>
+            
+            <h3>Part A: Initialization</h3>
+            <p>First, we locate the head of the list and protect the second node.</p>
+<pre><code><span class="c-type">void</span> <span class="c-func">reverse</span>() {
+    <span class="c-type">struct node</span> *current, *prev, *nextnode;
+    
+    <span class="c-comment">// current starts at the first node (tail->next)</span>
+    current = tail->next;      <span class="c-comment">// Gets 500</span>
+    
+    <span class="c-comment">// nextnode jumps to the second node immediately</span>
+    nextnode = current->next;  <span class="c-comment">// Gets 200</span>
+    
+    <span class="c-keyword">if</span>(tail == <span class="c-type">0</span>) {
+        printf("List is empty");
+    } <span class="c-keyword">else</span> { 
+        <span class="c-comment">// ... Loop logic begins here</span>
+</code></pre>
+
+            <h3>Part B: The Main Reversal Loop</h3>
+            <p>We traverse until <code>current</code> reaches the <code>tail</code>. Look closely at the order of operations inside the loop!</p>
+<pre><code>        <span class="c-keyword">while</span>(current != tail) {
+            <span class="c-comment">/* Step 1: prev catches up to current */</span>
+            prev = current;             
+            
+            <span class="c-comment">/* Step 2: current moves forward */</span>
+            current = nextnode;         
+            
+            <span class="c-comment">/* Step 3: nextnode jumps ahead to save the remaining list */</span>
+            nextnode = current->next;   
+            
+            <span class="c-comment">/* Step 4: Break the link and reverse it! */</span>
+            current->next = prev;       
+        }
+</code></pre>
+            <p><strong>Tracing Iteration 1:</strong></p>
+            <ul>
+                <li><code>prev</code> gets <strong>500</strong>.</li>
+                <li><code>current</code> moves to <strong>200</strong>.</li>
+                <li><code>nextnode</code> secures <strong>150</strong>.</li>
+                <li><code>current->next</code> (Node 200's pointer) is changed to <strong>500</strong>. Link is reversed!</li>
+            </ul>
+            <p><em>Note: This loop stops when <code>current == 600</code> (the tail). It breaks <strong>before</strong> reversing the tail node's link.</em></p>
+
+            <h3>Part C: Finalizing Outside the Loop</h3>
+            <p>Because the loop broke early, we have manual clean-up to do. We must reverse the final node, close the circular loop, and officially move the tail.</p>
+<pre><code>        <span class="c-comment">// After loop: current is 600, prev is 150, nextnode is 500</span>
+
+        <span class="c-comment">/* 1. Make the old First Node point to the old Last Node */</span>
+        nextnode->next = tail;   <span class="c-comment">// 500's next becomes 600</span>
+        
+        <span class="c-comment">/* 2. Update the global tail pointer */</span>
+        tail = nextnode;         <span class="c-comment">// tail becomes 500</span>
+    }
+}
+</code></pre>
+        </div>
+
+        <!-- Card 5: Final Goal State -->
+        <div class="card">
+            <h2>5. The Final Visual State</h2>
+            <p>After the function finishes, the links point backward. Our global <code>tail</code> is now <strong>500</strong>.</p>
+            
+            <div class="viz-container">
+                <div class="node-wrapper" style="align-self: flex-start; margin-bottom: 10px;">
+                    <div class="tail-indicator">New tail pointer = 500</div>
+                </div>
+                <div class="node-row" style="flex-direction: row-reverse;">
+                    
+                    <div class="node-wrapper">
+                        <div class="node" style="border-color: var(--secondary);">
+                            <div class="node-data">7</div>
+                            <div class="node-next">600</div>
+                        </div>
+                        <div class="node-addr">Addr: 500 (New Tail)</div>
+                    </div>
+                    
+                    <div class="arrow">⬅</div>
+
+                    <div class="node-wrapper">
+                        <div class="node">
+                            <div class="node-data">1</div>
+                            <div class="node-next">500</div>
+                        </div>
+                        <div class="node-addr">Addr: 200</div>
+                    </div>
+                    
+                    <div class="arrow">⬅</div>
+
+                    <div class="node-wrapper">
+                        <div class="node">
+                            <div class="node-data">6</div>
+                            <div class="node-next">200</div>
+                        </div>
+                        <div class="node-addr">Addr: 150</div>
+                    </div>
+
+                    <div class="arrow">⬅</div>
+
+                    <div class="node-wrapper">
+                        <div class="node">
+                            <div class="node-data">-3</div>
+                            <div class="node-next">150</div>
+                        </div>
+                        <div class="node-addr">Addr: 600 (New Head)</div>
+                    </div>
+                </div>
+                <p style="text-align: center; color: var(--text-muted); margin-top: 10px;">
+                    <em>* Printing starting from `tail->next` (600) yields: <strong>-3, 6, 1, 7</strong>. Perfect success!</em>
+                </p>
+            </div>
+        </div>
+
+        <!-- Spacer for comfortable scrolling at the bottom -->
+        <div style="height: 50px;"></div>
+
+    </div>
+
+    <script>
+        // Simple Intersection Observer to fade in cards as you scroll down
+        // This gives the application a modern, interactive "feed" feel.
+        document.addEventListener("DOMContentLoaded", () => {
+            const cards = document.querySelectorAll('.card');
+            
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                    }
+                });
+            }, {
+                threshold: 0.1 // Trigger when 10% of the card is visible
+            });
+
+            cards.forEach(card => observer.observe(card));
+        });
+    </script>
+</body>
+</html>
