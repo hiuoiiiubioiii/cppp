@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Doubly Linked List Deletion | Vertical Feed Notes</title>
+    <style>
+        /* Modern Reset & Base Variables */
+        :root {
+            --bg-color: #0f172a;
+            --feed-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #3b82f6;
+            --head-color: #10b981; /* Green */
+            --tail-color: #f43f5e; /* Red */
+            --temp-color: #f59e0b; /* Yellow */
+            --node-bg: #0f172a;
+            --node-border: #475569;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 100px;
+        }
+
+        /* The Vertical Feed Container */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+            padding: 40px 20px;
+        }
+
+        /* Feed Cards */
+        .feed-card {
+            background-color: var(--feed-bg);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            border: 1px solid rgba(255,255,255,0.05);
+            opacity: 0;
+            transform: translateY(30px);
+            animation: fadeUp 0.6s ease forwards;
+        }
+
+        /* Sequential Animation Delays */
+        .feed-card:nth-child(1) { animation-delay: 0.1s; }
+        .feed-card:nth-child(2) { animation-delay: 0.3s; }
+        .feed-card:nth-child(3) { animation-delay: 0.5s; }
+        .feed-card:nth-child(4) { animation-delay: 0.7s; }
+        .feed-card:nth-child(5) { animation-delay: 0.9s; }
+
+        @keyframes fadeUp {
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        h1, h2, h3 { color: #fff; margin-bottom: 15px; }
+        h1 { font-size: 2.2rem; text-align: center; color: var(--accent-blue); }
+        h2 { font-size: 1.8rem; border-bottom: 2px solid var(--node-border); padding-bottom: 10px; margin-bottom: 20px;}
+        p { margin-bottom: 15px; color: var(--text-muted); font-size: 1.1rem; }
+        
+        .highlight { color: #fff; background: rgba(59, 130, 246, 0.2); padding: 2px 6px; border-radius: 4px; font-family: monospace;}
+        
+        /* Code Block Styling */
+        pre {
+            background-color: #000;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--node-border);
+        }
+        code { font-family: 'Courier New', Courier, monospace; font-size: 0.95rem; color: #e2e8f0; }
+        .c-comment { color: #10b981; }
+        .c-keyword { color: #c678dd; }
+        .c-func { color: #61afef; }
+
+        /* === DOUBLY LINKED LIST VISUALIZATION SYSTEM === */
+        .visual-container {
+            background: #000;
+            padding: 60px 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+            margin: 20px 0;
+            border: 1px solid var(--node-border);
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            gap: 15px;
+        }
+
+        .node-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+            min-width: 140px;
+        }
+
+        .memory-addr {
+            font-family: monospace;
+            color: var(--text-muted);
+            font-size: 0.85rem;
+            margin-bottom: 8px;
+        }
+
+        .node {
+            display: flex;
+            background: var(--node-bg);
+            border: 2px solid var(--node-border);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .part {
+            padding: 12px;
+            font-family: monospace;
+            font-size: 0.9rem;
+            border-right: 1px solid var(--node-border);
+            text-align: center;
+        }
+        .part:last-child { border-right: none; }
+        
+        .part.data {
+            background-color: rgba(59, 130, 246, 0.15);
+            font-weight: bold;
+            color: var(--accent-blue);
+            min-width: 40px;
+        }
+        .part.null { color: var(--tail-color); }
+
+        .arrow {
+            color: var(--node-border);
+            font-size: 24px;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+        .arrow.broken { color: var(--tail-color); position: relative; }
+        .arrow.broken::after {
+            content: "X";
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 30px;
+            color: red;
+        }
+
+        /* Pointer Labels */
+        .ptr {
+            position: absolute;
+            padding: 4px 10px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .ptr::after {
+            content: ''; position: absolute; left: 50%; transform: translateX(-50%);
+            border-width: 6px; border-style: solid;
+        }
+        
+        .ptr.top { top: -45px; }
+        .ptr.top::after { bottom: -12px; border-color: transparent transparent transparent transparent; }
+        
+        .ptr.bottom { bottom: -45px; }
+        .ptr.bottom::after { top: -12px; border-color: transparent transparent transparent transparent; }
+
+        .lbl-head { background: var(--head-color); color: #fff; top:-60px;}
+        .lbl-head::after { border-color: var(--head-color) transparent transparent transparent; bottom: -12px;}
+        
+        .lbl-tail { background: var(--tail-color); color: #fff; top:-60px;}
+        .lbl-tail::after { border-color: var(--tail-color) transparent transparent transparent; bottom: -12px;}
+        
+        .lbl-temp { background: var(--temp-color); color: #000; bottom: -60px;}
+        .lbl-temp::after { border-color: transparent transparent var(--temp-color) transparent; top: -12px;}
+
+        .lbl-deleted { opacity: 0.3; filter: grayscale(1); }
+
+        /* Info boxes */
+        .info-box {
+            background: rgba(16, 185, 129, 0.1);
+            border-left: 4px solid var(--head-color);
+            padding: 15px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+        }
+        .info-box p { margin: 0; color: #e2e8f0; }
+
+        /* Step List */
+        .steps { list-style: none; margin: 20px 0; }
+        .steps li {
+            position: relative;
+            padding-left: 30px;
+            margin-bottom: 15px;
+            color: var(--text-muted);
+        }
+        .steps li::before {
+            content: '→'; position: absolute; left: 0; color: var(--accent-blue); font-weight: bold; font-size: 1.2rem;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+
+    <!-- Title Card -->
+    <div class="feed-card">
+        <h1>Doubly Linked List: Deletion</h1>
+        <p style="text-align: center;">A complete visual breakdown of the instructor's lecture. Scroll down to review the code, logic, and visual pointer movements.</p>
+        
+        <div class="info-box">
+            <p><strong>Instructor's Golden Rule:</strong> The massive advantage of a Doubly Linked List over a Singly Linked List is that you only need <strong>one pointer (<span class="highlight">temp</span>)</strong> to delete a node from the middle! You don't need to trail behind with a second pointer because every node already knows its <span class="highlight">prev</span> neighbor.</p>
+        </div>
+    </div>
+
+    <!-- Section 1: Delete from Beginning -->
+    <div class="feed-card">
+        <h2>1. Deletion from the Beginning</h2>
+        <p><strong>Goal:</strong> Remove the very first node and free its memory without breaking the rest of the list.</p>
+
+        <ul class="steps">
+            <li>We cannot just do <span class="highlight">head = head->next</span> immediately. If we do, we lose the memory address of the first node forever (creating a memory leak).</li>
+            <li>We must put a <span class="highlight">temp</span> pointer on the first node.</li>
+            <li>Move <span class="highlight">head</span> to the second node.</li>
+            <li>Set the new head's <span class="highlight">prev</span> pointer to <span class="highlight">0 (NULL)</span>.</li>
+            <li>Free <span class="highlight">temp</span>.</li>
+        </ul>
+
+        <h3>Visual State: Moving Pointers</h3>
+        <div class="visual-container">
+            <!-- Node 1 -->
+            <div class="node-wrapper lbl-deleted">
+                <span class="memory-addr">Address: 200</span>
+                <div class="ptr top lbl-temp">temp</div>
+                <div class="node">
+                    <div class="part null">0</div>
+                    <div class="part data">7</div>
+                    <div class="part">400</div>
+                </div>
+            </div>
+            
+            <div class="arrow broken">⇄</div>
+
+            <!-- Node 2 -->
+            <div class="node-wrapper">
+                <span class="memory-addr">Address: 400</span>
+                <div class="ptr top lbl-head">head</div>
+                <div class="node">
+                    <div class="part null" style="color:var(--head-color);">0</div>
+                    <div class="part data">1</div>
+                    <div class="part">150</div>
+                </div>
+            </div>
+
+            <div class="arrow">⇄</div>
+
+            <!-- Node 3 -->
+            <div class="node-wrapper">
+                <span class="memory-addr">Address: 150</span>
+                <div class="node">
+                    <div class="part">400</div>
+                    <div class="part data">6</div>
+                    <div class="part null">0</div>
+                </div>
+            </div>
+        </div>
+
+        <pre><code><span class="c-keyword">void</span> <span class="c-func">delFromBeg</span>() {
+    <span class="c-keyword">struct</span> node *temp;
+
+    <span class="c-comment">// 1. Check for Underflow</span>
+    <span class="c-keyword">if</span> (head == 0) {
+        printf("List is empty");
+    } <span class="c-keyword">else</span> {
+        <span class="c-comment">// 2. Point temp to the node to be deleted</span>
+        temp = head; 
+
+        <span class="c-comment">// 3. Shift head forward</span>
+        head = head->next; 
+
+        <span class="c-comment">// 4. Break the backward link of the new first node</span>
+        head->prev = 0; 
+        
+        <span class="c-comment">// 5. Clean up garbage memory</span>
+        free(temp); 
+    }
+}</code></pre>
+        <p>⏱️ <strong>Time Complexity:</strong> <strong>O(1)</strong>. We directly access the node via the `head` pointer; no traversal needed.</p>
+    </div>
+
+
+    <!-- Section 2: Delete from End -->
+    <div class="feed-card">
+        <h2>2. Deletion from the End</h2>
+        <p><strong>Goal:</strong> Remove the very last node. Because we maintain a <span class="highlight">tail</span> pointer, this is incredibly fast.</p>
+
+        <ul class="steps">
+            <li>Point <span class="highlight">temp</span> to <span class="highlight">tail</span>.</li>
+            <li>Move <span class="highlight">tail</span> backward using <span class="highlight">tail = tail->prev</span>.</li>
+            <li>Make the new tail's <span class="highlight">next</span> pointer <span class="highlight">0 (NULL)</span> to detach the last node.</li>
+            <li>Free <span class="highlight">temp</span>.</li>
+        </ul>
+
+        <h3>Visual State: Moving the Tail</h3>
+        <div class="visual-container">
+            <!-- Node 1 -->
+            <div class="node-wrapper">
+                <span class="memory-addr">Address: 200</span>
+                <div class="node">
+                    <div class="part null">0</div>
+                    <div class="part data">7</div>
+                    <div class="part">400</div>
+                </div>
+            </div>
+            
+            <div class="arrow">⇄</div>
+
+            <!-- Node 2 (New Tail) -->
+            <div class="node-wrapper">
+                <span class="memory-addr">Address: 400</span>
+                <div class="ptr top lbl-tail">tail</div>
+                <div class="node">
+                    <div class="part">200</div>
+                    <div class="part data">1</div>
+                    <div class="part null" style="color:var(--head-color);">0</div>
+                </div>
+            </div>
+
+            <div class="arrow broken">⇄</div>
+
+            <!-- Node 3 (Deleted) -->
+            <div class="node-wrapper lbl-deleted">
+                <span class="memory-addr">Address: 150</span>
+                <div class="ptr bottom lbl-temp">temp</div>
+                <div class="node">
+                    <div class="part">400</div>
+                    <div class="part data">6</div>
+                    <div class="part null">0</div>
+                </div>
+            </div>
+        </div>
+
+        <pre><code><span class="c-keyword">void</span> <span class="c-func">delFromEnd</span>() {
+    <span class="c-keyword">struct</span> node *temp;
+
+    <span class="c-keyword">if</span> (tail == 0) {
+        printf("List is empty");
+    } <span class="c-keyword">else</span> {
+        <span class="c-comment">// 1. Temp tracks the node we want to kill</span>
+        temp = tail;
+
+        <span class="c-comment">// 2. Tail steps backwards</span>
+        tail = tail->prev;
+
+        <span class="c-comment">// 3. Break the forward link to the dying node</span>
+        tail->next = 0;
+        
+        <span class="c-comment">// 4. Free memory</span>
+        free(temp);
+    }
+}</code></pre>
+        <p>⏱️ <strong>Time Complexity:</strong> <strong>O(1)</strong>. Because of the `tail` pointer, we instantly access the end of the list without loops.</p>
+    </div>
+
+
+    <!-- Section 3: Delete from Position -->
+    <div class="feed-card">
+        <h2>3. Deletion from a Specific Position</h2>
+        <p><strong>Goal:</strong> Delete a node at a specific index given by the user (e.g., position 3). This is where the power of the Doubly Linked List shines.</p>
+        
+        <p>If we want to delete <strong>Node 3</strong>, we need to connect <strong>Node 2</strong> directly to <strong>Node 4</strong>. Here is the instructor's logic decoded:</p>
+        <ul class="steps">
+            <li>Traverse with <span class="highlight">temp</span> until it sits on position 3.</li>
+            <li><span class="highlight">temp->prev</span> is Node 2. We change its `next` to point to Node 4: <span class="highlight">temp->prev->next = temp->next;</span></li>
+            <li><span class="highlight">temp->next</span> is Node 4. We change its `prev` to point to Node 2: <span class="highlight">temp->next->prev = temp->prev;</span></li>
+            <li>Free <span class="highlight">temp</span>.</li>
+        </ul>
+
+        <h3>Visual State: Bypassing the Middle Node</h3>
+        <div class="visual-container">
+            <!-- Node 2 -->
+            <div class="node-wrapper">
+                <span class="memory-addr">Address: 100 (Node 2)</span>
+                <div class="node">
+                    <div class="part">200</div>
+                    <div class="part data">2</div>
+                    <div class="part" style="color:var(--head-color); font-weight:bold;">150</div> <!-- Pointing to Node 4 -->
+                </div>
+            </div>
+            
+            <div class="arrow broken">⇄</div>
+
+            <!-- Node 3 (Deleted) -->
+            <div class="node-wrapper lbl-deleted">
+                <span class="memory-addr">Address: 500 (Node 3)</span>
+                <div class="ptr bottom lbl-temp">temp</div>
+                <div class="node">
+                    <div class="part">100</div>
+                    <div class="part data">7</div>
+                    <div class="part">150</div>
+                </div>
+            </div>
+
+            <div class="arrow broken">⇄</div>
+
+            <!-- Node 4 -->
+            <div class="node-wrapper">
+                <span class="memory-addr">Address: 150 (Node 4)</span>
+                <div class="node">
+                    <div class="part" style="color:var(--head-color); font-weight:bold;">100</div> <!-- Pointing to Node 2 -->
+                    <div class="part data">9</div>
+                    <div class="part null">0</div>
+                </div>
+            </div>
+        </div>
+
+        <pre><code><span class="c-keyword">void</span> <span class="c-func">delFromPos</span>() {
+    <span class="c-keyword">int</span> pos, i = 1;
+    <span class="c-keyword">struct</span> node *temp;
+
+    printf("Enter Position: ");
+    scanf("%d", &pos);
+
+    <span class="c-comment">// Note: Add if(pos==1) delFromBeg() logic here in reality</span>
+
+    temp = head;
+
+    <span class="c-comment">// 1. Traverse to the node</span>
+    <span class="c-keyword">while</span> (i < pos) {
+        temp = temp->next;
+        i++;
+    }
+
+    <span class="c-comment">// 2. The Magic Bypass Steps:</span>
+    <span class="c-comment">// Look backwards, update its forward pointer</span>
+    temp->prev->next = temp->next;
+
+    <span class="c-comment">// Look forward, update its backward pointer</span>
+    temp->next->prev = temp->prev;
+
+    <span class="c-comment">// 3. Free the bypassed node</span>
+    free(temp);
+}</code></pre>
+        <p>⏱️ <strong>Time Complexity:</strong> <strong>O(n)</strong>. Because we have to loop through the list to find the specific position, execution time grows linearly with the position size.</p>
+    </div>
+
+</div>
+
+</body>
+</html>
