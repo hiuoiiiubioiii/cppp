@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Circular Linked List: Deletion Methods</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-color: #2c3e50;
+            --card-bg: #ffffff;
+            --primary: #3498db;
+            --secondary: #e74c3c;
+            --accent: #2ecc71;
+            --code-bg: #1e1e1e;
+            --code-text: #d4d4d4;
+            --node-border: #34495e;
+            --node-bg: #ecf0f1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        /* Vertical Feed Container */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* Card / Section Styling */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--primary);
+        }
+
+        .card.tip { border-top-color: #f1c40f; background-color: #fffdf2; }
+        .card.beg { border-top-color: var(--primary); }
+        .card.end { border-top-color: var(--secondary); }
+        .card.pos { border-top-color: var(--accent); }
+
+        h1 { font-size: 2.2rem; margin-bottom: 10px; color: var(--node-border); }
+        h2 { font-size: 1.8rem; margin-bottom: 20px; padding-bottom: 10px; border-bottom: 2px solid #eee; }
+        h3 { font-size: 1.4rem; margin: 20px 0 10px 0; color: var(--primary); }
+        p { margin-bottom: 15px; font-size: 1.1rem; }
+        ul { margin-left: 20px; margin-bottom: 15px; font-size: 1.1rem; }
+        li { margin-bottom: 8px; }
+
+        .highlight {
+            background-color: #ffeaa7;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        /* --- VISUALIZATION CSS --- */
+        .visualization {
+            background-color: #f8f9fa;
+            border: 1px dashed #bdc3c7;
+            border-radius: 8px;
+            padding: 30px 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+        }
+
+        .vis-title {
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #7f8c8d;
+            margin-bottom: 15px;
+            font-weight: bold;
+        }
+
+        .list-row {
+            display: flex;
+            align-items: center;
+            justify-content: flex-start;
+            min-width: max-content;
+            margin-bottom: 40px;
+        }
+
+        .node-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            position: relative;
+        }
+
+        .address-label {
+            font-size: 0.85rem;
+            color: #7f8c8d;
+            margin-bottom: 5px;
+            font-family: monospace;
+        }
+
+        .node {
+            display: flex;
+            border: 2px solid var(--node-border);
+            border-radius: 6px;
+            background: var(--node-bg);
+            box-shadow: 2px 2px 5px rgba(0,0,0,0.1);
+        }
+
+        .node .data {
+            padding: 12px 18px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            border-right: 2px solid var(--node-border);
+            background: #fff;
+        }
+
+        .node .next {
+            padding: 12px 10px;
+            font-family: monospace;
+            font-size: 1rem;
+            color: var(--secondary);
+            background: #ecf0f1;
+        }
+
+        .pointer-label {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            padding: 4px 8px;
+            border-radius: 4px;
+            position: absolute;
+            top: 100%;
+        }
+
+        .pt-tail { background: var(--primary); color: white; }
+        .pt-temp { background: var(--secondary); color: white; }
+        .pt-curr { background: #9b59b6; color: white; }
+        .pt-prev { background: #e67e22; color: white; }
+
+        .arrow {
+            margin: 0 15px;
+            font-size: 1.5rem;
+            color: var(--node-border);
+            font-weight: bold;
+        }
+
+        .circular-return {
+            border: 2px dashed var(--primary);
+            padding: 10px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: bold;
+            margin-left: 15px;
+            text-align: center;
+        }
+
+        /* Code Block Styling */
+        pre {
+            background-color: var(--code-bg);
+            color: var(--code-text);
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1rem;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.2);
+            margin-top: 10px;
+        }
+
+        .c-keyword { color: #569cd6; font-weight: bold; }
+        .c-type { color: #4ec9b0; }
+        .c-var { color: #9cdcfe; }
+        .c-comment { color: #6a9955; font-style: italic; }
+        .c-string { color: #ce9178; }
+
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+
+    <!-- HEADER SECTION -->
+    <div class="card">
+        <h1>📚 Master Class: Deletion from a Circular Linked List</h1>
+        <p>Complete student breakdown covering the logic, visual pointers, and C code for deleting nodes from the <strong>Beginning</strong>, <strong>End</strong>, and a <strong>Specific Position</strong>.</p>
+    </div>
+
+    <!-- THE GOLDEN RULE -->
+    <div class="card tip">
+        <h2>🔑 The Golden Rule & Setup</h2>
+        <p>Before we start deleting, remember how the instructor setup the board:</p>
+        <ul>
+            <li>We are <strong>NOT</strong> using a <code>head</code> pointer. We are only maintaining a <code>tail</code> pointer.</li>
+            <li><strong>How do we find the first node?</strong> The <code>next</code> part of the tail node <em>always</em> contains the address of the first node.</li>
+            <li><span class="highlight">Formula: First Node = tail->next;</span></li>
+        </ul>
+        <h3>Standard Node Structure</h3>
+        <pre>
+<span class="c-keyword">struct</span> <span class="c-type">node</span> {
+    <span class="c-type">int</span> <span class="c-var">data</span>;
+    <span class="c-keyword">struct</span> <span class="c-type">node</span> *<span class="c-var">next</span>;
+} *<span class="c-var">tail</span>; <span class="c-comment">// Global tail pointer</span></pre>
+    </div>
+
+    <!-- PART 1: BEG DELETION -->
+    <div class="card beg">
+        <h2>🗑️ Part 1: Deletion from the Beginning</h2>
+        <p><strong>The Goal:</strong> Remove the very first node in the list and free its memory.</p>
+        
+        <h3>The Logic</h3>
+        <ol>
+            <li>Create a temporary pointer (<code>temp</code>) pointing to the first node (<code>tail->next</code>).</li>
+            <li>Update the <code>tail</code> to point to the <em>second</em> node (<code>tail->next = temp->next</code>).</li>
+            <li>Free the memory of the first node (<code>temp</code>).</li>
+        </ol>
+
+        <!-- VISUALIZATION -->
+        <div class="visualization">
+            <div class="vis-title">Before Deletion</div>
+            <div class="list-row">
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 500</div>
+                    <div class="node"><div class="data">5</div><div class="next">600</div></div>
+                    <div class="pointer-label pt-temp">temp</div>
+                </div>
+                <div class="arrow">➔</div>
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 600</div>
+                    <div class="node"><div class="data">4</div><div class="next">100</div></div>
+                </div>
+                <div class="arrow">➔</div>
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 100</div>
+                    <div class="node"><div class="data">1</div><div class="next">200</div></div>
+                </div>
+                <div class="arrow">➔</div>
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 200</div>
+                    <div class="node"><div class="data">7</div><div class="next" style="color: #c0392b; font-weight: bold;">500</div></div>
+                    <div class="pointer-label pt-tail">tail</div>
+                </div>
+                <div class="circular-return">Wraps to Addr 500</div>
+            </div>
+
+            <div class="vis-title" style="margin-top: 50px;">After Deletion (Node 5 is freed)</div>
+            <div class="list-row">
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 600 (New First Node)</div>
+                    <div class="node"><div class="data">4</div><div class="next">100</div></div>
+                </div>
+                <div class="arrow">➔</div>
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 100</div>
+                    <div class="node"><div class="data">1</div><div class="next">200</div></div>
+                </div>
+                <div class="arrow">➔</div>
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 200</div>
+                    <div class="node"><div class="data">7</div><div class="next" style="background: #ffeaa7; color: black; font-weight: bold;">600</div></div>
+                    <div class="pointer-label pt-tail">tail</div>
+                </div>
+                <div class="circular-return">Wraps to Addr 600</div>
+            </div>
+        </div>
+
+        <h3>C Code</h3>
+        <pre>
+<span class="c-type">void</span> <span class="c-var">delFromBeg</span>() {
+    <span class="c-keyword">struct</span> <span class="c-type">node</span> *<span class="c-var">temp</span>;
+    <span class="c-var">temp</span> = <span class="c-var">tail</span>-><span class="c-var">next</span>; <span class="c-comment">// temp points to the 1st node</span>
+
+    <span class="c-keyword">if</span> (<span class="c-var">tail</span> == <span class="c-var">0</span>) { 
+        <span class="c-var">printf</span>(<span class="c-string">"List is empty"</span>);
+    } 
+    <span class="c-keyword">else if</span> (<span class="c-var">temp</span>-><span class="c-var">next</span> == <span class="c-var">temp</span>) { <span class="c-comment">// Only ONE node exists</span>
+        <span class="c-var">tail</span> = <span class="c-var">0</span>;
+        <span class="c-var">free</span>(<span class="c-var">temp</span>);
+    } 
+    <span class="c-keyword">else</span> { 
+        <span class="c-var">tail</span>-><span class="c-var">next</span> = <span class="c-var">temp</span>-><span class="c-var">next</span>; <span class="c-comment">// Tail bypasses the 1st node</span>
+        <span class="c-var">free</span>(<span class="c-var">temp</span>);              <span class="c-comment">// Clean up garbage memory</span>
+    }
+}</pre>
+    </div>
+
+    <!-- PART 2: END DELETION -->
+    <div class="card end">
+        <h2>🗑️ Part 2: Deletion from the End</h2>
+        <p><strong>The Goal:</strong> Remove the last node (the <code>tail</code> node) and update the <code>tail</code> pointer to the second-to-last node.</p>
+        
+        <h3>The Logic</h3>
+        <ol>
+            <li>Because it's a singly linked list, we can't go backward. We must traverse from the beginning.</li>
+            <li>Create <code>current</code> (starts at head) and <code>previous</code> (trails one step behind).</li>
+            <li>Traverse until <code>current->next == tail->next</code> (meaning <code>current</code> hit the last node).</li>
+            <li>Make <code>previous->next = tail->next</code> to complete the circle, update <code>tail = previous</code>, and <code>free(current)</code>.</li>
+        </ol>
+
+        <!-- VISUALIZATION -->
+        <div class="visualization">
+            <div class="vis-title">During Traversal (Stopping point)</div>
+            <div class="list-row">
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 600</div>
+                    <div class="node"><div class="data">4</div><div class="next">100</div></div>
+                </div>
+                <div class="arrow">➔</div>
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 100</div>
+                    <div class="node"><div class="data">1</div><div class="next">200</div></div>
+                    <div class="pointer-label pt-prev">previous</div>
+                </div>
+                <div class="arrow">➔</div>
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 200</div>
+                    <div class="node"><div class="data">7</div><div class="next">600</div></div>
+                    <div class="pointer-label pt-curr">current (tail)</div>
+                </div>
+            </div>
+
+            <div class="vis-title" style="margin-top: 50px;">After Links Updated & Current Freed</div>
+            <div class="list-row">
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 600</div>
+                    <div class="node"><div class="data">4</div><div class="next">100</div></div>
+                </div>
+                <div class="arrow">➔</div>
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 100 (New Tail)</div>
+                    <div class="node"><div class="data">1</div><div class="next" style="background: #ffeaa7; color: black; font-weight: bold;">600</div></div>
+                    <div class="pointer-label pt-tail">tail (previous)</div>
+                </div>
+                <div class="circular-return">Wraps to Addr 600</div>
+            </div>
+        </div>
+
+        <h3>C Code</h3>
+        <pre>
+<span class="c-type">void</span> <span class="c-var">delFromEnd</span>() {
+    <span class="c-keyword">struct</span> <span class="c-type">node</span> *<span class="c-var">current</span>, *<span class="c-var">previous</span>;
+    <span class="c-var">current</span> = <span class="c-var">tail</span>-><span class="c-var">next</span>; 
+
+    <span class="c-keyword">if</span> (<span class="c-var">tail</span> == <span class="c-var">0</span>) {
+        <span class="c-var">printf</span>(<span class="c-string">"List is empty"</span>);
+    } 
+    <span class="c-keyword">else if</span> (<span class="c-var">current</span>-><span class="c-var">next</span> == <span class="c-var">current</span>) { 
+        <span class="c-var">tail</span> = <span class="c-var">0</span>;
+        <span class="c-var">free</span>(<span class="c-var">current</span>);
+    } 
+    <span class="c-keyword">else</span> {
+        <span class="c-comment">// Traverse to the end</span>
+        <span class="c-keyword">while</span> (<span class="c-var">current</span>-><span class="c-var">next</span> != <span class="c-var">tail</span>-><span class="c-var">next</span>) { 
+            <span class="c-var">previous</span> = <span class="c-var">current</span>;       
+            <span class="c-var">current</span> = <span class="c-var">current</span>-><span class="c-var">next</span>;  
+        }
+        
+        <span class="c-var">previous</span>-><span class="c-var">next</span> = <span class="c-var">tail</span>-><span class="c-var">next</span>; <span class="c-comment">// Link 2nd-to-last to First</span>
+        <span class="c-var">tail</span> = <span class="c-var">previous</span>;             <span class="c-comment">// Update tail pointer</span>
+        <span class="c-var">free</span>(<span class="c-var">current</span>);               <span class="c-comment">// Free the old tail</span>
+    }
+}</pre>
+    </div>
+
+    <!-- PART 3: POSITION DELETION -->
+    <div class="card pos">
+        <h2>🗑️ Part 3: Deletion from a Specific Position</h2>
+        <p><strong>The Goal:</strong> User enters a position (e.g., 3). Traverse to position 2, bypass position 3, and free the memory.</p>
+        
+        <h3>The Logic</h3>
+        <ol>
+            <li>Get the total length of the list (using a helper function <code>getLength()</code>) to validate user input.</li>
+            <li>Traverse the list using a <code>while</code> loop. Stop exactly <strong>ONE node before</strong> the target position (<code>i < pos - 1</code>).</li>
+            <li>Create <code>nextnode = current->next</code> to hold the node being deleted.</li>
+            <li>Bypass the node: <code>current->next = nextnode->next</code>.</li>
+            <li>Free <code>nextnode</code>.</li>
+        </ol>
+
+        <!-- VISUALIZATION -->
+        <div class="visualization">
+            <div class="vis-title">Deleting Position 3 (Node '3')</div>
+            <div class="list-row">
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 100 (Pos 1)</div>
+                    <div class="node"><div class="data">5</div><div class="next">500</div></div>
+                </div>
+                <div class="arrow">➔</div>
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 500 (Pos 2)</div>
+                    <div class="node"><div class="data">1</div><div class="next" style="background: #ffeaa7; color: black; font-weight: bold;">800</div></div>
+                    <div class="pointer-label pt-curr">current</div>
+                </div>
+                
+                <!-- Bypassed Node visually pushed down -->
+                <div style="display:flex; flex-direction: column; margin: 0 15px; align-items:center;">
+                   <div style="color: #e74c3c; font-weight: bold; margin-bottom: 5px;">Bypassed ⬇</div>
+                    <div class="node-wrapper" style="opacity: 0.4;">
+                        <div class="address-label">Addr: 800 (Pos 3)</div>
+                        <div class="node"><div class="data">3</div><div class="next">200</div></div>
+                        <div class="pointer-label pt-temp" style="background: gray;">nextnode</div>
+                    </div>
+                </div>
+
+                <div class="node-wrapper">
+                    <div class="address-label">Addr: 200 (Pos 4)</div>
+                    <div class="node"><div class="data">4</div><div class="next">100</div></div>
+                    <div class="pointer-label pt-tail">tail</div>
+                </div>
+            </div>
+            <p style="font-size: 0.9rem; text-align: center; color: #7f8c8d; margin-top: 10px;"><em>Notice how Pos 2 now points directly to Addr 200, completely cutting out Pos 3.</em></p>
+        </div>
+
+        <h3>C Code</h3>
+        <pre>
+<span class="c-type">void</span> <span class="c-var">delFromPos</span>() {
+    <span class="c-keyword">struct</span> <span class="c-type">node</span> *<span class="c-var">current</span>, *<span class="c-var">nextnode</span>;
+    <span class="c-type">int</span> <span class="c-var">pos</span>, <span class="c-var">i</span> = <span class="c-var">1</span>, <span class="c-var">l</span>;
+
+    <span class="c-var">current</span> = <span class="c-var">tail</span>-><span class="c-var">next</span>; 
+    
+    <span class="c-var">printf</span>(<span class="c-string">"Enter position: "</span>);
+    <span class="c-var">scanf</span>(<span class="c-string">"%d"</span>, &amp;<span class="c-var">pos</span>);
+    
+    <span class="c-var">l</span> = <span class="c-var">getLength</span>(); <span class="c-comment">// Helper function</span>
+
+    <span class="c-keyword">if</span> (<span class="c-var">pos</span> &lt; <span class="c-var">1</span> || <span class="c-var">pos</span> &gt; <span class="c-var">l</span>) { 
+        <span class="c-var">printf</span>(<span class="c-string">"Invalid Position"</span>);
+    } 
+    <span class="c-keyword">else if</span> (<span class="c-var">pos</span> == <span class="c-var">1</span>) { 
+        <span class="c-var">delFromBeg</span>(); 
+    } 
+    <span class="c-keyword">else</span> {
+        <span class="c-comment">// Stop ONE node BEFORE the target</span>
+        <span class="c-keyword">while</span> (<span class="c-var">i</span> &lt; <span class="c-var">pos</span> - <span class="c-var">1</span>) {
+            <span class="c-var">current</span> = <span class="c-var">current</span>-><span class="c-var">next</span>;
+            <span class="c-var">i</span>++;
+        }
+        
+        <span class="c-var">nextnode</span> = <span class="c-var">current</span>-><span class="c-var">next</span>; <span class="c-comment">// Node to be deleted</span>
+        
+        <span class="c-var">current</span>-><span class="c-var">next</span> = <span class="c-var">nextnode</span>-><span class="c-var">next</span>; <span class="c-comment">// Bypass the node</span>
+        <span class="c-var">free</span>(<span class="c-var">nextnode</span>); <span class="c-comment">// Free memory</span>
+    }
+}</pre>
+    </div>
+
+    <!-- WRAP UP / TIPS -->
+    <div class="card tip" style="margin-bottom: 50px;">
+        <h2>📝 Final Study Tips</h2>
+        <p>Two major takeaways from the instructor's breakdown:</p>
+        <ul>
+            <li><strong>Draw the Boxes:</strong> When tracking circular lists on an exam, always draw the data/address boxes. Write the actual address numbers (like 100, 500) inside the "next" sections. It makes pointer logic foolproof.</li>
+            <li><strong>Order of Operations Matters:</strong> Always update the links of the <em>surviving</em> nodes before you call <code>free()</code>. If you <code>free()</code> the target node first, you lose its <code>->next</code> data, breaking the chain!</li>
+        </ul>
+    </div>
+
+</div>
+
+</body>
+</html>
