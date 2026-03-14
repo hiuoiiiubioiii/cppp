@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MST Edge Weights: Study Notes Feed</title>
+    <style>
+        :root {
+            --primary: #2b6cb0;
+            --secondary: #e53e3e;
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --highlight: #fefcbf;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Fixed Header */
+        header {
+            position: fixed;
+            top: 0;
+            width: 100%;
+            background: var(--card-bg);
+            padding: 15px 20px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+            z-index: 1000;
+            text-align: center;
+            border-bottom: 3px solid var(--primary);
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            color: var(--primary);
+        }
+
+        header p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Vertical Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 100px auto 50px auto; /* Margin top to clear header */
+            display: flex;
+            flex-direction: column;
+            gap: 40px; /* Space between posts */
+            padding: 0 20px;
+        }
+
+        .feed-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+            border-left: 5px solid var(--primary);
+            opacity: 0;
+            transform: translateY(20px);
+            animation: fadeIn 0.8s ease forwards;
+        }
+
+        /* Staggered animation for feed loading */
+        .feed-card:nth-child(1) { animation-delay: 0.1s; border-left-color: #4299e1; }
+        .feed-card:nth-child(2) { animation-delay: 0.3s; border-left-color: #ed8936; }
+        .feed-card:nth-child(3) { animation-delay: 0.5s; border-left-color: #48bb78; }
+        .feed-card:nth-child(4) { animation-delay: 0.7s; border-left-color: #e53e3e; }
+        .feed-card:nth-child(5) { animation-delay: 0.9s; border-left-color: #805ad5; }
+
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        h2 {
+            font-size: 1.4rem;
+            margin-bottom: 15px;
+            color: #1a202c;
+            border-bottom: 2px solid #edf2f7;
+            padding-bottom: 5px;
+        }
+
+        p { margin-bottom: 15px; }
+
+        .math-box {
+            background: #edf2f7;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.1rem;
+            margin: 15px 0;
+            border-left: 4px solid var(--text-muted);
+        }
+
+        .important-note {
+            background: var(--highlight);
+            padding: 10px 15px;
+            border-radius: 6px;
+            font-weight: bold;
+            display: inline-block;
+            margin-bottom: 15px;
+            color: #b7791f;
+        }
+
+        /* Visual Graph CSS */
+        .graph-comparison {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .graph-panel {
+            flex: 1;
+            min-width: 300px;
+            background: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+            text-align: center;
+        }
+
+        .graph-panel h3 {
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+            color: var(--primary);
+        }
+
+        /* Drawing the Nodes and Edges */
+        .visual-graph {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 40px 0;
+            padding: 0 10px;
+        }
+
+        .node {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            border: 3px solid var(--primary);
+            background: white;
+            z-index: 2;
+        }
+
+        .edge {
+            flex: 1;
+            height: 4px;
+            background: #cbd5e0;
+            position: relative;
+            margin: 0 -2px;
+            z-index: 1;
+        }
+
+        .weight-label {
+            position: absolute;
+            top: -25px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-weight: bold;
+            color: var(--secondary);
+            background: #f8fafc;
+            padding: 0 4px;
+            font-size: 0.95rem;
+        }
+
+        .calc-result {
+            font-size: 1.2rem;
+            font-weight: bold;
+            margin-top: 20px;
+            padding: 10px;
+            background: white;
+            border-radius: 6px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+
+        .options-list {
+            list-style-type: none;
+            padding-left: 0;
+        }
+
+        .options-list li {
+            background: #f7fafc;
+            margin-bottom: 8px;
+            padding: 10px 15px;
+            border-radius: 6px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .correct-answer {
+            background: #c6f6d5 !important;
+            border-color: #48bb78 !important;
+            font-weight: bold;
+            color: #276749;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Study Feed: Minimum Spanning Trees (MST)</h1>
+        <p>Topic: Modifying Edge Weights (Squaring weights) | Continuous Scroll</p>
+    </header>
+
+    <main class="feed-container">
+
+        <!-- Section 1: The Problem -->
+        <article class="feed-card">
+            <h2>1. The Problem Statement</h2>
+            <p>We are given a scenario with two Minimum Spanning Trees constructed from the exact same vertices, but with different edge weight rules.</p>
+            
+            <div class="math-box">
+                Let <b>x</b> = cost of MST G(V, E)<br>
+                Let <b>y</b> = cost of MST G(V, E&sup2;)<br><br>
+                Where E&sup2; means:<br>
+                If weight w(u,v) &isin; E, then w&sup2;(u,v) &isin; E&sup2;
+            </div>
+            
+            <p><strong>Question:</strong> What is the relationship between x and y?</p>
+            
+            <div class="important-note">
+                &#9888; CRUCIAL INSTRUCTOR HINT WRITTEN ON BOARD:<br>
+                "w &isin; Real number"
+            </div>
+            <p>This box drawn on the board changes everything. Edge weights are NOT limited to positive whole integers. They can be decimals, fractions, etc.</p>
+
+            <ul class="options-list">
+                <li>(i) x &ge; y</li>
+                <li>(ii) x &le; y</li>
+                <li>(iii) x = y</li>
+                <li>(iv) None of these</li>
+            </ul>
+        </article>
+
+        <!-- Section 2: Properties & Setup -->
+        <article class="feed-card">
+            <h2>2. Setting up the Approach & Graph Properties</h2>
+            <p>The instructor decides to test the problem using a counter-example approach. She starts by drawing a simple 4-node path graph.</p>
+            <p><strong>Core MST Rule Mentioned:</strong> If an MST has <em>N</em> vertices, it will always have exactly <em>N-1</em> edges.</p>
+            <p>Because the problem states both graphs are built on <b>G(V...)</b>, both graphs have the exact same number of vertices (V). Therefore, both graphs will have exactly 3 edges. If graph 2 had V' (different vertices), the problem would be unsolvable.</p>
+        </article>
+
+        <!-- Section 3: Case Study 1 -->
+        <article class="feed-card">
+            <h2>3. Case Study 1: Standard Integers (> 1)</h2>
+            <p>The instructor assigns random integer weights to Graph 1, and squares them to create Graph 2.</p>
+            
+            <div class="graph-comparison">
+                <!-- Graph 1 -->
+                <div class="graph-panel">
+                    <h3>Graph 1 (Cost = x)</h3>
+                    <div class="visual-graph">
+                        <div class="node"></div>
+                        <div class="edge"><span class="weight-label">5</span></div>
+                        <div class="node"></div>
+                        <div class="edge"><span class="weight-label">3</span></div>
+                        <div class="node"></div>
+                        <div class="edge"><span class="weight-label">2</span></div>
+                        <div class="node"></div>
+                    </div>
+                    <div class="calc-result">x = 5 + 3 + 2 = 10</div>
+                </div>
+
+                <!-- Graph 2 -->
+                <div class="graph-panel">
+                    <h3>Graph 2 (Cost = y)</h3>
+                    <div class="visual-graph">
+                        <div class="node"></div>
+                        <div class="edge"><span class="weight-label">25</span></div>
+                        <div class="node"></div>
+                        <div class="edge"><span class="weight-label">9</span></div>
+                        <div class="node"></div>
+                        <div class="edge"><span class="weight-label">4</span></div>
+                        <div class="node"></div>
+                    </div>
+                    <div class="calc-result">y = 25 + 9 + 4 = 38</div>
+                </div>
+            </div>
+
+            <p style="margin-top: 20px;"><strong>Result of Case 1:</strong> Here, <b>x (10) < y (38)</b>. A student might rush and pick option (ii) <em>x &le; y</em>. The instructor warns this is a trap! We must test the "Real Numbers" constraint.</p>
+        </article>
+
+        <!-- Section 4: Case Study 2 -->
+        <article class="feed-card">
+            <h2>4. Case Study 2: The Trap (Decimals between 0 and 1)</h2>
+            <p>To test the "Real Number" condition, she erases the integers and replaces them with decimal values.</p>
+            
+            <div class="graph-comparison">
+                <!-- Graph 1 Decimal -->
+                <div class="graph-panel">
+                    <h3>Graph 1 (Cost = x)</h3>
+                    <div class="visual-graph">
+                        <div class="node"></div>
+                        <div class="edge"><span class="weight-label">0.5</span></div>
+                        <div class="node"></div>
+                        <div class="edge"><span class="weight-label">0.3</span></div>
+                        <div class="node"></div>
+                        <div class="edge"><span class="weight-label">0.2</span></div>
+                        <div class="node"></div>
+                    </div>
+                    <div class="calc-result">x = 0.5 + 0.3 + 0.2 = 1.0</div>
+                </div>
+
+                <!-- Graph 2 Decimal -->
+                <div class="graph-panel">
+                    <h3>Graph 2 (Cost = y)</h3>
+                    <div class="visual-graph">
+                        <div class="node"></div>
+                        <div class="edge"><span class="weight-label">0.25</span></div>
+                        <div class="node"></div>
+                        <div class="edge"><span class="weight-label">0.09</span></div>
+                        <div class="node"></div>
+                        <div class="edge"><span class="weight-label">0.04</span></div>
+                        <div class="node"></div>
+                    </div>
+                    <div class="calc-result">y = 0.25 + 0.09 + 0.04 = 0.38</div>
+                </div>
+            </div>
+
+            <p style="margin-top: 20px;"><strong>Result of Case 2:</strong> Squaring a number between 0 and 1 makes it <i>smaller</i>. Now, <b>x (1.0) > y (0.38)</b>. The relationship has flipped completely.</p>
+        </article>
+
+        <!-- Section 5: Conclusion -->
+        <article class="feed-card">
+            <h2>5. Final Conclusion</h2>
+            <p>Because the relationship changes depending on whether the original weights are greater than 1 or between 0 and 1, there is <b>no absolute, constant mathematical relationship</b> between x and y.</p>
+            
+            <div class="math-box" style="text-align: center;">
+                Case 1: x < y<br>
+                Case 2: x > y<br>
+                <b>Therefore, no single rule applies.</b>
+            </div>
+
+            <ul class="options-list">
+                <li>(i) x &ge; y</li>
+                <li>(ii) x &le; y</li>
+                <li>(iii) x = y</li>
+                <li class="correct-answer">&#10004; (iv) None of these.</li>
+            </ul>
+
+            <p><strong>💡 Key Takeaway:</strong> In competitive exams (GATE, NET, etc.), always look for constraints like "Real numbers." If weights aren't explicitly restricted to integers > 1, always test a counter-example with a decimal (0 to 1) or a negative number before locking in your answer.</p>
+        </article>
+
+    </main>
+
+</body>
+</html>
