@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selection Sort - In-Depth Study Notes</title>
+    <!-- Tailwind CSS for rapid styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Prism.js for syntax highlighting -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+        }
+        /* Custom scrollbar for webkit */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f5f9; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+        
+        /* Array Visualization Styles */
+        .arr-container {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+        }
+        .arr-box {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: bold;
+            border: 2px solid #cbd5e1;
+            border-radius: 8px;
+            background-color: #ffffff;
+            position: relative;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.2s;
+        }
+        .arr-box:hover {
+            transform: translateY(-2px);
+        }
+        .arr-index {
+            position: absolute;
+            top: -20px;
+            font-size: 0.75rem;
+            color: #64748b;
+            font-weight: normal;
+        }
+        /* State Colors */
+        .sorted {
+            background-color: #dcfce7; /* Green */
+            border-color: #22c55e;
+            color: #166534;
+        }
+        .unsorted {
+            background-color: #f1f5f9; /* Gray */
+        }
+        .target {
+            background-color: #fee2e2; /* Red/Pink for target swap spot */
+            border-color: #ef4444;
+        }
+        .min-found {
+            background-color: #fef08a; /* Yellow for min element */
+            border-color: #eab308;
+        }
+        .progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 4px;
+            background: #3b82f6;
+            z-index: 50;
+            width: 0%;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <!-- Scroll Progress Bar -->
+    <div class="progress-bar" id="progressBar"></div>
+
+    <div class="max-w-3xl mx-auto px-4 py-10 space-y-12">
+
+        <!-- Header -->
+        <header class="text-center space-y-4 pt-8 border-b-2 border-slate-200 pb-8">
+            <span class="bg-blue-100 text-blue-800 text-xs font-semibold px-3 py-1 rounded-full uppercase tracking-wider">Algorithm Study Notes</span>
+            <h1 class="text-4xl font-extrabold text-slate-900 tracking-tight">Selection Sort Algorithm</h1>
+            <p class="text-lg text-slate-600">Based on Jenny's Lectures • Complete breakdown, visualization, and code trace.</p>
+        </header>
+
+        <!-- Section 1: Introduction -->
+        <section class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <span class="text-blue-500">1.</span> Initial Setup & Concept
+            </h2>
+            <p class="text-slate-600 mb-6">Selection Sort works by logically dividing the array into two parts: a <strong>Sorted Sub-array</strong> and an <strong>Unsorted Sub-array</strong>. Initially, the sorted part is empty, and the unsorted part contains all elements.</p>
+            
+            <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-4">Initial Array (n = 6)</h3>
+                <div class="arr-container">
+                    <div class="arr-box unsorted"><span class="arr-index">0</span>7</div>
+                    <div class="arr-box unsorted"><span class="arr-index">1</span>4</div>
+                    <div class="arr-box unsorted"><span class="arr-index">2</span>10</div>
+                    <div class="arr-box unsorted"><span class="arr-index">3</span>8</div>
+                    <div class="arr-box unsorted"><span class="arr-index">4</span>3</div>
+                    <div class="arr-box unsorted"><span class="arr-index">5</span>1</div>
+                </div>
+                <p class="mt-4 text-sm text-slate-500 italic">Target: Sort in Ascending Order.</p>
+            </div>
+
+            <h3 class="text-lg font-bold text-slate-800 mt-8 mb-3">The Core Logic</h3>
+            <ul class="list-disc list-inside space-y-2 text-slate-600 ml-2 marker:text-blue-500">
+                <li>Look at the <strong>Unsorted Sub-array</strong>.</li>
+                <li>Find the <strong>minimum (smallest)</strong> element in this unsorted section.</li>
+                <li><strong>Swap</strong> that minimum element with the element located at the <em>starting position</em> of the unsorted sub-array.</li>
+                <li>Move the boundary of the sorted array one step to the right. Repeat.</li>
+            </ul>
+        </section>
+
+        <!-- Section 2: Visualizations -->
+        <section class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-2xl font-bold text-slate-800 mb-6 flex items-center gap-2">
+                <span class="text-blue-500">2.</span> Step-by-Step Visualization
+            </h2>
+            
+            <!-- Legend -->
+            <div class="flex flex-wrap gap-4 mb-8 p-4 bg-slate-50 rounded-lg text-sm font-medium text-slate-600 border border-slate-200">
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded-sm bg-green-200 border border-green-500"></div> Sorted</div>
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded-sm bg-slate-100 border border-slate-300"></div> Unsorted</div>
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded-sm bg-red-200 border border-red-500"></div> Target Position</div>
+                <div class="flex items-center gap-2"><div class="w-4 h-4 rounded-sm bg-yellow-200 border border-yellow-500"></div> Minimum Found</div>
+            </div>
+
+            <div class="space-y-8 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+                
+                <!-- Pass 1 -->
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm w-full md:w-[calc(50%-2rem)] z-10 hover:border-blue-400 transition-colors">
+                        <h4 class="font-bold text-blue-600 mb-2">Pass 1</h4>
+                        <p class="text-sm text-slate-600 mb-3">Swap target <strong>7</strong> with min <strong>1</strong>.</p>
+                        <div class="arr-container !gap-1 !m-0">
+                            <div class="arr-box target">7</div>
+                            <div class="arr-box unsorted">4</div>
+                            <div class="arr-box unsorted">10</div>
+                            <div class="arr-box unsorted">8</div>
+                            <div class="arr-box unsorted">3</div>
+                            <div class="arr-box min-found">1</div>
+                        </div>
+                        <p class="text-xs font-semibold text-green-600 mt-3">Result: [ 1 | 4, 10, 8, 3, 7 ]</p>
+                    </div>
+                </div>
+
+                <!-- Pass 2 -->
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm w-full md:w-[calc(50%-2rem)] z-10 hover:border-blue-400 transition-colors ml-auto">
+                        <h4 class="font-bold text-blue-600 mb-2">Pass 2</h4>
+                        <p class="text-sm text-slate-600 mb-3">Swap target <strong>4</strong> with min <strong>3</strong>.</p>
+                        <div class="arr-container !gap-1 !m-0">
+                            <div class="arr-box sorted">1</div>
+                            <div class="arr-box target">4</div>
+                            <div class="arr-box unsorted">10</div>
+                            <div class="arr-box unsorted">8</div>
+                            <div class="arr-box min-found">3</div>
+                            <div class="arr-box unsorted">7</div>
+                        </div>
+                        <p class="text-xs font-semibold text-green-600 mt-3">Result: [ 1, 3 | 10, 8, 4, 7 ]</p>
+                    </div>
+                </div>
+
+                <!-- Pass 3 -->
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm w-full md:w-[calc(50%-2rem)] z-10 hover:border-blue-400 transition-colors">
+                        <h4 class="font-bold text-blue-600 mb-2">Pass 3</h4>
+                        <p class="text-sm text-slate-600 mb-3">Swap target <strong>10</strong> with min <strong>4</strong>.</p>
+                        <div class="arr-container !gap-1 !m-0">
+                            <div class="arr-box sorted">1</div>
+                            <div class="arr-box sorted">3</div>
+                            <div class="arr-box target">10</div>
+                            <div class="arr-box unsorted">8</div>
+                            <div class="arr-box min-found">4</div>
+                            <div class="arr-box unsorted">7</div>
+                        </div>
+                        <p class="text-xs font-semibold text-green-600 mt-3">Result: [ 1, 3, 4 | 8, 10, 7 ]</p>
+                    </div>
+                </div>
+
+                <!-- Pass 4 -->
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm w-full md:w-[calc(50%-2rem)] z-10 hover:border-blue-400 transition-colors ml-auto">
+                        <h4 class="font-bold text-blue-600 mb-2">Pass 4</h4>
+                        <p class="text-sm text-slate-600 mb-3">Swap target <strong>8</strong> with min <strong>7</strong>.</p>
+                        <div class="arr-container !gap-1 !m-0">
+                            <div class="arr-box sorted">1</div>
+                            <div class="arr-box sorted">3</div>
+                            <div class="arr-box sorted">4</div>
+                            <div class="arr-box target">8</div>
+                            <div class="arr-box unsorted">10</div>
+                            <div class="arr-box min-found">7</div>
+                        </div>
+                        <p class="text-xs font-semibold text-green-600 mt-3">Result: [ 1, 3, 4, 7 | 10, 8 ]</p>
+                    </div>
+                </div>
+
+                <!-- Pass 5 -->
+                <div class="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                    <div class="bg-white p-5 rounded-xl border border-slate-200 shadow-sm w-full md:w-[calc(50%-2rem)] z-10 hover:border-blue-400 transition-colors">
+                        <h4 class="font-bold text-blue-600 mb-2">Pass 5</h4>
+                        <p class="text-sm text-slate-600 mb-3">Swap target <strong>10</strong> with min <strong>8</strong>.</p>
+                        <div class="arr-container !gap-1 !m-0">
+                            <div class="arr-box sorted">1</div>
+                            <div class="arr-box sorted">3</div>
+                            <div class="arr-box sorted">4</div>
+                            <div class="arr-box sorted">7</div>
+                            <div class="arr-box target">10</div>
+                            <div class="arr-box min-found">8</div>
+                        </div>
+                        <p class="text-xs font-semibold text-green-600 mt-3">Result: [ 1, 3, 4, 7, 8 | 10 ]</p>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="mt-8 bg-blue-50 border-l-4 border-blue-500 p-4 rounded-r-lg">
+                <p class="text-sm text-blue-800 font-medium"><strong>Crucial Logic Point:</strong> Notice that we only needed <strong>5 passes</strong> for an array of <strong>6 elements</strong>. Once 5 elements are sorted, the 6th element (10) is automatically left in its correct, sorted position. <br><br>Rule: Number of passes required = <code>n - 1</code>.</p>
+            </div>
+        </section>
+
+        <!-- Section 3: The Code -->
+        <section class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <span class="text-blue-500">3.</span> C/C++ Code Implementation
+            </h2>
+            <p class="text-slate-600 mb-4">Pay close attention to the variable <code>min</code>. It stores the <strong>index</strong> of the minimum element, <em>not</em> the actual value.</p>
+            
+            <div class="rounded-xl overflow-hidden shadow-lg">
+<pre class="language-c"><code class="language-c">// Outer loop controls the number of passes.
+// It runs from 0 to n-2 (which is < n-1)
+for (int i = 0; i < n - 1; i++) 
+{
+    // Assume the first element of the unsorted part is the minimum
+    int min = i; 
+    
+    // Inner loop searches the unsorted part for a smaller element
+    for (int j = i + 1; j < n; j++) 
+    {
+        // If we find an element smaller than our current minimum...
+        if (a[j] < a[min]) 
+        {
+            // Update 'min' to hold the index of this new smallest element
+            min = j; 
+        }
+    }
+    
+    // Optimization check: If the minimum element is already in the right place, 
+    // don't bother swapping.
+    if (min != i) 
+    {
+        swap(a[i], a[min]);
+    }
+}</code></pre>
+            </div>
+        </section>
+
+        <!-- Section 4: Dry Run -->
+        <section class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <span class="text-blue-500">4.</span> Dry Run / Tracing the Code
+            </h2>
+            <p class="text-slate-600 mb-6">Let's prove the code works by tracing variables on the board for <strong>Pass 1 (i = 0)</strong>.</p>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <h3 class="font-bold text-slate-800 mb-3 border-b pb-2">Initial State</h3>
+                    <ul class="space-y-2 text-sm text-slate-600 font-mono">
+                        <li>i = 0 <span class="text-slate-400">// First pass begins</span></li>
+                        <li>min = 0 <span class="text-slate-400">// Assume a[0] (7) is smallest</span></li>
+                        <li>j = i + 1 = 1</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <h3 class="font-bold text-slate-800 mb-3 border-b pb-2">Inner Loop Execution</h3>
+                    <ul class="space-y-2 text-sm text-slate-600 font-mono">
+                        <li><span class="font-semibold text-blue-600">j=1:</span> a[1]&lt;a[min] ? 4&lt;7? <span class="text-green-600 font-bold">YES</span> &rarr; min = 1</li>
+                        <li><span class="font-semibold text-blue-600">j=2:</span> a[2]&lt;a[min] ? 10&lt;4? <span class="text-red-500 font-bold">NO</span></li>
+                        <li><span class="font-semibold text-blue-600">j=3:</span> a[3]&lt;a[min] ? 8&lt;4? <span class="text-red-500 font-bold">NO</span></li>
+                        <li><span class="font-semibold text-blue-600">j=4:</span> a[4]&lt;a[min] ? 3&lt;4? <span class="text-green-600 font-bold">YES</span> &rarr; min = 4</li>
+                        <li><span class="font-semibold text-blue-600">j=5:</span> a[5]&lt;a[min] ? 1&lt;3? <span class="text-green-600 font-bold">YES</span> &rarr; min = 5</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-slate-900 text-slate-100 p-6 rounded-xl shadow-inner">
+                <h3 class="text-sm text-slate-400 uppercase tracking-widest mb-2">After Inner Loop:</h3>
+                <p class="font-mono text-sm leading-relaxed">
+                    Check optimization: <code class="bg-slate-800 px-1 rounded text-yellow-300">if (min != i)</code> &rarr; <code class="bg-slate-800 px-1 rounded text-yellow-300">if (5 != 0)</code> &rarr; <span class="text-green-400 font-bold">True</span>.<br><br>
+                    Execute: <code class="bg-slate-800 px-1 rounded text-blue-300">swap(a[0], a[5])</code>.<br>
+                    Array <code class="text-slate-400">[7, 4, 10, 8, 3, 1]</code> becomes <code class="text-green-300">[1, 4, 10, 8, 3, 7]</code>.<br>
+                    Pass 1 is complete!
+                </p>
+            </div>
+        </section>
+
+        <!-- Section 5: Time Complexity -->
+        <section class="bg-white p-8 rounded-2xl shadow-sm border border-slate-100 mb-10">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4 flex items-center gap-2">
+                <span class="text-blue-500">5.</span> Time Complexity Analysis
+            </h2>
+            
+            <div class="flex items-center justify-center py-6 mb-6 bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+                <span class="text-5xl font-extrabold text-blue-600">O(n²)</span>
+            </div>
+
+            <h3 class="font-bold text-slate-800 mb-2">Why is it O(n²)?</h3>
+            <ul class="list-disc list-inside space-y-3 text-slate-600 ml-2 marker:text-blue-500">
+                <li>The outer loop <code>i</code> runs approximately <code>n</code> times.</li>
+                <li>The inner loop <code>j</code> runs <code>n-1</code>, then <code>n-2</code>, then <code>n-3</code> times, scaling geometrically.</li>
+                <li>Unlike Insertion Sort or Bubble Sort, Selection Sort <strong>does not care if the array is already sorted.</strong> </li>
+                <li>Even if you give it a perfectly sorted array like <code>[1, 2, 3, 4, 5]</code>, the inner loop must still completely scan all remaining elements just to verify that no smaller element exists.</li>
+            </ul>
+
+            <div class="grid grid-cols-3 gap-4 mt-8 text-center">
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Best Case</p>
+                    <p class="font-bold text-lg text-slate-800">O(n²)</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Average Case</p>
+                    <p class="font-bold text-lg text-slate-800">O(n²)</p>
+                </div>
+                <div class="bg-slate-50 p-4 rounded-lg border border-slate-200">
+                    <p class="text-xs text-slate-500 uppercase tracking-widest mb-1">Worst Case</p>
+                    <p class="font-bold text-lg text-slate-800">O(n²)</p>
+                </div>
+            </div>
+        </section>
+
+        <footer class="text-center pb-12 text-slate-400 text-sm">
+            <p>End of Notes. You are now ready to dry-run Pass 2 on your own as the instructor suggested!</p>
+        </footer>
+
+    </div>
+
+    <!-- Scripts for interactivity (Scroll Progress & PrismJS) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-c.min.js"></script>
+    <script>
+        // Scroll Progress Bar Logic
+        window.onscroll = function() {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progressBar").style.width = scrolled + "%";
+        };
+    </script>
+</body>
+</html>
