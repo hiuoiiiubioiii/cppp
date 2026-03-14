@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prim's Algorithm Lecture Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
+
+        :root {
+            --bg-color: #f3f4f6;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --warning: #dc2626;
+            --warning-light: #fef2f2;
+            --success: #059669;
+            --success-light: #ecfdf5;
+            --border: #e5e7eb;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 24px;
+            padding-bottom: 60px;
+        }
+
+        /* Header */
+        .page-header {
+            text-align: center;
+            padding: 40px 20px;
+            background: var(--primary);
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            margin-bottom: 10px;
+        }
+
+        .page-header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 8px;
+        }
+
+        .page-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+        }
+
+        .card h2 {
+            font-size: 1.75rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .card h2 span.step-badge {
+            background: var(--primary);
+            color: white;
+            font-size: 1rem;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-weight: 600;
+        }
+
+        .card p, .card ul {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+            margin-bottom: 16px;
+        }
+
+        .card ul {
+            padding-left: 24px;
+        }
+
+        .card li {
+            margin-bottom: 8px;
+        }
+
+        /* Callouts */
+        .callout {
+            padding: 16px 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            border-left: 4px solid;
+        }
+
+        .callout.warning {
+            background-color: var(--warning-light);
+            border-color: var(--warning);
+            color: #991b1b;
+        }
+
+        .callout.success {
+            background-color: var(--success-light);
+            border-color: var(--success);
+            color: #065f46;
+        }
+
+        .callout strong {
+            display: block;
+            margin-bottom: 4px;
+            font-size: 1.15rem;
+        }
+
+        /* Visualizations */
+        .viz-container {
+            width: 100%;
+            background: #f8fafc;
+            border: 2px solid var(--border);
+            border-radius: 12px;
+            margin: 24px 0;
+            overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        svg {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+        }
+
+        /* Math Blocks */
+        .math-block {
+            background: #1e293b;
+            color: #38bdf8;
+            padding: 16px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 10px 0;
+            letter-spacing: 1px;
+        }
+
+        /* Timeline Connector */
+        .connector {
+            width: 4px;
+            height: 24px;
+            background: var(--primary);
+            margin: 0 auto;
+            border-radius: 2px;
+            opacity: 0.3;
+        }
+
+        @media (max-width: 600px) {
+            .card { padding: 20px; }
+            .page-header h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <!-- Header -->
+        <header class="page-header">
+            <h1>Prim's Algorithm</h1>
+            <p>Instructor: Jenny | Finding the Minimum Spanning Tree (MST)</p>
+        </header>
+
+        <!-- Intro -->
+        <section class="card">
+            <h2>Introduction</h2>
+            <p><strong>Goal:</strong> To find the Minimum Spanning Tree (MST) from a given weighted, undirected graph.</p>
+            <p><strong>Context:</strong> This follows Kruskal's Algorithm. Both solve the same problem but use different logic:</p>
+            <ul>
+                <li><strong>Kruskal's Approach:</strong> Sorts all edges globally by weight and adds them sequentially, skipping those that form cycles.</li>
+                <li><strong>Prim's Approach (This Lecture):</strong> Starts at a single arbitrary root vertex and grows the tree outward by always choosing the cheapest connecting edge.</li>
+            </ul>
+        </section>
+
+        <div class="connector"></div>
+
+        <!-- Original Graph -->
+        <section class="card">
+            <h2>The Original Graph</h2>
+            <p>This is the graph provided on the whiteboard at the start of the lecture. Notice that it contains a <strong>loop</strong> on vertex F, and <strong>parallel edges</strong> between B and D.</p>
+            <div class="viz-container" id="viz-original"></div>
+        </section>
+
+        <div class="connector"></div>
+
+        <!-- Step 1 -->
+        <section class="card">
+            <h2><span class="step-badge">Step 1</span> Pre-Processing</h2>
+            <p>Before executing Prim's Algorithm, you must clean up the graph by applying two strict rules:</p>
+            <ul>
+                <li><strong>Remove all self-loops:</strong> A loop starts and ends at the same vertex. The instructor removes the loop on <strong>F (weight 1)</strong>. You do not check its cost; loops are automatically discarded.</li>
+                <li><strong>Remove parallel edges:</strong> If two vertices have multiple edges connecting them, keep the one with the lowest weight and remove the rest. Between B and D, we have weights 6 and 8. The instructor <strong>keeps the 6 and removes the 8</strong>.</li>
+            </ul>
+            <div class="viz-container" id="viz-preprocessed"></div>
+        </section>
+
+        <div class="connector"></div>
+
+        <!-- The Core Rule -->
+        <section class="card">
+            <h2><span class="step-badge">Crucial Concept</span> The Core Rule of Prim's</h2>
+            <p>To grow the tree iteratively, you must choose a starting vertex. <strong>The instructor chooses vertex A.</strong></p>
+            
+            <div class="callout warning">
+                <strong>⚠️ Instructor Warning: A Common Student Mistake!</strong>
+                At every step, you must look at the outgoing edges from <strong>ALL vertices currently in your growing tree</strong>, not just the newest vertex you added. Failing to check the older vertices will result in a wrong MST!
+            </div>
+            
+            <p>You must select the edge with the <strong>minimum weight</strong> that connects a visited node to an unvisited node.</p>
+        </section>
+
+        <div class="connector"></div>
+
+        <!-- Iteration 1 & 2 -->
+        <section class="card">
+            <h2><span class="step-badge">Step 2</span> Iterations 1 & 2</h2>
+            <p><strong>Iteration 1:</strong> Start at <strong>A</strong>. Available edges are A-B (7) and A-C (8). The minimum is 7. We choose <strong>A-B</strong>.</p>
+            <p><strong>Iteration 2:</strong> Tree is {A, B}. We check ALL outgoing edges: A-C (8), B-C (3), B-D (6). The minimum is 3. We choose <strong>B-C</strong>.</p>
+            <div class="viz-container" id="viz-iter2"></div>
+        </section>
+
+        <div class="connector"></div>
+
+        <!-- Iteration 3 -->
+        <section class="card">
+            <h2><span class="step-badge">Step 3</span> Iteration 3</h2>
+            <p><strong>Current Tree:</strong> {A, B, C}</p>
+            <p>We check edges from A, B, and C that lead to new nodes. Available edges: B-D (6), C-D (4), C-E (3). <em>(Note: A-C is ignored because C is already visited)</em>.</p>
+            <p>The minimum is 3. We choose <strong>C-E</strong>.</p>
+            <div class="viz-container" id="viz-iter3"></div>
+        </section>
+
+        <div class="connector"></div>
+
+        <!-- Iteration 4 (The Tie) -->
+        <section class="card">
+            <h2><span class="step-badge">Step 4</span> Iteration 4 (The Tie-Breaker)</h2>
+            <p><strong>Current Tree:</strong> {A, B, C, E}</p>
+            <p>Available edges leading to unvisited nodes (D, F): B-D (6), C-D (4), E-D (2), E-F (2).</p>
+            
+            <div class="callout success">
+                <strong>💡 Tie-Breaker Rule</strong>
+                There is a tie between E-D (2) and E-F (2). The instructor states you can choose <strong>either one arbitrarily</strong>. She decides to choose <strong>E-F (2)</strong>.
+            </div>
+            <div class="viz-container" id="viz-iter4"></div>
+        </section>
+
+        <div class="connector"></div>
+
+        <!-- Final Iteration -->
+        <section class="card">
+            <h2><span class="step-badge">Step 5</span> Final Iteration</h2>
+            <p><strong>Current Tree:</strong> {A, B, C, E, F}. Only vertex D is unvisited.</p>
+            <p>Available edges leading to D: B-D (6), C-D (4), E-D (2), F-D (5). The minimum is 2. We choose <strong>E-D</strong>.</p>
+            <p>All vertices are now included. The algorithm terminates.</p>
+            <div class="viz-container" id="viz-final"></div>
+        </section>
+
+        <div class="connector"></div>
+
+        <!-- Verification -->
+        <section class="card">
+            <h2><span class="step-badge">Final Step</span> Verifying the MST</h2>
+            <p>At the end of the video, Jenny explains how to mathematically verify that the tree you drew is a valid Spanning Tree.</p>
+            <p>Let the original graph be <strong>G(V, E)</strong> and the spanning tree be <strong>G'(V', E')</strong>.</p>
+
+            <ul>
+                <li><strong>Rule 1: Same number of Vertices.</strong> The MST must contain every vertex from the original graph.
+                    <div class="math-block">V' = V</div>
+                    <em>Check: Original graph has 6 vertices. MST has 6 vertices. (Pass)</em>
+                </li>
+                <li><strong>Rule 2: Number of Edges.</strong> The MST must have exactly one less edge than the total number of vertices.
+                    <div class="math-block">|E'| = |V| - 1</div>
+                    <em>Check: 6 - 1 = 5 edges. Our tree has 5 edges. (Pass)</em>
+                </li>
+                <li><strong>Rule 3: Subset of Edges.</strong> All edges in the MST must exist in the original graph.
+                    <div class="math-block">E' ⊆ E</div>
+                </li>
+                <li><strong>Rule 4: Minimum Cost.</strong> The sum of the weights must be the lowest possible.
+                    <div class="math-block">Cost = 7 + 3 + 3 + 2 + 2 = 17</div>
+                </li>
+            </ul>
+
+            <div class="callout success">
+                <strong>Final Note from Instructor:</strong> A single graph can have <em>more than one</em> valid Minimum Spanning Tree (because of tie-breakers like we saw in Step 4), but the <strong>total minimum weight will always be the same.</strong>
+            </div>
+        </section>
+
+    </div>
+
+    <!-- JavaScript Visualization Engine -->
+    <script>
+        // Graph Data Coordinates
+        const nodes = {
+            A: { x: 50, y: 150 },
+            B: { x: 180, y: 60 },
+            C: { x: 180, y: 240 },
+            D: { x: 380, y: 60 },
+            E: { x: 380, y: 240 },
+            F: { x: 510, y: 150 }
+        };
+
+        // Graph Edges Definition
+        const edges = [
+            { id: 'AB', f: 'A', t: 'B', w: 7 },
+            { id: 'AC', f: 'A', t: 'C', w: 8 },
+            { id: 'BC', f: 'B', t: 'C', w: 3 },
+            { id: 'BD', f: 'B', t: 'D', w: 6 },
+            { id: 'CD', f: 'C', t: 'D', w: 4 },
+            { id: 'CE', f: 'C', t: 'E', w: 3 },
+            { id: 'DE', f: 'D', t: 'E', w: 2 },
+            { id: 'DF', f: 'D', t: 'F', w: 5 },
+            { id: 'EF', f: 'E', t: 'F', w: 2 }
+        ];
+
+        // Custom edges for the Original Graph (Pre-processing targets)
+        const parallelEdge = { f: 'B', t: 'D', w: 8 };
+        const loopEdge = { f: 'F', t: 'F', w: 1 };
+
+        /**
+         * Dynamic SVG Generator
+         * Generates an SVG string representing the state of the graph.
+         * @param {Array} activeNodes - Nodes part of the MST so far
+         * @param {Array} activeEdges - Edges part of the MST so far
+         * @param {Boolean} showRemoved - Whether to draw the loop and parallel edge
+         * @param {Boolean} highlightRemoved - Whether to draw them in red dashed lines
+         */
+        function createGraphSVG(activeNodes = [], activeEdges = [], showRemoved = false, highlightRemoved = false) {
+            let svg = `<svg viewBox="0 0 560 300" xmlns="http://www.w3.org/2000/svg">`;
+            
+            // Draw standard edges
+            edges.forEach(e => {
+                const isActive = activeEdges.includes(e.id);
+                const color = isActive ? '#2563eb' : '#cbd5e1';
+                const strokeWidth = isActive ? 4 : 2;
+                const n1 = nodes[e.f];
+                const n2 = nodes[e.t];
+                
+                // Draw Line
+                svg += `<line x1="${n1.x}" y1="${n1.y}" x2="${n2.x}" y2="${n2.y}" stroke="${color}" stroke-width="${strokeWidth}" />`;
+                
+                // Draw Weight Text (midpoint)
+                const mx = (n1.x + n2.x) / 2;
+                const my = (n1.y + n2.y) / 2 - 10;
+                const textColor = isActive ? '#1e3a8a' : '#64748b';
+                const fontWeight = isActive ? 'bold' : 'normal';
+                svg += `<text x="${mx}" y="${my}" fill="${textColor}" font-size="16" font-weight="${fontWeight}" text-anchor="middle">${e.w}</text>`;
+            });
+
+            // Draw Pre-processing edges (Parallel & Loop)
+            if (showRemoved) {
+                const removedColor = highlightRemoved ? '#ef4444' : '#cbd5e1';
+                const dash = highlightRemoved ? 'stroke-dasharray="5,5"' : '';
+                
+                // Parallel B-D curve
+                svg += `<path d="M ${nodes.B.x} ${nodes.B.y} Q 280 10 ${nodes.D.x} ${nodes.D.y}" fill="transparent" stroke="${removedColor}" stroke-width="2" ${dash} />`;
+                svg += `<text x="280" y="30" fill="${removedColor}" font-size="16" text-anchor="middle">8</text>`;
+
+                // Loop F-F
+                svg += `<circle cx="${nodes.F.x + 15}" cy="${nodes.F.y - 15}" r="20" fill="transparent" stroke="${removedColor}" stroke-width="2" ${dash} />`;
+                svg += `<text x="${nodes.F.x + 45}" y="${nodes.F.y - 25}" fill="${removedColor}" font-size="16" text-anchor="middle">1</text>`;
+            }
+
+            // Draw Nodes
+            Object.keys(nodes).forEach(key => {
+                const n = nodes[key];
+                const isActive = activeNodes.includes(key);
+                const bg = isActive ? '#2563eb' : '#ffffff';
+                const stroke = isActive ? '#1e3a8a' : '#94a3b8';
+                const textCol = isActive ? '#ffffff' : '#1e293b';
+
+                svg += `<circle cx="${n.x}" cy="${n.y}" r="20" fill="${bg}" stroke="${stroke}" stroke-width="2"/>`;
+                svg += `<text x="${n.x}" y="${n.y + 6}" fill="${textCol}" font-size="16" font-weight="bold" text-anchor="middle">${key}</text>`;
+            });
+
+            svg += `</svg>`;
+            return svg;
+        }
+
+        // Render the graphs into their respective containers
+        
+        // 1. Original Graph
+        document.getElementById('viz-original').innerHTML = createGraphSVG([], [], true, false);
+        
+        // 2. Preprocessed Graph (Highlighting the removed edges in red dashes)
+        document.getElementById('viz-preprocessed').innerHTML = createGraphSVG([], [], true, true);
+        
+        // 3. Iteration 1 & 2 (Nodes A, B, C | Edges AB, BC)
+        document.getElementById('viz-iter2').innerHTML = createGraphSVG(['A', 'B', 'C'], ['AB', 'BC'], false, false);
+        
+        // 4. Iteration 3 (Nodes A, B, C, E | Edges AB, BC, CE)
+        document.getElementById('viz-iter3').innerHTML = createGraphSVG(['A', 'B', 'C', 'E'], ['AB', 'BC', 'CE'], false, false);
+        
+        // 5. Iteration 4 (Nodes A, B, C, E, F | Edges AB, BC, CE, EF)
+        document.getElementById('viz-iter4').innerHTML = createGraphSVG(['A', 'B', 'C', 'E', 'F'], ['AB', 'BC', 'CE', 'EF'], false, false);
+        
+        // 6. Final Graph (All Nodes | Edges AB, BC, CE, EF, DE)
+        document.getElementById('viz-final').innerHTML = createGraphSVG(['A', 'B', 'C', 'D', 'E', 'F'], ['AB', 'BC', 'CE', 'DE', 'EF'], false, false);
+
+    </script>
+</body>
+</html>
