@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Finding Bridges in a Graph | Study Feed</title>
+    <style>
+        /* Base Variables & Reset */
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --accent-blue: #3b82f6;
+            --accent-blue-light: #eff6ff;
+            --danger-red: #ef4444;
+            --danger-red-light: #fef2f2;
+            --success-green: #10b981;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 4rem;
+        }
+
+        /* Feed Layout Container */
+        .feed-container {
+            max-width: 768px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem; /* Space between cards */
+        }
+
+        /* Header Styling */
+        header {
+            text-align: center;
+            padding: 3rem 1rem 1rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+            letter-spacing: -0.025em;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Feed Cards */
+        .feed-card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .feed-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card-tag {
+            display: inline-block;
+            background: var(--accent-blue-light);
+            color: var(--accent-blue);
+            font-size: 0.875rem;
+            font-weight: 600;
+            padding: 0.25rem 0.75rem;
+            border-radius: 999px;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .feed-card h2 {
+            font-size: 1.75rem;
+            margin-bottom: 1rem;
+            color: var(--text-main);
+        }
+
+        .feed-card p {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        .feed-card ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--text-muted);
+            font-size: 1.05rem;
+        }
+
+        .feed-card li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Callout / Golden Rule Box */
+        .golden-rule {
+            background: var(--danger-red-light);
+            border-left: 4px solid var(--danger-red);
+            padding: 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+        }
+
+        .golden-rule h3 {
+            color: var(--danger-red);
+            margin-bottom: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .formula {
+            font-family: 'Courier New', Courier, monospace;
+            background: rgba(255,255,255,0.7);
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 1.1rem;
+            display: inline-block;
+            margin-top: 0.5rem;
+            color: var(--danger-red);
+        }
+
+        /* Inline Math / Node Notation styling */
+        .node-note {
+            display: inline-flex;
+            align-items: center;
+            background: var(--bg-color);
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-weight: bold;
+            color: var(--text-main);
+            border: 1px solid #e5e7eb;
+        }
+
+        .highlight-text {
+            font-weight: 600;
+            color: var(--text-main);
+        }
+
+        /* Graph Visualizations (SVG Containers) */
+        .svg-container {
+            width: 100%;
+            background: #fafafa;
+            border: 2px dashed #e5e7eb;
+            border-radius: 12px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        svg {
+            max-width: 100%;
+            height: auto;
+            overflow: visible;
+        }
+
+        .node { fill: white; stroke: var(--text-main); stroke-width: 2; }
+        .edge { stroke: var(--text-muted); stroke-width: 3; }
+        .edge-bridge { stroke: var(--danger-red); stroke-width: 4; stroke-dasharray: 5,5; }
+        .node-text { font-family: monospace; font-size: 16px; font-weight: bold; fill: var(--text-main); }
+        .math-text { font-family: monospace; font-size: 14px; fill: var(--accent-blue); font-weight: bold; }
+        
+        /* Responsive adjustments */
+        @media (max-width: 600px) {
+            .feed-card { padding: 1.5rem; }
+            header h1 { font-size: 2rem; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Finding All Bridges in a Graph</h1>
+        <p>In-depth video breakdown & whiteboard notes • Scroll to begin</p>
+    </header>
+
+    <main class="feed-container" id="feed">
+
+        <!-- Card 1 -->
+        <section class="feed-card">
+            <span class="card-tag">Concept</span>
+            <h2>What exactly is a "Bridge"?</h2>
+            <p>An edge in a graph is considered a <strong>bridge</strong> if removing it increases the number of connected components in the graph. In simpler terms: <em>if you cut this edge, does the graph split into disconnected pieces?</em></p>
+            
+            <div class="svg-container">
+                <svg width="300" height="150" viewBox="0 0 300 150">
+                    <!-- Edges -->
+                    <line x1="50" y1="75" x2="150" y2="75" class="edge-bridge" />
+                    <line x1="150" y1="75" x2="250" y2="75" class="edge-bridge" />
+                    
+                    <!-- Nodes -->
+                    <circle cx="50" cy="75" r="20" class="node" />
+                    <text x="45" y="80" class="node-text">d</text>
+                    
+                    <circle cx="150" cy="75" r="20" class="node" />
+                    <text x="145" y="80" class="node-text">e</text>
+                    
+                    <circle cx="250" cy="75" r="20" class="node" />
+                    <text x="245" y="80" class="node-text">f</text>
+
+                    <!-- Labels -->
+                    <text x="70" y="60" font-family="sans-serif" font-size="12" fill="#ef4444" font-weight="bold">Bridge</text>
+                    <text x="170" y="60" font-family="sans-serif" font-size="12" fill="#ef4444" font-weight="bold">Bridge</text>
+                </svg>
+            </div>
+            <p>In her whiteboard example (0:22), the instructor shows a graph. If we remove the edge between <span class="node-note">d</span> and <span class="node-note">e</span>, the graph splits. If we remove the edge between <span class="node-note">e</span> and <span class="node-note">f</span>, it splits again. These structural weak points are the bridges.</p>
+        </section>
+
+        <!-- Card 2 -->
+        <section class="feed-card">
+            <span class="card-tag">The Strategy</span>
+            <h2>DFS Traversal & Tracking Time</h2>
+            <p>To find bridges efficiently in large graphs, we use a <strong>Depth-First Search (DFS)</strong>. As we traverse, the instructor writes a fraction next to every node on the whiteboard tracking two crucial numbers:</p>
+            <ul>
+                <li><strong>Discovery Time (dt):</strong> The chronological step when we first visit a node (1, 2, 3...).</li>
+                <li><strong>Lowest Reachable Time (low):</strong> The lowest "Discovery Time" this node can reach by looking at its neighbors <em>(excluding the parent node it just came from)</em>.</li>
+            </ul>
+            <p>On the whiteboard, it looks like this: <span class="node-note">Discovery Time / Lowest Time</span> (e.g., <span class="node-note">6 / 4</span>).</p>
+        </section>
+
+        <!-- Card 3 -->
+        <section class="feed-card">
+            <span class="card-tag">Core Rule</span>
+            <h2>The Golden Rule of Bridges</h2>
+            <p>As you hit a dead end in the graph and start backtracking up the DFS tree, a child node reports its <strong>Lowest Reachable Time</strong> back to its parent.</p>
+            
+            <div class="golden-rule">
+                <h3>🚨 The Bridge Formula</h3>
+                <p>If an edge connects a Parent to a Child, it is a bridge IF AND ONLY IF:</p>
+                <div class="formula">Lowest_Time [Child] > Discovery_Time [Parent]</div>
+            </div>
+            
+            <p><strong>Why?</strong> Because if the child's lowest reachable time is strictly greater than the parent's discovery time, it means the child has NO back-edges (alternate routes) connecting it to older parts of the graph. The ONLY way back is through the parent. Cut the parent, and the child breaks off.</p>
+        </section>
+
+        <!-- Card 4 -->
+        <section class="feed-card">
+            <span class="card-tag">Walkthrough Step 1</span>
+            <h2>Forward Traversal & Initial Backtracking</h2>
+            <p>Starting at node <span class="node-note">d</span>, the DFS dives deep, assigning discovery times:</p>
+            <p><span class="node-note">d(1) ➔ f(2) ➔ g(3) ➔ c(4) ➔ b(5) ➔ a(6)</span></p>
+            <p>At <span class="node-note">a</span>, we hit a dead end and begin backtracking and calculating "Lowest Reachable Times":</p>
+            <ul>
+                <li><strong>At Node a (dt=6):</strong> Neighbors are <code>b</code> (parent) and <code>c</code> (dt=4). Ignoring the parent, it can reach <code>c</code>. Its lowest time is 4. She writes <span class="node-note">6 / 4</span>. Backtracks to <code>b</code>. Check: <code>4 < 5</code>. <strong>Not a bridge.</strong></li>
+                <li><strong>At Node b (dt=5):</strong> DFS branches out to <code>e</code> (dt=7). <code>e</code> can reach <code>d</code>(1). So <code>e</code> is <span class="node-note">7 / 1</span>. <code>e</code> backtracks to <code>b</code>. Check: <code>1 < 5</code>. <strong>Not a bridge.</strong></li>
+                <li>Node <code>b</code> adopts <code>e</code>'s lowest time, becoming <span class="node-note">5 / 1</span>, and backtracks to <code>c</code>. Check: <code>1 < 4</code>. <strong>Not a bridge.</strong></li>
+            </ul>
+        </section>
+
+        <!-- Card 5 -->
+        <section class="feed-card">
+            <span class="card-tag">Walkthrough Step 2</span>
+            <h2>Traversing the Bottom Half & Bridge #1</h2>
+            <p>From node <code>c(4)</code>, the DFS travels down into the lower half of the whiteboard graph:</p>
+            <p><span class="node-note">c ➔ h(8) ➔ i(9) ➔ k(10) ➔ l(11) ➔ j(12)</span></p>
+            <p>After backtracking up through <code>j</code> and <code>l</code>, node <code>k(10)</code> branches down again to the final cluster:</p>
+            <p><span class="node-note">k(10) ➔ m(13) ➔ n(14) ➔ o(15)</span></p>
+
+            <div class="svg-container">
+                <svg width="350" height="200" viewBox="0 0 350 200">
+                    <!-- Edges -->
+                    <line x1="175" y1="40" x2="175" y2="120" class="edge-bridge" />
+                    <line x1="175" y1="120" x2="100" y2="170" class="edge" />
+                    <line x1="175" y1="120" x2="250" y2="170" class="edge" />
+                    <line x1="100" y1="170" x2="250" y2="170" class="edge" />
+                    
+                    <!-- Nodes -->
+                    <circle cx="175" cy="40" r="22" class="node" />
+                    <text x="170" y="45" class="node-text">k</text>
+                    <text x="210" y="45" class="math-text">10 / 8</text>
+
+                    <circle cx="175" cy="120" r="22" class="node" />
+                    <text x="170" y="125" class="node-text">m</text>
+                    <text x="210" y="125" class="math-text">13 / 13</text>
+
+                    <circle cx="100" cy="170" r="22" class="node" />
+                    <text x="95" y="175" class="node-text">o</text>
+
+                    <circle cx="250" cy="170" r="22" class="node" />
+                    <text x="245" y="175" class="node-text">n</text>
+                    
+                    <!-- Highlight text -->
+                    <text x="185" y="85" font-family="sans-serif" font-size="14" fill="#ef4444" font-weight="bold">Bridge Found!</text>
+                </svg>
+            </div>
+
+            <p><strong>Applying the Math at Node m (13:35):</strong></p>
+            <ul>
+                <li>Node <code>m</code> completes its check of <code>n</code> and <code>o</code>. They form a cycle, so <code>m</code> cannot reach anything older than itself. Its lowest time is <strong>13</strong>.</li>
+                <li><code>m</code> backtracks to its parent, <code>k</code>.</li>
+                <li><strong>The Check:</strong> <code>Lowest [m] (13) > Discovery [k] (10)</code>.</li>
+                <li><strong>Result:</strong> Because 13 is greater than 10, the edge <span class="node-note">k-m</span> is our first bridge! She circles this on the board.</li>
+            </ul>
+        </section>
+
+        <!-- Card 6 -->
+        <section class="feed-card">
+            <span class="card-tag">Walkthrough Step 3</span>
+            <h2>Backtracking & Bridge #2</h2>
+            <p>The DFS continues to backtrack up the left side of the graph: <span class="node-note">k ➔ i ➔ h</span>.</p>
+            <ul>
+                <li><code>k</code> passes up a lowest time of 8.</li>
+                <li><code>i</code> passes up a lowest time of 8.</li>
+                <li>Node <code>h</code> receives 8. It has no other edges. So <code>h</code>'s lowest time remains <strong>8</strong>.</li>
+            </ul>
+
+            <div class="svg-container">
+                <svg width="250" height="200" viewBox="0 0 250 200">
+                    <!-- Edges -->
+                    <line x1="125" y1="40" x2="125" y2="120" class="edge-bridge" />
+                    <line x1="125" y1="120" x2="125" y2="180" class="edge" />
+                    
+                    <!-- Nodes -->
+                    <circle cx="125" cy="40" r="22" class="node" />
+                    <text x="120" y="45" class="node-text">c</text>
+                    <text x="160" y="45" class="math-text">4 / 1</text>
+
+                    <circle cx="125" cy="120" r="22" class="node" />
+                    <text x="120" y="125" class="node-text">h</text>
+                    <text x="160" y="125" class="math-text">8 / 8</text>
+
+                    <circle cx="125" cy="180" r="22" class="node" />
+                    <text x="120" y="185" class="node-text">i</text>
+                    
+                    <!-- Highlight text -->
+                    <text x="135" y="85" font-family="sans-serif" font-size="14" fill="#ef4444" font-weight="bold">Bridge Found!</text>
+                </svg>
+            </div>
+
+            <p><strong>Applying the Math at Node h (14:40):</strong></p>
+            <ul>
+                <li>Node <code>h</code> backtracks to its parent, <code>c</code>.</li>
+                <li><strong>The Check:</strong> <code>Lowest [h] (8) > Discovery [c] (4)</code>.</li>
+                <li><strong>Result:</strong> Because 8 is strictly greater than 4, the edge <span class="node-note">c-h</span> is our second bridge. Removing it separates the entire top and bottom halves of the whiteboard graph.</li>
+            </ul>
+        </section>
+
+        <!-- Card 7 -->
+        <section class="feed-card">
+            <span class="card-tag">Conclusion</span>
+            <h2>Time Complexity</h2>
+            <p>After backtracking all the way to the start, we conclude the graph contains exactly two bridges.</p>
+            <p>At <strong>19:20</strong> in the video, the instructor explains the time complexity of this algorithm:</p>
+            <div class="golden-rule" style="background: var(--accent-blue-light); border-left-color: var(--accent-blue);">
+                <h3 style="color: var(--accent-blue);">Time Complexity: Θ(V + E)</h3>
+                <p style="color: var(--text-main); margin-top: 0.5rem;">Where <strong>V</strong> is Vertices (Nodes) and <strong>E</strong> is Edges.</p>
+            </div>
+            <p><strong>Why?</strong> In the worst-case scenario, the Depth-First Search algorithm requires us to visit every single vertex to assign discovery times, and traverse across every single edge exactly once to perform the backtracking lowest-time checks.</p>
+        </section>
+
+    </main>
+
+    <script>
+        // Intersection Observer for scroll animations (Feed effect)
+        document.addEventListener("DOMContentLoaded", () => {
+            const cards = document.querySelectorAll('.feed-card');
+            
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15 // Trigger when 15% of the card is visible
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target); // Run animation only once
+                    }
+                });
+            }, observerOptions);
+
+            cards.forEach(card => {
+                observer.observe(card);
+            });
+            
+            // Immediately trigger visibility for cards already in the viewport on load
+            setTimeout(() => {
+                 cards.forEach(card => {
+                    const rect = card.getBoundingClientRect();
+                    if(rect.top < window.innerHeight) {
+                        card.classList.add('visible');
+                    }
+                });
+            }, 100);
+        });
+    </script>
+</body>
+</html>
