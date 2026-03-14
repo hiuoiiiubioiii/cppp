@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connected Components Study Notes</title>
+    <style>
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --primary: #2563eb;
+            --secondary: #3b82f6;
+            --accent: #ef4444;
+            --success: #10b981;
+            --code-bg: #1e1e1e;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Vertical Feed Container */
+        .feed-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Feed Cards */
+        .feed-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .feed-card h2 {
+            color: var(--primary);
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid #e5e7eb;
+            font-size: 1.8rem;
+        }
+
+        .feed-card h3 {
+            margin: 1.5rem 0 0.5rem 0;
+            color: var(--text-main);
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        ul, ol {
+            margin-bottom: 1rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Emphasized Information */
+        .highlight-box {
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+        }
+
+        /* Visualizations / SVGs */
+        .visual-container {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        svg text {
+            font-family: monospace;
+            font-weight: bold;
+            font-size: 14px;
+            fill: #fff;
+            pointer-events: none;
+        }
+
+        .node {
+            fill: var(--primary);
+            stroke: #fff;
+            stroke-width: 2;
+        }
+
+        .edge {
+            stroke: #94a3b8;
+            stroke-width: 3;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: var(--code-bg);
+            color: #d4d4d4;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            margin: 1.5rem 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+        }
+
+        .code-comment { color: #6a9955; }
+        .code-keyword { color: #569cd6; }
+        .code-function { color: #dcdcaa; }
+        .code-string { color: #ce9178; }
+
+        /* State Trackers for Trace */
+        .state-tracker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            background: #1e293b;
+            color: white;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            font-family: monospace;
+        }
+
+        .state-item {
+            background: #334155;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .output-box {
+            background: #0f172a;
+            color: #22c55e;
+            padding: 1rem;
+            border-radius: 8px;
+            font-family: monospace;
+            margin-top: 1rem;
+        }
+
+        .step {
+            margin-left: 1rem;
+            border-left: 2px dashed #cbd5e1;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .step-title {
+            font-weight: bold;
+            color: var(--secondary);
+            margin-bottom: 0.25rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <!-- HEADER -->
+        <div style="text-align: center; margin-bottom: 1rem;">
+            <h1 style="font-size: 2.5rem; color: var(--primary);">Graphs: Connected Components</h1>
+            <p style="color: var(--text-muted); font-size: 1.1rem;">A complete deep-dive into finding and counting connected components using Depth First Search (DFS).</p>
+        </div>
+
+        <!-- PART 1: DEFINITIONS -->
+        <article class="feed-card">
+            <h2>1. Concept & Definitions</h2>
+            <p>A <strong>Connected Component</strong> is defined as a subgraph of a main graph (the "super graph") that follows two strict conditions:</p>
+            <ul>
+                <li><strong>Reachable Vertices:</strong> Inside the component, any two vertices must be connected to each other by some path.</li>
+                <li><strong>No Outside Connections:</strong> No vertex inside the component can have an edge connecting it to any vertex outside the component in the super graph.</li>
+            </ul>
+
+            <div class="highlight-box">
+                <strong>Instructor's Tip:</strong> By simply looking at a drawing of a graph, a human can easily count how many isolated pieces exist. However, a computer cannot "see" it. We must write an algorithm to find them.
+            </div>
+
+            <h3>Visualizing the Instructor's Examples</h3>
+            
+            <div class="visual-container">
+                <p><strong>Example 1:</strong> 1 Connected Component (Everything is linked)</p>
+                <svg width="200" height="120" viewBox="0 0 200 120">
+                    <line x1="50" y1="20" x2="150" y2="20" class="edge"/>
+                    <line x1="150" y1="20" x2="100" y2="100" class="edge"/>
+                    <line x1="100" y1="100" x2="50" y2="20" class="edge"/>
+                    <line x1="50" y1="20" x2="100" y2="60" class="edge"/>
+                    <line x1="150" y1="20" x2="100" y2="60" class="edge"/>
+                    <circle cx="50" cy="20" r="12" class="node"/><text x="46" y="25">A</text>
+                    <circle cx="150" cy="20" r="12" class="node"/><text x="146" y="25">B</text>
+                    <circle cx="100" cy="100" r="12" class="node"/><text x="96" y="105">C</text>
+                    <circle cx="100" cy="60" r="12" class="node"/><text x="96" y="65">D</text>
+                </svg>
+            </div>
+
+            <div class="visual-container">
+                <p><strong>Example 2:</strong> 3 Connected Components (Edges deleted)</p>
+                <svg width="350" height="120" viewBox="0 0 350 120">
+                    <!-- Comp 1 -->
+                    <line x1="40" y1="80" x2="80" y2="20" class="edge"/>
+                    <line x1="80" y1="20" x2="120" y2="80" class="edge"/>
+                    <line x1="120" y1="80" x2="40" y2="80" class="edge"/>
+                    <circle cx="40" cy="80" r="12" class="node"/>
+                    <circle cx="80" cy="20" r="12" class="node"/>
+                    <circle cx="120" cy="80" r="12" class="node"/>
+                    
+                    <!-- Comp 2 -->
+                    <line x1="180" y1="50" x2="240" y2="50" class="edge"/>
+                    <circle cx="180" cy="50" r="12" class="node"/>
+                    <circle cx="240" cy="50" r="12" class="node"/>
+
+                    <!-- Comp 3 -->
+                    <circle cx="300" cy="50" r="12" class="node"/>
+                </svg>
+            </div>
+        </article>
+
+        <!-- PART 2: ALGORITHM & SETUP -->
+        <article class="feed-card">
+            <h2>2. The Algorithm & Setup</h2>
+            <p>To teach a computer to find components, we can use graph traversal algorithms like <strong>DFS (Depth First Search)</strong> or <strong>BFS (Breadth First Search)</strong>. In this lecture, we use DFS.</p>
+            
+            <div class="highlight-box">
+                <strong>Core Logic:</strong> The number of times the main recursive DFS function is triggered from the outer loop is exactly equal to the number of connected components in the graph.
+            </div>
+
+            <h3>The Target Graph (N = 9 Vertices)</h3>
+            <p>We will trace our code against this specific 9-node graph drawn on the board. Visually, we can see there are 3 distinct components.</p>
+            
+            <div class="visual-container">
+                <svg width="400" height="150" viewBox="0 0 400 150">
+                    <!-- Component 1: Nodes 0,1,2,3 (Square cycle) -->
+                    <line x1="40" y1="40" x2="120" y2="40" class="edge"/>
+                    <line x1="120" y1="40" x2="120" y2="120" class="edge"/>
+                    <line x1="120" y1="120" x2="40" y2="120" class="edge"/>
+                    <line x1="40" y1="120" x2="40" y2="40" class="edge"/>
+                    <circle cx="40" cy="40" r="14" class="node"/><text x="36" y="45">0</text>
+                    <circle cx="120" cy="40" r="14" class="node"/><text x="116" y="45">1</text>
+                    <circle cx="120" cy="120" r="14" class="node"/><text x="116" y="125">2</text>
+                    <circle cx="40" cy="120" r="14" class="node"/><text x="36" y="125">3</text>
+
+                    <!-- Component 2: Nodes 4,5 (Line) -->
+                    <line x1="190" y1="40" x2="250" y2="40" class="edge"/>
+                    <circle cx="190" cy="40" r="14" class="node"/><text x="186" y="45">4</text>
+                    <circle cx="250" cy="40" r="14" class="node"/><text x="246" y="45">5</text>
+
+                    <!-- Component 3: Nodes 6,7,8 (Triangle) -->
+                    <line x1="330" y1="40" x2="370" y2="100" class="edge"/>
+                    <line x1="370" y1="100" x2="290" y2="100" class="edge"/>
+                    <line x1="290" y1="100" x2="330" y2="40" class="edge"/>
+                    <circle cx="330" cy="40" r="14" class="node"/><text x="326" y="45">6</text>
+                    <circle cx="370" cy="100" r="14" class="node"/><text x="366" y="105">7</text>
+                    <circle cx="290" cy="100" r="14" class="node"/><text x="286" y="105">8</text>
+                </svg>
+            </div>
+
+            <h3>The Pseudo-Code</h3>
+<pre><code><span class="code-comment">// Main Function to find components</span>
+<span class="code-function">Connected_Components</span>(G) {
+    <span class="code-comment">// 1. Initialize all vertices as unvisited (-1)</span>
+    <span class="code-keyword">for each</span> vertex v ∈ N {
+        flag[v] = -1  
+    }
+    
+    <span class="code-keyword">int</span> count = 0; <span class="code-comment">// Will hold the total components</span>
+    
+    <span class="code-comment">// 2. Loop through every vertex in the graph</span>
+    <span class="code-keyword">for</span>(<span class="code-keyword">int</span> v = 0; v < N; v++) {
+        
+        <span class="code-comment">// 3. Only call DFS if the vertex is unvisited</span>
+        <span class="code-keyword">if</span>(flag[v] == -1) {
+            <span class="code-function">DFS</span>(v, flag); <span class="code-comment">// Call helper function</span>
+            count++;      <span class="code-comment">// Increment component counter</span>
+            cout << <span class="code-string">"\n"</span>; <span class="code-comment">// Print newline for separation</span>
+        }
+    }
+}
+
+<span class="code-comment">// DFS Recursive Helper Function</span>
+<span class="code-function">DFS</span>(<span class="code-keyword">int</span> v, <span class="code-keyword">int</span> flag[]) {
+    flag[v] = 1;    <span class="code-comment">// Mark current node as visited</span>
+    cout << v;      <span class="code-comment">// Print the node</span>
+    
+    <span class="code-comment">// Check all neighbors of the current node</span>
+    <span class="code-keyword">for each</span> adjacent node u of v {
+        <span class="code-keyword">if</span>(flag[u] == -1) {  <span class="code-comment">// If neighbor is unvisited</span>
+            <span class="code-function">DFS</span>(u, flag);    <span class="code-comment">// Recursive call</span>
+        }
+    }
+}</code></pre>
+        </article>
+
+        <!-- PART 3: TRACE - COMPONENT 1 -->
+        <article class="feed-card">
+            <h2>3. Execution Trace: Component 1</h2>
+            <p>Let's dry-run the algorithm on our 9-node graph.</p>
+            
+            <div class="state-tracker">
+                <div class="state-item">N = 9</div>
+                <div class="state-item">count = 0</div>
+                <div class="state-item">flag = [-1,-1,-1,-1,-1,-1,-1,-1,-1]</div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">Main Loop: v = 0</div>
+                <p><code>flag[0] == -1</code> is True. We enter the if-statement and call <strong><code>DFS(0)</code></strong>.</p>
+                <ul>
+                    <li><strong><code>DFS(0)</code>:</strong> Sets <code>flag[0] = 1</code>. Prints <strong>0</strong>. Adjacents to 0 are {1, 3}. Takes adjacent <code>u = 1</code>.</li>
+                    <li><code>flag[1] == -1</code>. Calls <strong><code>DFS(1)</code></strong>.
+                        <ul>
+                            <li><strong><code>DFS(1)</code>:</strong> Sets <code>flag[1] = 1</code>. Prints <strong>1</strong>. Adjacents are {0, 2}. 0 is visited. Takes <code>u = 2</code>.</li>
+                            <li><code>flag[2] == -1</code>. Calls <strong><code>DFS(2)</code></strong>.
+                                <ul>
+                                    <li><strong><code>DFS(2)</code>:</strong> Sets <code>flag[2] = 1</code>. Prints <strong>2</strong>. Adjacents are {1, 3}. 1 is visited. Takes <code>u = 3</code>.</li>
+                                    <li><code>flag[3] == -1</code>. Calls <strong><code>DFS(3)</code></strong>.
+                                        <ul>
+                                            <li><strong><code>DFS(3)</code>:</strong> Sets <code>flag[3] = 1</code>. Prints <strong>3</strong>. Adjacents are {0, 2}. Both are visited!</li>
+                                            <li><code>DFS(3)</code> finishes and returns.</li>
+                                        </ul>
+                                    </li>
+                                    <li><code>DFS(2)</code> finishes and returns.</li>
+                                </ul>
+                            </li>
+                            <li><code>DFS(1)</code> finishes and returns.</li>
+                        </ul>
+                    </li>
+                    <li><code>DFS(0)</code> finishes and returns to main loop.</li>
+                </ul>
+                <p>Back in main loop: <code>count++</code> executes. <strong>Count is now 1.</strong> Newline is printed.</p>
+            </div>
+
+            <div class="output-box">
+                Console Output:<br>
+                0 1 2 3
+            </div>
+        </article>
+
+        <!-- PART 4: TRACE - COMPONENTS 2 & 3 -->
+        <article class="feed-card">
+            <h2>4. Execution Trace: Remaining Components</h2>
+            
+            <h3>Skipping Visited Nodes</h3>
+            <p>The main loop continues for <code>v = 1</code>, <code>v = 2</code>, and <code>v = 3</code>. Because they were fully explored above, their <code>flag</code> array values are all <code>1</code>. The if-statement condition (<code>flag[v] == -1</code>) fails, so they are skipped.</p>
+
+            <div class="state-tracker" style="margin-top: 1rem;">
+                <div class="state-item">count = 1</div>
+                <div class="state-item">flag = [1, 1, 1, 1, -1, -1, -1, -1, -1]</div>
+            </div>
+
+            <div class="step">
+                <div class="step-title">Main Loop: v = 4</div>
+                <p><code>flag[4] == -1</code> is True. We call <strong><code>DFS(4)</code></strong>.</p>
+                <ul>
+                    <li><strong><code>DFS(4)</code>:</strong> Sets <code>flag[4] = 1</code>. Prints <strong>4</strong>. Adjacent is {5}.</li>
+                    <li><code>flag[5] == -1</code>. Calls <strong><code>DFS(5)</code></strong>.
+                        <ul>
+                            <li><strong><code>DFS(5)</code>:</strong> Sets <code>flag[5] = 1</code>. Prints <strong>5</strong>. Adjacent is {4} (visited).</li>
+                            <li><code>DFS(5)</code> finishes and returns.</li>
+                        </ul>
+                    </li>
+                    <li><code>DFS(4)</code> finishes and returns to main loop.</li>
+                </ul>
+                <p>Back in main loop: <code>count++</code> executes. <strong>Count is now 2.</strong> Newline is printed.</p>
+            </div>
+
+            <h3>Skipping Node 5</h3>
+            <p>Main loop moves to <code>v = 5</code>. <code>flag[5]</code> is 1. Skipped.</p>
+
+            <div class="step">
+                <div class="step-title">Main Loop: v = 6</div>
+                <p><code>flag[6] == -1</code> is True. We call <strong><code>DFS(6)</code></strong>.</p>
+                <ul>
+                    <li><strong><code>DFS(6)</code>:</strong> Sets <code>flag[6] = 1</code>. Prints <strong>6</strong>. Adjacents are {7, 8}. Takes <code>u = 7</code>.</li>
+                    <li><code>flag[7] == -1</code>. Calls <strong><code>DFS(7)</code></strong>.
+                        <ul>
+                            <li><strong><code>DFS(7)</code>:</strong> Sets <code>flag[7] = 1</code>. Prints <strong>7</strong>. Adjacents are {6, 8}. Takes <code>u = 8</code>.</li>
+                            <li><code>flag[8] == -1</code>. Calls <strong><code>DFS(8)</code></strong>.
+                                <ul>
+                                    <li><strong><code>DFS(8)</code>:</strong> Sets <code>flag[8] = 1</code>. Prints <strong>8</strong>. Adjacents checked. All visited.</li>
+                                    <li><code>DFS(8)</code> finishes and returns.</li>
+                                </ul>
+                            </li>
+                            <li><code>DFS(7)</code> finishes and returns.</li>
+                        </ul>
+                    </li>
+                    <li><code>DFS(6)</code> finishes and returns.</li>
+                </ul>
+                <p>Back in main loop: <code>count++</code> executes. <strong>Count is now 3.</strong> Newline is printed.</p>
+            </div>
+
+            <p>Loop moves to <code>v = 7</code> and <code>v = 8</code>, both are skipped because they are visited. The main loop finishes (<code>v < 9</code> is no longer true).</p>
+
+            <div class="output-box">
+                Final Console Output:<br>
+                0 1 2 3<br>
+                4 5<br>
+                6 7 8<br>
+                <br>
+                Total Components (count) = 3
+            </div>
+        </article>
+
+    </div>
+
+</body>
+</html>
