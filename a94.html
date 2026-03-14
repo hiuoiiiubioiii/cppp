@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floyd-Warshall Algorithm | Study Feed</title>
+    
+    <!-- MathJax for Math Rendering -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    
+    <!-- Mermaid.js for Graph Visualization -->
+    <script type="module">
+        import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs';
+        mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+    </script>
+
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --accent: #3b82f6;
+            --accent-light: #eff6ff;
+            --highlight-working: #dbeafe; /* Light blue for working row/col */
+            --highlight-working-border: #2563eb;
+            --highlight-updated: #dcfce7; /* Green for updated values */
+            --highlight-updated-text: #166534;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        /* Vertical Feed Layout Container */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem; /* Space between feed items */
+            padding-bottom: 4rem;
+        }
+
+        /* Individual Feed Card */
+        .feed-item {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease-in-out;
+        }
+
+        .feed-item:hover {
+            transform: translateY(-2px);
+        }
+
+        .feed-header {
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        h1 { font-size: 2rem; color: #111827; }
+        h2 { font-size: 1.5rem; color: var(--accent); margin-bottom: 0.5rem; }
+        h3 { font-size: 1.25rem; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+        p { margin-bottom: 1rem; color: var(--text-muted); }
+        
+        .important-box {
+            background-color: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+        }
+
+        /* Matrix/Table Styling */
+        .matrix-container {
+            display: flex;
+            justify-content: center;
+            margin: 2rem 0;
+            overflow-x: auto;
+        }
+
+        table {
+            border-collapse: collapse;
+            text-align: center;
+            font-size: 1.2rem;
+            background: white;
+        }
+
+        th, td {
+            width: 60px;
+            height: 60px;
+            border: 1px solid #d1d5db;
+        }
+
+        th {
+            background-color: #f9fafb;
+            font-weight: 600;
+            color: #374151;
+        }
+
+        .header-cell { background-color: #e5e7eb; font-weight: bold; }
+        
+        /* Visualization Classes */
+        .working {
+            background-color: var(--highlight-working);
+            border: 2px solid var(--highlight-working-border);
+            font-weight: bold;
+        }
+        
+        .updated {
+            background-color: var(--highlight-updated);
+            color: var(--highlight-updated-text);
+            font-weight: bold;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+            70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+
+        .calc-breakdown {
+            background: #1f2937;
+            color: #f3f4f6;
+            padding: 1.5rem;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1rem;
+            margin-top: 1rem;
+            overflow-x: auto;
+        }
+
+        .graph-container {
+            display: flex;
+            justify-content: center;
+            padding: 2rem;
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+
+    <!-- FEED ITEM 1: Intro -->
+    <div class="feed-item">
+        <div class="feed-header">
+            <h1>All Pair Shortest Path (Floyd-Warshall)</h1>
+            <p>Instructor: Jenny's Lectures Breakdown</p>
+        </div>
+        <h2>1. The Core Concept</h2>
+        <p>The <strong>All Pair Shortest Path</strong> problem asks us to find the shortest distance from <em>every single node</em> to <em>every other node</em> in a graph.</p>
+        
+        <div class="important-box">
+            <strong>Why not use Dijkstra's Algorithm?</strong><br>
+            1. Dijkstra is a "Single Source" algorithm. You'd have to run it \(V\) times.<br>
+            2. <strong>Crucial Flaw:</strong> Dijkstra fails if the graph has <strong>negative edge weights</strong>. Floyd-Warshall handles negative weights perfectly!
+        </div>
+
+        <p><strong>The Strategy: Dynamic Programming</strong><br>
+        We break the complex problem down. To find the shortest path from Node \(i\) to Node \(j\), we ask: <em>"Is it shorter to go directly from \(i\) to \(j\), or should we go through an intermediate 'via' node \(k\)?"</em></p>
+    </div>
+
+    <!-- FEED ITEM 2: The Graph -->
+    <div class="feed-item">
+        <h2>2. The Example Graph</h2>
+        <p>Here is the directed, weighted graph used in the lecture. Notice the edge from <strong>1 to 3</strong> has a negative weight of <strong>-4</strong>.</p>
+        
+        <div class="graph-container">
+            <div class="mermaid">
+                graph LR
+                    1((1)) -- 9 --> 2((2))
+                    2 -- 6 --> 1
+                    1 -- "-4" --> 3((3))
+                    3 -- 5 --> 2
+                    2 -- 2 --> 4((4))
+                    4 -- 1 --> 3
+            </div>
+        </div>
+    </div>
+
+    <!-- FEED ITEM 3: Matrix D0 -->
+    <div class="feed-item">
+        <h2>3. Step 0: Initial Matrix (\(D^0\))</h2>
+        <p>We start by creating a distance matrix for direct paths only (no intermediate nodes allowed yet).</p>
+        <ul>
+            <li><strong>Rule 1:</strong> Diagonals are 0 (distance to itself).</li>
+            <li><strong>Rule 2:</strong> Write the weight of direct edges.</li>
+            <li><strong>Rule 3:</strong> If no direct edge exists, write \(\infty\).</li>
+        </ul>
+
+        <div class="matrix-container">
+            <table>
+                <tr><th class="header-cell">D⁰</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+                <tr><th>1</th><td>0</td><td>9</td><td>-4</td><td>∞</td></tr>
+                <tr><th>2</th><td>6</td><td>0</td><td>∞</td><td>2</td></tr>
+                <tr><th>3</th><td>∞</td><td>5</td><td>0</td><td>∞</td></tr>
+                <tr><th>4</th><td>∞</td><td>∞</td><td>1</td><td>0</td></tr>
+            </table>
+        </div>
+    </div>
+
+    <!-- FEED ITEM 4: Matrix D1 -->
+    <div class="feed-item">
+        <h2>4. Step 1: Paths via Vertex 1 (\(D^1\))</h2>
+        <p>Now we check if going <em>through vertex 1</em> makes any path shorter. We use \(D^0\) as our base.</p>
+        <div class="important-box">
+            <strong>Instructor's Exam Trick:</strong> Because Vertex 1 is our intermediate node, draw a box around Row 1 and Column 1. <strong>They will not change.</strong> Copy them directly from \(D^0\)!
+        </div>
+
+        <div class="matrix-container">
+            <table>
+                <tr><th class="header-cell">D¹</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+                <tr><th>1</th><td class="working">0</td><td class="working">9</td><td class="working">-4</td><td class="working">∞</td></tr>
+                <tr><th>2</th><td class="working">6</td><td>0</td><td class="updated">2</td><td>2</td></tr>
+                <tr><th>3</th><td class="working">∞</td><td>5</td><td>0</td><td>∞</td></tr>
+                <tr><th>4</th><td class="working">∞</td><td>∞</td><td>1</td><td>0</td></tr>
+            </table>
+        </div>
+
+        <div class="calc-breakdown">
+            // Calculation for the updated cell D¹[2,3]<br>
+            // Can we get from 2 to 3 faster by going through 1?<br>
+            D¹[2,3] = min( D⁰[2,3], D⁰[2,1] + D⁰[1,3] )<br>
+            D¹[2,3] = min( ∞, 6 + (-4) )<br>
+            D¹[2,3] = min( ∞, 2 ) -> Updates to 2!
+        </div>
+    </div>
+
+    <!-- FEED ITEM 5: Matrix D2 -->
+    <div class="feed-item">
+        <h2>5. Step 2: Paths via Vertex 2 (\(D^2\))</h2>
+        <p>Now we use \(D^1\) as our base and test Vertex 2 as our intermediate node. Following the trick, Row 2 and Column 2 remain unchanged.</p>
+
+        <div class="matrix-container">
+            <table>
+                <tr><th class="header-cell">D²</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+                <tr><th>1</th><td>0</td><td class="working">9</td><td>-4</td><td class="updated">11</td></tr>
+                <tr><th>2</th><td class="working">6</td><td class="working">0</td><td class="working">2</td><td class="working">2</td></tr>
+                <tr><th>3</th><td class="updated">11</td><td class="working">5</td><td>0</td><td class="updated">7</td></tr>
+                <tr><th>4</th><td>∞</td><td class="working">∞</td><td>1</td><td>0</td></tr>
+            </table>
+        </div>
+
+        <div class="calc-breakdown">
+            // Examples of updates:<br>
+            D²[1,4] = min( ∞, D¹[1,2] + D¹[2,4] ) = min( ∞, 9 + 2 ) = 11<br>
+            D²[3,1] = min( ∞, D¹[3,2] + D¹[2,1] ) = min( ∞, 5 + 6 ) = 11<br>
+            D²[3,4] = min( ∞, D¹[3,2] + D¹[2,4] ) = min( ∞, 5 + 2 ) = 7
+        </div>
+    </div>
+
+    <!-- FEED ITEM 6: Matrix D3 -->
+    <div class="feed-item">
+        <h2>6. Step 3: Paths via Vertex 3 (\(D^3\))</h2>
+        <p>Using \(D^2\) as the base, we test Vertex 3. Row 3 and Column 3 are locked. <strong>Major updates happen here!</strong></p>
+
+        <div class="matrix-container">
+            <table>
+                <tr><th class="header-cell">D³</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+                <tr><th>1</th><td>0</td><td class="updated">1</td><td class="working">-4</td><td class="updated">3</td></tr>
+                <tr><th>2</th><td>6</td><td>0</td><td class="working">2</td><td>2</td></tr>
+                <tr><th>3</th><td class="working">11</td><td class="working">5</td><td class="working">0</td><td class="working">7</td></tr>
+                <tr><th>4</th><td class="updated">12</td><td class="updated">6</td><td class="working">1</td><td>0</td></tr>
+            </table>
+        </div>
+
+        <div class="calc-breakdown">
+            // Notice the massive drop in distance for 1 -> 2<br>
+            D³[1,2] = min( D²[1,2], D²[1,3] + D²[3,2] )<br>
+            D³[1,2] = min( 9, -4 + 5 )<br>
+            D³[1,2] = min( 9, 1 ) -> Updates to 1!
+        </div>
+    </div>
+
+    <!-- FEED ITEM 7: Matrix D4 -->
+    <div class="feed-item">
+        <h2>7. Step 4: Paths via Vertex 4 (\(D^4\) - Final)</h2>
+        <p>Finally, we test Vertex 4. Row 4 and Column 4 are locked. The instructor calculates the remaining possibilities (e.g., \(1 \rightarrow 2\) via 4 is \(3 + 6 = 9\), which is not less than 1). No values update.</p>
+
+        <div class="matrix-container">
+            <table>
+                <tr><th class="header-cell">D⁴</th><th>1</th><th>2</th><th>3</th><th>4</th></tr>
+                <tr><th>1</th><td>0</td><td>1</td><td>-4</td><td class="working">3</td></tr>
+                <tr><th>2</th><td>6</td><td>0</td><td>2</td><td class="working">2</td></tr>
+                <tr><th>3</th><td>11</td><td>5</td><td>0</td><td class="working">7</td></tr>
+                <tr><th>4</th><td class="working">12</td><td class="working">6</td><td class="working">1</td><td class="working">0</td></tr>
+            </table>
+        </div>
+        <p>This is the <strong>Final Matrix</strong>. It gives you the absolute shortest path from any starting node (row) to any destination node (column).</p>
+    </div>
+
+    <!-- FEED ITEM 8: Formula & Logic -->
+    <div class="feed-item">
+        <h2>8. The Core Formula & Logic</h2>
+        <p>The math used to generate these matrices is expressed by this Dynamic Programming formula:</p>
+        
+        <div style="font-size: 1.25rem; text-align: center; margin: 2rem 0;">
+            \[ D^k[i, j] = \min \left( D^{k-1}[i, j], \; D^{k-1}[i, k] + D^{k-1}[k, j] \right) \]
+        </div>
+
+        <ul>
+            <li>\(D^k[i,j]\) : Shortest distance from \(i\) to \(j\) using vertices up to \(k\).</li>
+            <li>\(D^{k-1}[i,j]\) : The current best distance <em>without</em> using node \(k\).</li>
+            <li>\(D^{k-1}[i,k] + D^{k-1}[k,j]\) : Distance going from \(i\) to \(k\), and then \(k\) to \(j\).</li>
+        </ul>
+
+        <h3>Algorithm Pseudocode</h3>
+        <p>To execute this across the whole graph, we use 3 nested loops:</p>
+        <div class="calc-breakdown">
+for (k = 1 to V) {          // Outer loop: the intermediate 'via' node
+  for (i = 1 to V) {        // Middle loop: the source row
+    for (j = 1 to V) {      // Inner loop: the destination column
+      D[i][j] = min(D[i][j], D[i][k] + D[k][j]);
+    }
+  }
+}
+        </div>
+    </div>
+
+    <!-- FEED ITEM 9: Conclusion -->
+    <div class="feed-item">
+        <h2>9. Conclusion & Time Complexity</h2>
+        <p>When should you use Floyd-Warshall?</p>
+        <ul>
+            <li><strong>Dense Graphs:</strong> It works exceptionally well when there are many edges connected to many nodes.</li>
+            <li><strong>Negative Weights:</strong> Unlike Dijkstra, it correctly computes shortest paths when edges have negative costs (as long as there are no negative weight <em>cycles</em>).</li>
+        </ul>
+        <div class="important-box" style="background-color: #fef2f2; border-color: #ef4444;">
+            <strong>Time Complexity: \(O(V^3)\)</strong><br>
+            Because of the three nested loops (k, i, j), the algorithm will always take \(V \times V \times V\) operations, where \(V\) is the number of vertices.
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
