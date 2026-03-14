@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B-Tree Deletion: Complete Study Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@500&display=swap');
+
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent-blue: #2563eb;
+            --accent-red: #ef4444;
+            --accent-green: #16a34a;
+            --accent-purple: #9333ea;
+            --node-border: #cbd5e1;
+            --node-bg: #ffffff;
+            --feed-width: 800px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: #0f172a;
+            color: white;
+            padding: 60px 20px 40px;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            letter-spacing: -0.5px;
+        }
+
+        header p {
+            color: #94a3b8;
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .feed-container {
+            max-width: var(--feed-width);
+            margin: 0 auto;
+            padding: 0 20px 80px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border-left: 4px solid var(--accent-blue);
+        }
+
+        .card.setup { border-left-color: var(--text-main); }
+        .card.case-1 { border-left-color: var(--accent-blue); }
+        .card.case-2 { border-left-color: var(--accent-purple); }
+        .card.shrink { border-left-color: var(--accent-red); }
+
+        h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin: 25px 0 10px;
+            color: #334155;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #f1f5f9;
+        }
+
+        .badge {
+            font-size: 0.8rem;
+            padding: 3px 8px;
+            border-radius: 12px;
+            background: #e2e8f0;
+            color: #475569;
+            font-weight: 600;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .highlight-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        /* Visualization Styles */
+        .viz-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f1f5f9;
+            padding: 30px;
+            border-radius: 8px;
+            margin: 20px 0;
+            gap: 20px;
+            overflow-x: auto;
+        }
+
+        .viz-step-label {
+            font-weight: 600;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.85rem;
+            margin-bottom: 10px;
+        }
+
+        .tree-level {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+            align-items: flex-start;
+            position: relative;
+        }
+
+        .node {
+            display: flex;
+            background: var(--node-bg);
+            border: 2px solid var(--node-border);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            font-family: 'JetBrains Mono', monospace;
+            position: relative;
+            z-index: 2;
+        }
+
+        .key {
+            padding: 8px 12px;
+            border-right: 1px solid var(--node-border);
+            font-weight: 600;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-width: 40px;
+        }
+        
+        .key:last-child {
+            border-right: none;
+        }
+
+        .arrow-down {
+            font-size: 2rem;
+            color: #94a3b8;
+            margin: 10px 0;
+        }
+
+        /* Action Colors */
+        .del-target { background-color: #fee2e2; color: var(--accent-red); }
+        .borrow-target { background-color: #dbeafe; color: var(--accent-blue); }
+        .merge-target { background-color: #dcfce7; color: var(--accent-green); }
+        .parent-target { background-color: #f3e8ff; color: var(--accent-purple); }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            font-size: 0.85rem;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+            border: 1px solid rgba(0,0,0,0.1);
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Deletion in a B-Tree</h1>
+        <p>A comprehensive, scrollable study guide combining lecture transcriptions with step-by-step whiteboard visualizations.</p>
+    </header>
+
+    <div class="feed-container">
+
+        <!-- SETUP -->
+        <section class="card setup">
+            <h2><span class="badge">Part 1</span> Rules & Specifications</h2>
+            <p>Before deleting anything, you must know the specific mathematical rules governing the B-Tree you are working with. The instructor writes these limits based on the Order of the tree.</p>
+            
+            <div class="highlight-box">
+                <p><strong>Tree Order (m) = 5</strong></p>
+                <ul>
+                    <li><strong>Max Children</strong> = m = <strong>5</strong></li>
+                    <li><strong>Min Children</strong> = &lceil;m/2&rceil; = &lceil;2.5&rceil; = <strong>3</strong></li>
+                    <li><strong>Max Keys per node</strong> = m - 1 = <strong>4</strong></li>
+                    <li><strong style="color:var(--accent-red);">Min Keys per node</strong> = &lceil;m/2&rceil; - 1 = <strong>2</strong></li>
+                </ul>
+            </div>
+            <p><strong>Crucial Rule:</strong> Every node in this tree (except the overall root) MUST have a minimum of 2 keys. If deleting a key drops a node to 1 key, it creates an "underflow" violation, and you must Borrow or Merge to fix it.</p>
+        </section>
+
+        <!-- CASE 1 INTRO -->
+        <section class="card case-1">
+            <h2><span class="badge">Case 1</span> Target Key is in a Leaf Node</h2>
+            <p>When the key you want to delete is found in a leaf node (a node at the very bottom with no children), you evaluate the situation based on how many keys that leaf currently holds.</p>
+
+            <!-- SUBCASE 1A -->
+            <h3>Subcase 1A: Simple Deletion</h3>
+            <p><strong>Scenario:</strong> The target leaf node contains 3 or 4 keys. Because the minimum is 2, you can safely remove the key without violating any rules.</p>
+            <p><strong>Action: Delete 64</strong></p>
+            
+            <div class="viz-container">
+                <div class="viz-step-label">Before</div>
+                <div class="node">
+                    <div class="key del-target">64</div>
+                    <div class="key">65</div>
+                    <div class="key">68</div>
+                </div>
+                <div class="arrow-down">&downarrow;</div>
+                <div class="viz-step-label">After</div>
+                <div class="node">
+                    <div class="key">65</div>
+                    <div class="key">68</div>
+                </div>
+            </div>
+
+            <!-- SUBCASE 1B -->
+            <h3>Subcase 1B: Borrowing from Immediate Left Sibling</h3>
+            <p><strong>Scenario:</strong> The target leaf has exactly 2 keys (the minimum). Deleting one leaves only 1 key (invalid). However, its immediate left sibling has >2 keys, so it can lend one.</p>
+            <p><strong>Action: Delete 23</strong>. Target is <code>[23, 27]</code>. Left sibling is <code>[14, 15, 16]</code>.</p>
+            <p><em>The Mechanism:</em> Borrowing ALWAYS goes through the parent. Take the <strong>maximum</strong> value from the left sibling (16), move it UP to the parent. Take the separating value from the parent (20), move it DOWN to the target. Finally, delete 23.</p>
+
+            <div class="viz-container">
+                <div class="viz-step-label">Before</div>
+                <div class="tree-level">
+                    <div class="node"><div class="key">10</div><div class="key parent-target">20</div></div>
+                </div>
+                <div style="height: 20px;"></div> <!-- Spacer simulating tree branches -->
+                <div class="tree-level">
+                    <div class="node"><div class="key">14</div><div class="key">15</div><div class="key borrow-target">16</div></div>
+                    <div class="node"><div class="key del-target">23</div><div class="key">27</div></div>
+                </div>
+                
+                <div class="arrow-down">&downarrow;</div>
+                
+                <div class="viz-step-label">After Borrowing & Deleting</div>
+                <div class="tree-level">
+                    <div class="node"><div class="key">10</div><div class="key borrow-target">16</div></div>
+                </div>
+                <div style="height: 20px;"></div>
+                <div class="tree-level">
+                    <div class="node"><div class="key">14</div><div class="key">15</div></div>
+                    <div class="node"><div class="key parent-target">20</div><div class="key">27</div></div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color del-target"></div> Target to delete</div>
+                    <div class="legend-item"><div class="legend-color borrow-target"></div> Sibling key moving UP</div>
+                    <div class="legend-item"><div class="legend-color parent-target"></div> Parent key moving DOWN</div>
+                </div>
+            </div>
+
+            <!-- SUBCASE 1C -->
+            <h3>Subcase 1C: Borrowing from Immediate Right Sibling</h3>
+            <p><strong>Scenario:</strong> The target has 2 keys. The left sibling also only has 2 keys, so it can't help. But the immediate right sibling has >2 keys.</p>
+            <p><strong>Action: Delete 72</strong>. Target is <code>[72, 73]</code>. Right sibling is <code>[77, 78, 79]</code>.</p>
+            <p><em>The Mechanism:</em> Take the <strong>minimum</strong> value from the right sibling (77), move it UP to the parent. Take the separating value from the parent (75), move it DOWN to the target. Delete 72.</p>
+
+            <div class="viz-container">
+                <div class="viz-step-label">Before</div>
+                <div class="tree-level">
+                    <div class="node"><div class="key">60</div><div class="key">70</div><div class="key parent-target">75</div></div>
+                </div>
+                <div style="height: 20px;"></div>
+                <div class="tree-level">
+                    <div class="node"><div class="key del-target">72</div><div class="key">73</div></div>
+                    <div class="node"><div class="key borrow-target">77</div><div class="key">78</div><div class="key">79</div></div>
+                </div>
+                
+                <div class="arrow-down">&downarrow;</div>
+                
+                <div class="viz-step-label">After</div>
+                <div class="tree-level">
+                    <div class="node"><div class="key">60</div><div class="key">70</div><div class="key borrow-target">77</div></div>
+                </div>
+                <div style="height: 20px;"></div>
+                <div class="tree-level">
+                    <div class="node"><div class="key">73</div><div class="key parent-target">75</div></div>
+                    <div class="node"><div class="key">78</div><div class="key">79</div></div>
+                </div>
+            </div>
+
+            <!-- SUBCASE 1D -->
+            <h3>Subcase 1D: Merging (Siblings cannot help)</h3>
+            <p><strong>Scenario:</strong> The target leaf has 2 keys. BOTH the left and right immediate siblings also have exactly 2 keys. Borrowing is impossible.</p>
+            <p><strong>Action: Delete 65</strong>. Target: <code>[65, 68]</code>. Left: <code>[51, 52]</code>. Right: <code>[73, 75]</code>. Parent separator: <code>[60]</code>.</p>
+            <p><em>The Mechanism:</em> Combine the target node, one sibling (let's use the left), AND the separating key pulled down from the parent into one giant node. Then delete the target key.</p>
+
+            <div class="viz-container">
+                <div class="viz-step-label">Before Merge</div>
+                <div class="tree-level">
+                    <div class="node"><div class="key parent-target">60</div><div class="key">70</div><div class="key">77</div></div>
+                </div>
+                <div style="height: 20px;"></div>
+                <div class="tree-level">
+                    <div class="node"><div class="key merge-target">51</div><div class="key merge-target">52</div></div>
+                    <div class="node"><div class="key del-target">65</div><div class="key merge-target">68</div></div>
+                </div>
+                
+                <div class="arrow-down">&downarrow;</div>
+                
+                <div class="viz-step-label">After Merge & Delete</div>
+                <div class="tree-level">
+                    <div class="node"><div class="key">70</div><div class="key">77</div></div>
+                </div>
+                <div style="height: 20px;"></div>
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key merge-target">51</div>
+                        <div class="key merge-target">52</div>
+                        <div class="key parent-target">60</div>
+                        <div class="key merge-target">68</div>
+                    </div>
+                </div>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color merge-target"></div> Keys merging together</div>
+                </div>
+            </div>
+
+            <!-- SUBCASE 1E -->
+            <h3>Subcase 1E: The "Cascading Problem" during Merging</h3>
+            <p><strong>Scenario:</strong> You perform a merge, pulling a key down from the parent. But this causes the <em>parent</em> internal node to fall below the minimum 2 keys!</p>
+            <p><strong>Action: Delete 20</strong>. This causes parent node <code>[10, 16]</code> to drop its '16' down, leaving only <code>[10]</code>. An internal node with 1 key is a violation.</p>
+            <p><em>The Fix:</em> Apply the exact same rules to the broken internal node. It tries to borrow from its sibling <code>[70, 77]</code>. Sibling only has 2 keys. Therefore, the internal nodes must MERGE with the Root <code>[50]</code>.</p>
+
+            <div class="viz-container">
+                <div class="viz-step-label">The Cascading Violation (Node [10] is invalid)</div>
+                <div class="tree-level">
+                    <div class="node"><div class="key parent-target">50</div><div class="key">80</div></div>
+                </div>
+                <div style="height: 20px;"></div>
+                <div class="tree-level">
+                    <div class="node" style="border-color: var(--accent-red);"><div class="key merge-target">10</div></div>
+                    <div class="node"><div class="key merge-target">70</div><div class="key merge-target">77</div></div>
+                </div>
+                
+                <div class="arrow-down">&downarrow;</div>
+                
+                <div class="viz-step-label">Fixed via Internal Merge</div>
+                <div class="tree-level">
+                    <div class="node"><div class="key">80</div></div>
+                </div>
+                <div style="height: 20px;"></div>
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key merge-target">10</div>
+                        <div class="key parent-target">50</div>
+                        <div class="key merge-target">70</div>
+                        <div class="key merge-target">77</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CASE 2 INTRO -->
+        <section class="card case-2">
+            <h2><span class="badge">Case 2</span> Target Key is in an Internal Node</h2>
+            <p>If the key you want to delete is NOT a leaf, you cannot just delete it and leave an empty hole in the middle of the tree. You must replace it with a value from further down the tree.</p>
+
+            <div class="highlight-box">
+                <p><strong>Replacement Rules:</strong></p>
+                <ul>
+                    <li><strong>In-order Predecessor:</strong> The largest value in the left subtree. (Go left once, then all the way right).</li>
+                    <li><strong>In-order Successor:</strong> The smallest value in the right subtree. (Go right once, then all the way left).</li>
+                    <li><em>Condition:</em> You can only "steal" a predecessor or successor if its leaf node currently has >2 keys.</li>
+                </ul>
+            </div>
+
+            <!-- SUBCASE 2A & 2B -->
+            <h3>Using Predecessors / Successors</h3>
+            <p><strong>Action 1: Delete 70.</strong> Left child is <code>[51, 52, 60, 68]</code>. Because it has 4 keys (>2), we steal the predecessor (<strong>68</strong>) to replace 70.</p>
+            <p><strong>Action 2: Delete 95.</strong> Left child has 2 keys (can't use). Right child is <code>[100, 110, 111]</code>. It has 3 keys (>2). We steal the successor (<strong>100</strong>) to replace 95.</p>
+
+            <div class="viz-container">
+                <div class="viz-step-label">Deleting 95 (Using Successor)</div>
+                <div class="tree-level">
+                    <div class="node"><div class="key">90</div><div class="key del-target">95</div></div>
+                </div>
+                <div style="height: 20px;"></div>
+                <div class="tree-level">
+                    <div class="node"><div class="key">92</div><div class="key">93</div></div>
+                    <div class="node"><div class="key borrow-target">100</div><div class="key">110</div><div class="key">111</div></div>
+                </div>
+                
+                <div class="arrow-down">&downarrow;</div>
+                
+                <div class="tree-level">
+                    <div class="node"><div class="key">90</div><div class="key borrow-target">100</div></div>
+                </div>
+                <div style="height: 20px;"></div>
+                <div class="tree-level">
+                    <div class="node"><div class="key">92</div><div class="key">93</div></div>
+                    <div class="node"><div class="key">110</div><div class="key">111</div></div>
+                </div>
+            </div>
+
+            <!-- SUBCASE 2C -->
+            <h3>Merging (When Predecessor & Successor are unavailable)</h3>
+            <p><strong>Action: Delete 77.</strong> Its predecessor leaf <code>[73, 75]</code> has 2 keys. Its successor leaf <code>[78, 79]</code> has 2 keys. Neither can provide a replacement key!</p>
+            <p><em>The Mechanism:</em> Pull the target key (77) down and MERGE the two children. Once merged into a massive leaf node, simply delete 77 from it.</p>
+
+            <div class="viz-container">
+                <div class="viz-step-label">Before</div>
+                <div class="tree-level">
+                    <div class="node"><div class="key">...50</div><div class="key">68</div><div class="key del-target">77</div></div>
+                </div>
+                <div style="height: 20px;"></div>
+                <div class="tree-level">
+                    <div class="node"><div class="key merge-target">73</div><div class="key merge-target">75</div></div>
+                    <div class="node"><div class="key merge-target">78</div><div class="key merge-target">79</div></div>
+                </div>
+                
+                <div class="arrow-down">&downarrow;</div>
+                
+                <div class="viz-step-label">After Merge (and 77 deleted)</div>
+                <div class="tree-level">
+                    <div class="node"><div class="key">...50</div><div class="key">68</div></div>
+                </div>
+                <div style="height: 20px;"></div>
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key merge-target">73</div>
+                        <div class="key merge-target">75</div>
+                        <div class="key merge-target">78</div>
+                        <div class="key merge-target">79</div>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- SHRINKING HEIGHT -->
+        <section class="card shrink">
+            <h2><span class="badge">Part 4</span> Shrinking the Height of the Tree</h2>
+            <p>If you perform a long sequence of deletions that result in cascading merges all the way up to the Root node, the tree can physically shrink in height.</p>
+            
+            <p><strong>Scenario:</strong> After extensive deletions, the root is <code>[80]</code>. Its left child is <code>[10]</code>. Its right child is <code>[90]</code>. The children only have 1 key (a violation), and they cannot borrow from each other.</p>
+            <p><em>The Fix:</em> They must merge with the Root node itself.</p>
+
+            <div class="viz-container">
+                <div class="viz-step-label">Tree Height = 3 (Root is [80])</div>
+                <div class="tree-level">
+                    <div class="node"><div class="key parent-target">80</div></div>
+                </div>
+                <div style="height: 20px;"></div>
+                <div class="tree-level">
+                    <div class="node" style="border-color: var(--accent-red);"><div class="key merge-target">10</div></div>
+                    <div class="node" style="border-color: var(--accent-red);"><div class="key merge-target">90</div></div>
+                </div>
+                
+                <div class="arrow-down">&downarrow;</div>
+                
+                <div class="viz-step-label">Tree Height = 2 (New Root Created)</div>
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key merge-target">10</div>
+                        <div class="key parent-target">80</div>
+                        <div class="key merge-target">90</div>
+                    </div>
+                </div>
+            </div>
+            <p>Because the old root (80) was pulled down into the merge, it disappears as an independent level. The newly merged node <code>[10, 80, 90]</code> becomes the entirely new root of the tree, shrinking the overall height.</p>
+        </section>
+
+    </div>
+
+</body>
+</html>
