@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bubble Sort | Interactive Study Notes</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc; /* light slate */
+            color: #0f172a;
+        }
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+        .note-card {
+            background: white;
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border-top: 4px solid #3b82f6; /* blue-500 */
+        }
+        .array-box {
+            width: 60px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            font-weight: bold;
+            border-radius: 8px;
+            background: #e2e8f0;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        .box-active {
+            background: #fef08a; /* yellow for comparing */
+            border-color: #eab308;
+            transform: scale(1.1);
+        }
+        .box-swap {
+            background: #fca5a5; /* red for swap */
+            border-color: #ef4444;
+            transform: scale(1.1);
+        }
+        .box-sorted {
+            background: #bbf7d0; /* green for sorted */
+            border-color: #22c55e;
+        }
+        pre {
+            background: #1e293b;
+            color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+        .highlight-code { color: #fde047; font-weight: bold; } /* yellow */
+        .comment-code { color: #94a3b8; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <!-- Scrollable Vertical Feed -->
+    <main class="feed-container">
+
+        <!-- Header -->
+        <div class="text-center pb-4">
+            <h1 class="text-4xl font-extrabold text-slate-900 mb-3">Bubble Sort Algorithm</h1>
+            <p class="text-lg text-slate-600">Complete Study Notes & Interactive Breakdown</p>
+        </div>
+
+        <!-- Section 1: Intro & Principle -->
+        <article class="note-card">
+            <h2 class="text-2xl font-bold mb-4 text-blue-600">1. The Basic Principle</h2>
+            <p class="mb-4">Sorting means arranging data in a specific order (in this lesson: <strong>ascending order</strong>, from smallest to largest).</p>
+            <div class="bg-blue-50 border-l-4 border-blue-500 p-4 mb-4 rounded-r-lg">
+                <h3 class="font-bold text-blue-800 mb-1">The Golden Rule of Bubble Sort:</h3>
+                <p class="text-blue-900">Start from the beginning of the array. Compare two <strong>adjacent (side-by-side) elements</strong>. If the left element is greater than the right element, <strong>swap them</strong>. Otherwise, move to the next pair.</p>
+            </div>
+            <p><strong>Why "Bubble"?</strong> Because after every complete pass through the array, the largest unsorted element "bubbles up" to its correct position at the far right end of the array.</p>
+        </article>
+
+        <!-- Section 2: Interactive Visualizer -->
+        <article class="note-card">
+            <h2 class="text-2xl font-bold mb-4 text-blue-600">2. Visual Tracing (Unoptimized)</h2>
+            <p class="mb-6">Let's manually trace the exact array used in the lecture: <code class="bg-slate-100 px-2 py-1 rounded">A = [15, 16, 6, 8, 5]</code>. Total elements <strong>n = 5</strong>.</p>
+            
+            <!-- Visualizer Container -->
+            <div class="bg-slate-50 p-6 rounded-xl border border-slate-200">
+                <div class="flex justify-center gap-4 mb-8" id="array-container">
+                    <!-- Boxes injected by JS -->
+                </div>
+                
+                <div class="text-center mb-6">
+                    <p id="step-message" class="text-lg font-semibold text-slate-700 min-h-[2rem]">Click "Step Forward" to start tracking Pass 1.</p>
+                </div>
+
+                <div class="flex justify-center gap-4">
+                    <button id="btn-step" class="px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg shadow-md transition-colors">
+                        Step Forward
+                    </button>
+                    <button id="btn-reset" class="px-6 py-2 bg-slate-300 hover:bg-slate-400 text-slate-800 font-bold rounded-lg shadow transition-colors hidden">
+                        Reset
+                    </button>
+                </div>
+            </div>
+            <p class="mt-4 text-sm text-slate-500 italic text-center">Notice how after Pass 1, the number 16 is "locked" in the final position.</p>
+        </article>
+
+        <!-- Section 3: The Brute Force Code -->
+        <article class="note-card">
+            <h2 class="text-2xl font-bold mb-4 text-blue-600">3. Translating Logic into Code</h2>
+            <p class="mb-4">From our trace, we noticed that for <code>n = 5</code> elements, we needed exactly <strong>4 passes</strong> to guarantee the array is sorted. Therefore, max passes = <code>n - 1</code>.</p>
+            <p class="mb-4">We need two loops: an <strong>outer loop</strong> for the passes, and an <strong>inner loop</strong> for the adjacent comparisons.</p>
+            
+            <h3 class="font-bold text-lg mb-2">Attempt 1: The Unoptimized Code</h3>
+            <pre><code><span class="comment-code">// Outer loop runs n-1 passes</span>
+for (i = 0; i < n - 1; i++) {           
+    
+    <span class="comment-code">// Inner loop checks every adjacent pair</span>
+    for (j = 0; j < n - 1; j++) {       
+        if (A[j] > A[j+1]) {
+            <span class="comment-code">// Swap logic</span>
+            temp = A[j];
+            A[j] = A[j+1];
+            A[j+1] = temp;
+        }
+    }
+}</code></pre>
+            <p class="mt-4 text-red-600 font-semibold">The Flaw:</p>
+            <p>This code stupidly checks <em>every</em> element in the inner loop during <em>every</em> pass. But remember our visualizer? After Pass 1, the last element is already sorted. After Pass 2, the last two are sorted. We shouldn't compare them again!</p>
+        </article>
+
+        <!-- Section 4: Optimization 1 -->
+        <article class="note-card">
+            <h2 class="text-2xl font-bold mb-4 text-blue-600">4. Optimization #1: Fixing the Inner Loop</h2>
+            <p class="mb-4">To stop comparing elements that are already "bubbled up" to their correct positions at the end of the array, we reduce the number of inner loop iterations as the outer loop (<code>i</code>) increases.</p>
+            
+            <pre><code>for (i = 0; i < n - 1; i++) {           
+    <span class="comment-code">// We subtract 'i' so we don't compare the elements already sorted at the end!</span>
+    for (j = 0; <span class="highlight-code">j < n - 1 - i</span>; j++) {       
+        if (A[j] > A[j+1]) {
+            temp = A[j];
+            A[j] = A[j+1];
+            A[j+1] = temp;
+        }
+    }
+}</code></pre>
+            <ul class="list-disc pl-6 mt-4 text-slate-700 space-y-2">
+                <li>When <code>i = 0</code> (Pass 1): Loops up to <code>n-1</code> (4 comparisons).</li>
+                <li>When <code>i = 1</code> (Pass 2): Loops up to <code>n-2</code> (3 comparisons).</li>
+                <li>When <code>i = 2</code> (Pass 3): Loops up to <code>n-3</code> (2 comparisons).</li>
+            </ul>
+        </article>
+
+        <!-- Section 5: Optimization 2 -->
+        <article class="note-card">
+            <h2 class="text-2xl font-bold mb-4 text-blue-600">5. Optimization #2: The Flag Variable</h2>
+            <p class="mb-4">What if the array is <strong>already sorted</strong> when we receive it? Or what if it gets fully sorted during Pass 2? The code above will blindly keep running passes 3 and 4 even though zero swaps happen.</p>
+            <p class="mb-4"><strong>The Fix:</strong> Introduce a boolean <code>flag</code>. If we go through an entire pass and make <strong>0 swaps</strong>, the array is perfectly sorted, and we can <code>break</code> the outer loop early.</p>
+
+            <h3 class="font-bold text-lg mb-2 mt-6">Final Optimized Bubble Sort Code:</h3>
+            <pre><code>for (i = 0; i < n - 1; i++) {
+    
+    <span class="highlight-code">flag = 0;</span> <span class="comment-code">// Reset flag at start of every pass</span>
+    
+    for (j = 0; j < n - 1 - i; j++) {
+        if (A[j] > A[j+1]) {
+            temp = A[j];
+            A[j] = A[j+1];
+            A[j+1] = temp;
+            
+            <span class="highlight-code">flag = 1;</span> <span class="comment-code">// A swap happened! Set flag to 1</span>
+        }
+    }
+    
+    <span class="comment-code">// If no swaps happened in the inner loop, flag is still 0</span>
+    <span class="highlight-code">if (flag == 0) {</span>
+        <span class="highlight-code">break;</span> <span class="comment-code">// Array is sorted, exit early!</span>
+    <span class="highlight-code">}</span>
+}</code></pre>
+        </article>
+
+        <!-- Section 6: Time Complexity -->
+        <article class="note-card">
+            <h2 class="text-2xl font-bold mb-4 text-blue-600">6. Time Complexity Analysis</h2>
+            
+            <div class="grid md:grid-cols-2 gap-6 mt-4">
+                <div class="bg-green-50 p-4 border border-green-200 rounded-lg">
+                    <h3 class="font-bold text-green-700 text-lg mb-2">🟢 Best Case: O(n)</h3>
+                    <p class="text-sm text-slate-700"><strong>Scenario:</strong> Array is already sorted (e.g., <code>[1, 2, 3, 4, 5]</code>).</p>
+                    <p class="text-sm text-slate-700 mt-2"><strong>Why:</strong> The outer loop starts. The inner loop does one full pass of <code>n-1</code> comparisons. Zero swaps occur. The flag remains 0, triggers the <code>break</code>, and the program ends immediately.</p>
+                </div>
+
+                <div class="bg-red-50 p-4 border border-red-200 rounded-lg">
+                    <h3 class="font-bold text-red-700 text-lg mb-2">🔴 Worst Case: O(n²)</h3>
+                    <p class="text-sm text-slate-700"><strong>Scenario:</strong> Array is in strictly descending order (e.g., <code>[5, 4, 3, 2, 1]</code>).</p>
+                    <p class="text-sm text-slate-700 mt-2"><strong>Why:</strong> Every single adjacent pair requires a swap. Both the outer loop and inner loop must run to maximum capacity. Loop <code>n</code> times multiplied by loop <code>n</code> times = <strong>O(n²)</strong>.</p>
+                </div>
+            </div>
+        </article>
+
+    </main>
+
+    <!-- JavaScript for the Interactive Visualizer -->
+    <script>
+        const initialArray = [15, 16, 6, 8, 5];
+        let arr = [...initialArray];
+        let n = arr.length;
+        let i = 0; // Outer loop (passes)
+        let j = 0; // Inner loop (comparisons)
+        let phase = 'select'; // 'select', 'compare', 'sorted'
+        let isComplete = false;
+
+        const container = document.getElementById('array-container');
+        const messageEl = document.getElementById('step-message');
+        const btnStep = document.getElementById('btn-step');
+        const btnReset = document.getElementById('btn-reset');
+
+        // Initial Render
+        function renderArray() {
+            container.innerHTML = '';
+            arr.forEach((val, index) => {
+                const box = document.createElement('div');
+                box.className = 'array-box';
+                box.innerText = val;
+                
+                // Keep boxes green if they are in the 'sorted' zone at the end
+                if (index >= n - i && isComplete === false) {
+                    box.classList.add('box-sorted');
+                }
+                
+                // If fully complete, everything is sorted
+                if (isComplete) {
+                    box.classList.add('box-sorted');
+                }
+
+                container.appendChild(box);
+            });
+        }
+
+        function step() {
+            if (isComplete) return;
+
+            const boxes = container.children;
+            
+            // Remove previous active/swap classes
+            Array.from(boxes).forEach(b => {
+                b.classList.remove('box-active', 'box-swap');
+            });
+
+            if (phase === 'select') {
+                // Highlight the two elements being compared
+                boxes[j].classList.add('box-active');
+                boxes[j+1].classList.add('box-active');
+                messageEl.innerHTML = `Pass ${i + 1}: Comparing <strong>${arr[j]}</strong> and <strong>${arr[j+1]}</strong>...`;
+                
+                // Decide what happens next
+                if (arr[j] > arr[j+1]) {
+                    phase = 'swap';
+                } else {
+                    phase = 'next';
+                    messageEl.innerHTML += ` <span class='text-green-600 font-bold'>Correct order!</span>`;
+                }
+            } 
+            else if (phase === 'swap') {
+                // Show red, then execute swap
+                boxes[j].classList.add('box-swap');
+                boxes[j+1].classList.add('box-swap');
+                messageEl.innerHTML = `<strong>${arr[j]} > ${arr[j+1]}</strong>, so we <span class='text-red-600 font-bold'>SWAP</span> them.`;
+                
+                // Swap logic
+                let temp = arr[j];
+                arr[j] = arr[j+1];
+                arr[j+1] = temp;
+                
+                // Visually update the boxes
+                boxes[j].innerText = arr[j];
+                boxes[j+1].innerText = arr[j+1];
+                
+                phase = 'next';
+            } 
+            else if (phase === 'next') {
+                j++;
+                
+                // Check if inner loop finished for this pass
+                if (j >= n - 1 - i) {
+                    messageEl.innerHTML = `End of Pass ${i + 1}. <strong>${arr[j]}</strong> bubbles to its final sorted position.`;
+                    i++; // Next pass
+                    j = 0; // Reset comparison index
+                    
+                    // Check if whole array is done sorting
+                    if (i === n - 1) {
+                        isComplete = true;
+                        messageEl.innerHTML = `<strong>Array is completely sorted!</strong> (Passes required: n - 1 = 4)`;
+                        btnStep.classList.add('hidden');
+                        btnReset.classList.remove('hidden');
+                    }
+                } else {
+                    // Just move to the next pair in the current pass, trigger immediately visually
+                    phase = 'select';
+                    step(); 
+                    return; // exit to avoid rendering current state twice
+                }
+                phase = 'select';
+                renderArray(); // re-render to update the green sorted boxes
+            }
+        }
+
+        function resetVisualizer() {
+            arr = [...initialArray];
+            i = 0;
+            j = 0;
+            phase = 'select';
+            isComplete = false;
+            messageEl.innerHTML = `Click "Step Forward" to start tracking Pass 1.`;
+            btnStep.classList.remove('hidden');
+            btnReset.classList.add('hidden');
+            renderArray();
+        }
+
+        btnStep.addEventListener('click', step);
+        btnReset.addEventListener('click', resetVisualizer);
+
+        // Initialize
+        renderArray();
+    </script>
+</body>
+</html>
