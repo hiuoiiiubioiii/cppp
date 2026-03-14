@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Linear Search Algorithm | Study Notes</title>
+    <style>
+        /* Base Styles & Typography */
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --code-bg: #1e293b;
+            --highlight: #fef08a;
+            --match: #4ade80;
+            --no-match: #f87171;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Vertical Feed Layout Container */
+        .feed-container {
+            width: 100%;
+            max-width: 800px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Header Styling */
+        header {
+            text-align: center;
+            padding: 40px 20px 20px;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Card (Feed Item) Styling */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            border-top: 5px solid var(--primary);
+        }
+
+        .card h2 {
+            margin-top: 0;
+            color: var(--text-main);
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .card h3 {
+            font-size: 1.2rem;
+            color: var(--primary);
+            margin-top: 25px;
+        }
+
+        /* Array Visualization Styles */
+        .visualization-box {
+            background-color: var(--bg-color);
+            border-radius: 8px;
+            padding: 30px 10px;
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            overflow-x: auto;
+        }
+
+        .array-container {
+            display: flex;
+            gap: 5px;
+            margin-bottom: 20px;
+        }
+
+        .array-element {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .index {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 5px;
+        }
+
+        .box {
+            width: 60px;
+            height: 60px;
+            background-color: white;
+            border: 2px solid #cbd5e1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+
+        .status-text {
+            font-size: 1.1rem;
+            font-weight: bold;
+            color: var(--text-muted);
+            min-height: 24px;
+        }
+
+        /* Color States for Animation */
+        .checking { background-color: var(--highlight); border-color: #eab308; }
+        .mismatch { background-color: var(--no-match); color: white; border-color: #dc2626; }
+        .found { background-color: var(--match); color: white; border-color: #16a34a; transform: scale(1.1); box-shadow: 0 4px 10px rgba(74, 222, 128, 0.5); }
+
+        /* Code Block Styles */
+        pre {
+            background-color: var(--code-bg);
+            color: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+        }
+        
+        code .keyword { color: #c678dd; }
+        code .type { color: #e5c07b; }
+        code .string { color: #98c379; }
+        code .comment { color: #7f848e; font-style: italic; }
+
+        /* List & Highlight Styles */
+        ul {
+            padding-left: 20px;
+        }
+        
+        li {
+            margin-bottom: 10px;
+        }
+
+        .highlight-box {
+            background-color: #e0f2fe;
+            border-left: 4px solid #0ea5e9;
+            padding: 15px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        /* Math Styles */
+        .math-block {
+            background: var(--bg-color);
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 1.2rem;
+            margin: 15px 0;
+        }
+        
+        .fraction {
+            display: inline-block;
+            text-align: center;
+            vertical-align: middle;
+            margin: 0 5px;
+        }
+        .fraction > span {
+            display: block;
+            padding: 0.1em;
+        }
+        .fraction span.fdn {
+            border-top: 1px solid var(--text-main);
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+
+        <!-- Header -->
+        <header>
+            <h1>Linear Search Algorithm</h1>
+            <p>Also known as Sequential Search. A comprehensive, vertical study guide.</p>
+        </header>
+
+        <!-- Section 1: Introduction & Setup -->
+        <section class="card">
+            <h2>1. Introduction & Array Setup</h2>
+            <p>Linear Search is a method for finding a target value within a list. It is called <strong>Sequential Search</strong> because it sequentially checks each element of the list until a match is found or the whole list has been searched.</p>
+            
+            <h3>The Scenario (From the Video):</h3>
+            <ul>
+                <li><strong>Total Elements (n):</strong> 8</li>
+                <li><strong>Indices:</strong> 0 to 7</li>
+                <li><strong>Target Data:</strong> <code>42</code></li>
+            </ul>
+
+            <div class="visualization-box">
+                <div class="array-container">
+                    <div class="array-element"><span class="index">0</span><div class="box">15</div></div>
+                    <div class="array-element"><span class="index">1</span><div class="box">5</div></div>
+                    <div class="array-element"><span class="index">2</span><div class="box">20</div></div>
+                    <div class="array-element"><span class="index">3</span><div class="box">35</div></div>
+                    <div class="array-element"><span class="index">4</span><div class="box">2</div></div>
+                    <div class="array-element"><span class="index">5</span><div class="box">42</div></div>
+                    <div class="array-element"><span class="index">6</span><div class="box">67</div></div>
+                    <div class="array-element"><span class="index">7</span><div class="box">17</div></div>
+                </div>
+                <p style="color: var(--text-muted); font-size: 0.9rem;">The array structure exactly as drawn on the whiteboard.</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Working Principle (Visualization) -->
+        <section class="card">
+            <h2>2. The Working Principle (Tracing)</h2>
+            <p>The algorithm starts at the <code>0th</code> index and compares the target <code>data (42)</code> with each element, one by one. Watch the animation below to see how the computer executes this.</p>
+
+            <div class="visualization-box">
+                <div class="array-container" id="anim-array">
+                    <!-- JS will populate this -->
+                </div>
+                <div class="status-text" id="anim-status">Initializing search...</div>
+            </div>
+
+            <div class="highlight-box">
+                <strong>Two Stopping Conditions:</strong> You stop searching the array under exactly two conditions:
+                <ol>
+                    <li><strong>You find the data:</strong> You hit the target element and stop immediately.</li>
+                    <li><strong>You reach the end:</strong> If the data isn't in the array (e.g., searching for 41), you check every single box. Once you reach the end, you stop.</li>
+                </ol>
+            </div>
+        </section>
+
+        <!-- Section 3: The Core Code -->
+        <section class="card">
+            <h2>3. The Code & The "break" Statement</h2>
+            <p>We use an iterative approach (a <code>for</code> loop) to execute the sequential search. Let's look at the primary logic.</p>
+
+            <pre><code><span class="keyword">for</span> (<span class="type">int</span> i = 0; i < n; i++) 
+{
+    <span class="keyword">if</span> (a[i] == data) 
+    {
+        printf(<span class="string">"Element found at index: %d"</span>, i);
+        <span class="keyword">break</span>; <span class="comment">// Crucial statement!</span>
+    }
+}</code></pre>
+
+            <h3>Why is <code>break;</code> essential?</h3>
+            <p>If we search for 42, we find it at index 5. If we don't include a <code>break;</code>, the loop will waste processing power by unnecessarily continuing to check index 6 and 7. The <code>break;</code> forces the program to instantly exit the loop.</p>
+        </section>
+
+        <!-- Section 4: Element Not Found -->
+        <section class="card">
+            <h2>4. Handling the "Not Found" Scenario</h2>
+            <p>What if we search for a number that isn't there (like 41)? The loop runs from index 0 to 7 and terminates. The instructor provided <strong>two different methods</strong> to print "Element not found". (You only need to use one of these on an exam).</p>
+
+            <h3>Method 1: Index Check (Checking the Loop Counter)</h3>
+            <p>If the loop searches the whole array and never hits the <code>break</code>, the loop finishes naturally when <code>i</code> becomes equal to <code>n</code> (8). So, if <code>i == n</code>, the element was missing.</p>
+            <pre><code><span class="comment">// Placed outside, below the for loop</span>
+<span class="keyword">if</span> (i == n) 
+{
+    printf(<span class="string">"Element not found"</span>);
+}</code></pre>
+
+            <h3>Method 2: Using a Flag Variable</h3>
+            <p>We create a variable called <code>found</code> and set it to 0. If we find the item, we change it to 1. After the loop, if it's still 0, the item doesn't exist.</p>
+            <pre><code><span class="type">int</span> found = 0; <span class="comment">// Initialize flag</span>
+
+<span class="keyword">for</span> (<span class="type">int</span> i = 0; i < n; i++) {
+    <span class="keyword">if</span> (a[i] == data) {
+        printf(<span class="string">"Element found at index: %d"</span>, i);
+        found = 1; <span class="comment">// Change flag</span>
+        <span class="keyword">break</span>; 
+    }
+}
+
+<span class="comment">// Check flag after the loop</span>
+<span class="keyword">if</span> (found == 0) {
+    printf(<span class="string">"Element not found"</span>);
+}</code></pre>
+        </section>
+
+        <!-- Section 5: Time Complexity -->
+        <section class="card">
+            <h2>5. Time Complexity Analysis</h2>
+            <p>Time complexity is determined by the number of comparisons made.</p>
+
+            <h3>1. Best Case: <strong>O(1)</strong></h3>
+            <p>The element you are looking for is at the very first index (e.g., searching for 15). It takes exactly 1 comparison. This is constant time: O(1).</p>
+
+            <h3>2. Worst Case: <strong>O(n)</strong></h3>
+            <p>The element is at the very last index (e.g., 17), or it's not in the array at all. You must check every single element, resulting in <code>n</code> comparisons. This is linear time: O(n).</p>
+
+            <h3>3. Average Case: <strong>O(n)</strong></h3>
+            <p>The element could be anywhere. To find the average, we add up the comparisons for all possible successful cases, and divide by the number of cases (n).</p>
+            
+            <ul>
+                <li>If found at index 0 = 1 comparison.</li>
+                <li>If found at index 1 = 2 comparisons... up to <code>n</code>.</li>
+            </ul>
+
+            <div class="math-block">
+                Sum of all cases = 1 + 2 + 3 + ... + n
+            </div>
+            
+            <p>Using the mathematical formula for the sum of the first <em>n</em> natural numbers, the sum is:</p>
+            
+            <div class="math-block">
+                Sum = <div class="fraction"><span>n(n + 1)</span><span class="fdn">2</span></div>
+            </div>
+
+            <p>Now, divide by the number of cases (n) to get the average:</p>
+
+            <div class="math-block">
+                Average = <div class="fraction"><span>n(n + 1) / 2</span><span class="fdn">n</span></div> = <div class="fraction"><span>n + 1</span><span class="fdn">2</span></div>
+            </div>
+
+            <p>In Big-O notation, we drop constants (like the +1 and the /2). Therefore, the average time complexity is <strong>O(n)</strong>.</p>
+        </section>
+
+    </div>
+
+    <!-- JavaScript for the Interactive Animation -->
+    <script>
+        const arrayValues = [15, 5, 20, 35, 2, 42, 67, 17];
+        const target = 42;
+        const animContainer = document.getElementById('anim-array');
+        const animStatus = document.getElementById('anim-status');
+
+        // Render the boxes dynamically
+        function renderBoxes() {
+            animContainer.innerHTML = '';
+            arrayValues.forEach((val, index) => {
+                const el = document.createElement('div');
+                el.className = 'array-element';
+                el.innerHTML = `
+                    <span class="index">${index}</span>
+                    <div class="box" id="box-${index}">${val}</div>
+                `;
+                animContainer.appendChild(el);
+            });
+        }
+
+        // Animation Logic
+        async function runSearchAnimation() {
+            renderBoxes(); // Reset boxes
+            animStatus.innerText = `Searching for data = ${target}...`;
+            
+            // Short pause before starting
+            await new Promise(r => setTimeout(r, 1000));
+
+            for (let i = 0; i < arrayValues.length; i++) {
+                const box = document.getElementById(`box-${i}`);
+                
+                // Highlight box as checking
+                box.classList.add('checking');
+                animStatus.innerText = `Index ${i}: Is ${arrayValues[i]} == ${target}?`;
+                
+                // Wait for visual effect
+                await new Promise(r => setTimeout(r, 1200));
+
+                if (arrayValues[i] === target) {
+                    box.classList.remove('checking');
+                    box.classList.add('found');
+                    animStatus.innerText = `Match! Found at index ${i}. Loop breaks.`;
+                    
+                    // Wait a few seconds, then restart loop
+                    await new Promise(r => setTimeout(r, 5000));
+                    runSearchAnimation(); 
+                    return; // Exit current iteration
+                } else {
+                    box.classList.remove('checking');
+                    box.classList.add('mismatch');
+                }
+            }
+        }
+
+        // Initialize animation on load
+        window.onload = runSearchAnimation;
+
+    </script>
+</body>
+</html>
