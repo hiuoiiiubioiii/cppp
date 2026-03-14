@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Insertion Sort - Interactive Study Notes</title>
+    <style>
+        :root {
+            --bg-color: #f1f5f9;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --primary: #3b82f6;
+            --sorted-bg: #d1fae5;
+            --sorted-border: #10b981;
+            --unsorted-bg: #f8fafc;
+            --unsorted-border: #cbd5e1;
+            --temp-bg: #fef08a;
+            --temp-border: #eab308;
+            --hole-border: #94a3b8;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        /* Vertical Feed Container */
+        #feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Card Styling */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-top: 0;
+            color: var(--text-main);
+            text-align: center;
+        }
+
+        h2 {
+            color: var(--primary);
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+        }
+
+        h3 {
+            color: var(--text-main);
+            margin-top: 1.5rem;
+        }
+
+        p {
+            font-size: 1.1rem;
+            margin-bottom: 1rem;
+        }
+
+        ul {
+            font-size: 1.1rem;
+            padding-left: 1.5rem;
+        }
+
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .highlight {
+            background-color: #fef08a;
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        /* Array Visualization Styling */
+        .visual-container {
+            background-color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .array-row {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+
+        .array-group {
+            display: flex;
+            gap: 4px;
+            position: relative;
+        }
+
+        .box {
+            width: 55px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.25rem;
+            font-weight: 700;
+            border-radius: 8px;
+            border: 3px solid;
+            transition: all 0.3s ease;
+        }
+
+        .box-index {
+            position: absolute;
+            top: -20px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            width: 100%;
+            text-align: center;
+        }
+
+        .index-wrapper {
+            position: relative;
+        }
+
+        /* Status Colors */
+        .sorted {
+            background-color: var(--sorted-bg);
+            border-color: var(--sorted-border);
+            color: #047857;
+        }
+
+        .unsorted {
+            background-color: var(--unsorted-bg);
+            border-color: var(--unsorted-border);
+            color: var(--text-muted);
+        }
+
+        .hole {
+            background-color: transparent;
+            border-color: var(--hole-border);
+            border-style: dashed;
+            color: transparent;
+        }
+
+        .temp {
+            background-color: var(--temp-bg);
+            border-color: var(--temp-border);
+            color: #a16207;
+        }
+
+        .temp-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: bold;
+            color: var(--text-muted);
+            margin-left: 2rem;
+            padding-left: 2rem;
+            border-left: 2px solid #e2e8f0;
+        }
+
+        .divider {
+            width: 4px;
+            background-color: var(--text-main);
+            border-radius: 2px;
+            margin: 0 4px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 1rem;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-top: -0.5rem;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 2px solid;
+        }
+
+        /* Code Block Styling */
+        .code-block {
+            background-color: #1e293b;
+            color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.05rem;
+            line-height: 1.6;
+        }
+
+        .comment { color: #94a3b8; font-style: italic; }
+        .keyword { color: #c678dd; }
+        .variable { color: #e5c07b; }
+        .operator { color: #56b6c2; }
+        .number { color: #d19a66; }
+
+        @media (max-width: 600px) {
+            .temp-wrapper {
+                margin-left: 0;
+                padding-left: 0;
+                border-left: none;
+                border-top: 2px solid #e2e8f0;
+                padding-top: 1rem;
+                width: 100%;
+                justify-content: center;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <main id="feed-container">
+        
+        <!-- HEADER CARD -->
+        <article class="card">
+            <h1>📝 Insertion Sort Algorithm</h1>
+            <p>Welcome to the continuous study feed for Insertion Sort. Scroll down to walk through the complete logic, step-by-step visual dry runs, actual C-code, and time complexity analysis exactly as taught on the whiteboard.</p>
+            
+            <div class="visual-container">
+                <p style="margin: 0; font-weight: bold; color: var(--text-muted);">Visual Legend</p>
+                <div class="legend">
+                    <div class="legend-item"><div class="legend-color sorted"></div> Sorted Sublist</div>
+                    <div class="legend-item"><div class="legend-color unsorted"></div> Unsorted Sublist</div>
+                    <div class="legend-item"><div class="legend-color temp"></div> Temp Variable</div>
+                    <div class="legend-item"><div class="legend-color hole"></div> Hole (Empty)</div>
+                </div>
+            </div>
+        </article>
+
+        <!-- CONCEPT CARD -->
+        <article class="card">
+            <h2>1. The Core Concept</h2>
+            <p>In this technique, the array is conceptually divided into two parts:</p>
+            <ul>
+                <li><span class="highlight">Sorted Sublist:</span> The left side. By default, the very first element (Index 0) is already considered sorted.</li>
+                <li><span class="highlight">Unsorted Sublist:</span> The right side. We take one element at a time from here and insert it into its correct position in the sorted sublist.</li>
+            </ul>
+            <p><strong>The Routine:</strong> Pick a value -> Store it in a variable called `temp` (leaving a hole) -> Shift sorted elements to the right if they are greater than `temp` -> Insert `temp` into the final hole.</p>
+        </article>
+
+        <!-- SETUP CARD -->
+        <article class="card">
+            <h2>2. Initial Setup</h2>
+            <p>Let's look at our starting array <code>a</code> with `n = 6` elements.</p>
+            <div class="visual-container">
+                <div class="array-row">
+                    <div class="array-group">
+                        <div class="index-wrapper"><div class="box-index">0</div><div class="box sorted">5</div></div>
+                    </div>
+                    <div class="divider"></div>
+                    <div class="array-group">
+                        <div class="index-wrapper"><div class="box-index">1</div><div class="box unsorted">4</div></div>
+                        <div class="index-wrapper"><div class="box-index">2</div><div class="box unsorted">10</div></div>
+                        <div class="index-wrapper"><div class="box-index">3</div><div class="box unsorted">1</div></div>
+                        <div class="index-wrapper"><div class="box-index">4</div><div class="box unsorted">6</div></div>
+                        <div class="index-wrapper"><div class="box-index">5</div><div class="box unsorted">2</div></div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- PASS 1 -->
+        <article class="card">
+            <h2>3. Pass 1: Looking at Index 1</h2>
+            <p><strong>Target:</strong> The value <code>4</code>.</p>
+            <ul>
+                <li>Store <code>4</code> in `temp`. Index 1 becomes a hole.</li>
+                <li>Compare `temp` (4) with the sorted element `5`. Is <code>5 > 4</code>? <strong>Yes.</strong></li>
+                <li><strong>Shift:</strong> Move 5 one place right into the hole. The hole moves to Index 0.</li>
+                <li><strong>Insert:</strong> Reached the start. Insert `4` into Index 0.</li>
+            </ul>
+            
+            <div class="visual-container">
+                <p style="margin:0; font-size:0.9rem;"><em>Step A: Store in temp and leave hole</em></p>
+                <div class="array-row">
+                    <div class="array-group"><div class="box sorted">5</div></div>
+                    <div class="divider"></div>
+                    <div class="array-group"><div class="box hole"></div><div class="box unsorted">10</div><div class="box unsorted">1</div><div class="box unsorted">6</div><div class="box unsorted">2</div></div>
+                    <div class="temp-wrapper">temp = <div class="box temp">4</div></div>
+                </div>
+
+                <p style="margin:0; font-size:0.9rem; margin-top: 1rem;"><em>Step B: Shift 5 right, Insert 4</em></p>
+                <div class="array-row">
+                    <div class="array-group"><div class="box sorted">4</div><div class="box sorted">5</div></div>
+                    <div class="divider"></div>
+                    <div class="array-group"><div class="box unsorted">10</div><div class="box unsorted">1</div><div class="box unsorted">6</div><div class="box unsorted">2</div></div>
+                </div>
+            </div>
+        </article>
+
+        <!-- PASS 2 -->
+        <article class="card">
+            <h2>4. Pass 2: Looking at Index 2</h2>
+            <p><strong>Target:</strong> The value <code>10</code>.</p>
+            <ul>
+                <li>Store <code>10</code> in `temp`. Index 2 becomes a hole.</li>
+                <li>Compare `temp` (10) with sorted element `5`. Is <code>5 > 10</code>? <strong>No.</strong></li>
+                <li>Because the sublist is sorted, if 10 is greater than 5, it's greater than everything before it. <strong>Stop comparing.</strong></li>
+                <li><strong>Insert:</strong> Put 10 back into the hole it came from.</li>
+            </ul>
+            
+            <div class="visual-container">
+                <div class="array-row">
+                    <div class="array-group"><div class="box sorted">4</div><div class="box sorted">5</div><div class="box sorted">10</div></div>
+                    <div class="divider"></div>
+                    <div class="array-group"><div class="box unsorted">1</div><div class="box unsorted">6</div><div class="box unsorted">2</div></div>
+                </div>
+            </div>
+        </article>
+
+        <!-- PASS 3 -->
+        <article class="card">
+            <h2>5. Pass 3: Looking at Index 3</h2>
+            <p><strong>Target:</strong> The value <code>1</code>.</p>
+            <ul>
+                <li>Store <code>1</code> in `temp`.</li>
+                <li>Is <code>10 > 1</code>? Yes. Shift 10 right.</li>
+                <li>Is <code>5 > 1</code>? Yes. Shift 5 right.</li>
+                <li>Is <code>4 > 1</code>? Yes. Shift 4 right.</li>
+                <li><strong>Insert:</strong> Insert 1 at the beginning (Index 0).</li>
+            </ul>
+            
+            <div class="visual-container">
+                <div class="array-row">
+                    <div class="array-group"><div class="box sorted">1</div><div class="box sorted">4</div><div class="box sorted">5</div><div class="box sorted">10</div></div>
+                    <div class="divider"></div>
+                    <div class="array-group"><div class="box unsorted">6</div><div class="box unsorted">2</div></div>
+                </div>
+            </div>
+        </article>
+
+        <!-- PASS 4 -->
+        <article class="card">
+            <h2>6. Pass 4: Looking at Index 4</h2>
+            <p><strong>Target:</strong> The value <code>6</code>.</p>
+            <ul>
+                <li>Store <code>6</code> in `temp`.</li>
+                <li>Is <code>10 > 6</code>? Yes. Shift 10 right.</li>
+                <li>Is <code>5 > 6</code>? <strong>No. Stop.</strong></li>
+                <li><strong>Insert:</strong> Insert 6 in the hole right after 5.</li>
+            </ul>
+            
+            <div class="visual-container">
+                <div class="array-row">
+                    <div class="array-group"><div class="box sorted">1</div><div class="box sorted">4</div><div class="box sorted">5</div><div class="box sorted">6</div><div class="box sorted">10</div></div>
+                    <div class="divider"></div>
+                    <div class="array-group"><div class="box unsorted">2</div></div>
+                </div>
+            </div>
+        </article>
+
+        <!-- PASS 5 -->
+        <article class="card">
+            <h2>7. Pass 5: Looking at Index 5</h2>
+            <p><strong>Target:</strong> The value <code>2</code>.</p>
+            <ul>
+                <li>Store <code>2</code> in `temp`.</li>
+                <li>Is <code>10 > 2</code>? Yes. Shift 10 right.</li>
+                <li>Is <code>6 > 2</code>? Yes. Shift 6 right.</li>
+                <li>Is <code>5 > 2</code>? Yes. Shift 5 right.</li>
+                <li>Is <code>4 > 2</code>? Yes. Shift 4 right.</li>
+                <li>Is <code>1 > 2</code>? <strong>No. Stop.</strong></li>
+                <li><strong>Insert:</strong> Insert 2 in the hole right after 1.</li>
+            </ul>
+            
+            <div class="visual-container">
+                <p style="margin:0; font-size:0.9rem; font-weight: bold; color: #047857;"><em>Final Sorted Array</em></p>
+                <div class="array-row">
+                    <div class="array-group">
+                        <div class="box sorted">1</div>
+                        <div class="box sorted">2</div>
+                        <div class="box sorted">4</div>
+                        <div class="box sorted">5</div>
+                        <div class="box sorted">6</div>
+                        <div class="box sorted">10</div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- THE CODE -->
+        <article class="card">
+            <h2>8. Writing the Code</h2>
+            <p>Here is the algorithm written exactly as explained on the whiteboard. We need an <strong>outer loop</strong> to travel left-to-right through the unsorted side, and an <strong>inner loop</strong> to travel right-to-left through the sorted side for shifting.</p>
+            
+            <div class="code-block">
+<span class="keyword">for</span> (<span class="variable">i</span> <span class="operator">=</span> <span class="number">1</span>; <span class="variable">i</span> <span class="operator"><</span> <span class="variable">n</span>; <span class="variable">i</span><span class="operator">++</span>) {
+    <span class="comment">// 1. Store the unsorted element</span>
+    <span class="variable">temp</span> <span class="operator">=</span> <span class="variable">a</span>[<span class="variable">i</span>];  
+    
+    <span class="comment">// 2. Start comparing with the end of the sorted sublist</span>
+    <span class="variable">j</span> <span class="operator">=</span> <span class="variable">i</span> <span class="operator">-</span> <span class="number">1</span>;    
+    
+    <span class="comment">// 3. Shift elements to the right if they are greater than temp</span>
+    <span class="keyword">while</span> (<span class="variable">j</span> <span class="operator">>=</span> <span class="number">0</span> <span class="operator">&&</span> <span class="variable">a</span>[<span class="variable">j</span>] <span class="operator">></span> <span class="variable">temp</span>) { 
+        <span class="variable">a</span>[<span class="variable">j</span> <span class="operator">+</span> <span class="number">1</span>] <span class="operator">=</span> <span class="variable">a</span>[<span class="variable">j</span>]; <span class="comment">// Shift right</span>
+        <span class="variable">j</span><span class="operator">--</span>;             <span class="comment">// Move left</span>
+    }
+    
+    <span class="comment">// 4. Insert temp into the correct hole</span>
+    <span class="variable">a</span>[<span class="variable">j</span> <span class="operator">+</span> <span class="number">1</span>] <span class="operator">=</span> <span class="variable">temp</span>; 
+}
+            </div>
+            
+            <h3>Dry Running the Loop (Inserting 10)</h3>
+            <p>Let's look at the math when we were trying to insert <code>10</code> (Pass 2):</p>
+            <ul>
+                <li>Outer loop: <code>i = 2</code></li>
+                <li><code>temp = a[2]</code> ➔ <code>temp = 10</code></li>
+                <li><code>j = i - 1</code> ➔ <code>j = 1</code> (a[1] is 5)</li>
+                <li><strong>While loop check:</strong> Is <code>j >= 0</code> (1 >= 0)? <strong>True.</strong> AND is <code>a[1] > temp</code> (5 > 10)? <strong>False.</strong></li>
+                <li>The while loop completely skips. No shifting.</li>
+                <li><strong>Insert:</strong> <code>a[j + 1] = temp</code> ➔ <code>a[1 + 1] = 10</code> ➔ <code>a[2] = 10</code>. It goes right back where it started.</li>
+            </ul>
+        </article>
+
+        <!-- COMPLEXITY -->
+        <article class="card">
+            <h2>9. Time Complexity Analysis</h2>
+            <p>Understanding the complexity is crucial for exams and interviews.</p>
+            
+            <h3>Worst-Case Scenario: <span class="highlight">O(n²)</span></h3>
+            <p><strong>When?</strong> The array is given in completely descending order (e.g., <code>[6, 5, 4, 3, 2, 1]</code>) and you want it ascending.</p>
+            <p><strong>Why?</strong> The outer `for` loop runs `n` times. Because every new element is smaller than <em>everything</em> in the sorted list, the inner `while` loop must run to its maximum limit every single time to shift every element. `n` loops × `n` loops = O(n²).</p>
+
+            <h3>Best-Case Scenario: <span class="highlight">O(n)</span></h3>
+            <p><strong>When?</strong> The array is already completely sorted (e.g., <code>[1, 2, 3, 4, 5, 6]</code>).</p>
+            <p><strong>Why?</strong> The outer `for` loop still runs `n` times. However, the inner `while` condition <code>a[j] > temp</code> will fail immediately on the very first check every time. The inner loop never runs. One comparison per element = O(n).</p>
+        </article>
+
+        <!-- TAKEAWAYS -->
+        <article class="card" style="border-left: 6px solid var(--primary);">
+            <h2 style="border: none;">💡 Key Student Takeaways</h2>
+            <ul>
+                <li><strong>Keyword: "Shift and Insert."</strong> You do not swap elements; you shuffle larger elements to the right to make room for smaller ones.</li>
+                <li><strong>Start at Index 1:</strong> Always remember the outer `for` loop starts at `i = 1`, not 0. Index 0 is your default sorted list.</li>
+                <li><strong>The Safety Condition:</strong> Memorize <code>(j >= 0 && a[j] > temp)</code>. The <code>j >= 0</code> check is vital—it prevents the program from crashing by trying to read negative array indices when you reach the start of the list.</li>
+            </ul>
+        </article>
+
+    </main>
+
+</body>
+</html>
