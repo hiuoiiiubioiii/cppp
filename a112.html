@@ -1,0 +1,487 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Optimal Huffman Coding - Lecture Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --primary: #2563eb;
+            --primary-light: #eff6ff;
+            --accent: #f59e0b;
+            --accent-light: #fffbeb;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --bg-page: #f8fafc;
+            --bg-card: #ffffff;
+            --border: #e2e8f0;
+            --success: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Scroll Progress Bar */
+        #progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: var(--border);
+            z-index: 1000;
+        }
+        #progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .header-card {
+            text-align: center;
+            padding: 40px 20px;
+            background: var(--primary);
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+        }
+
+        .header-card h1 {
+            font-size: 2.2rem;
+            margin-bottom: 10px;
+        }
+
+        .header-card p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            border: 1px solid var(--border);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-tag {
+            display: inline-block;
+            background: var(--primary-light);
+            color: var(--primary);
+            font-size: 0.85rem;
+            font-weight: 700;
+            padding: 4px 12px;
+            border-radius: 20px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 15px;
+            color: var(--text-main);
+        }
+
+        .card p {
+            margin-bottom: 15px;
+            font-size: 1.05rem;
+        }
+
+        /* Tip & Hack Boxes */
+        .callout {
+            background: var(--accent-light);
+            border-left: 4px solid var(--accent);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+
+        .callout strong {
+            color: #b45309;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Visualizations */
+        .viz-container {
+            background: var(--bg-page);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            overflow-x: auto;
+            text-align: center;
+        }
+
+        svg {
+            max-width: 100%;
+            height: auto;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .node-circle { fill: white; stroke: var(--primary); stroke-width: 2; }
+        .node-leaf { fill: var(--primary-light); stroke: var(--primary); stroke-width: 2; }
+        .edge { stroke: var(--border); stroke-width: 2; }
+        .edge-label { fill: var(--accent); font-weight: bold; font-size: 14px; }
+        .node-text { fill: var(--text-main); font-size: 14px; font-weight: bold; text-anchor: middle; dominant-baseline: middle; }
+        .leaf-label { fill: var(--text-muted); font-size: 12px; text-anchor: middle; }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+        }
+
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+        }
+
+        th {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* Math Blocks */
+        .math-block {
+            background: #1e293b;
+            color: #f8fafc;
+            font-family: 'JetBrains Mono', monospace;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+        
+        .math-block span {
+            color: var(--success);
+        }
+
+        @media (max-width: 600px) {
+            .feed-container { padding: 20px 10px; }
+            .card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Scroll Progress Bar -->
+    <div id="progress-container">
+        <div id="progress-bar"></div>
+    </div>
+
+    <div class="feed-container">
+        
+        <!-- Header -->
+        <header class="header-card">
+            <h1>Optimal Huffman Coding</h1>
+            <p>Complete NET/GATE Exam Study Notes & Visualizations</p>
+        </header>
+
+        <!-- Card 1: Decimal Problem -->
+        <article class="card">
+            <span class="card-tag">Problem 1: Decimals</span>
+            <h2>The Question Statement</h2>
+            <p>A text is made up of characters <strong>a, b, c, d, e</strong> each occurring with the probability <strong>0.11, 0.40, 0.16, 0.09, and 0.24</strong> respectively.</p>
+            <p><em>What is the average length of the optimal Huffman coding technique?</em></p>
+            <div class="callout">
+                <strong>Instructor's Rule #1</strong>
+                Always build the Huffman tree from the bottom up by repeatedly selecting the <strong>two minimum probabilities</strong> available in your current pool. Put the smaller on the left, larger on the right.
+            </div>
+        </article>
+
+        <!-- Card 2: Tree Construction Visualization -->
+        <article class="card">
+            <span class="card-tag">Visualization 1</span>
+            <h2>Step 1: Building the Decimal Tree</h2>
+            <p>Let's map out exactly what she drew on the whiteboard:</p>
+            <ol style="margin-left: 20px; margin-bottom: 15px;">
+                <li>Merge minimums <strong>d(0.09)</strong> + <strong>a(0.11)</strong> = <strong>0.20</strong></li>
+                <li>Merge new min <strong>c(0.16)</strong> + <strong>0.20</strong> = <strong>0.36</strong></li>
+                <li>Merge new min <strong>e(0.24)</strong> + <strong>0.36</strong> = <strong>0.60</strong></li>
+                <li>Merge last min <strong>b(0.40)</strong> + <strong>0.60</strong> = <strong>1.00</strong></li>
+            </ol>
+            
+            <div class="viz-container">
+                <svg viewBox="0 0 700 350" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Edges -->
+                    <line x1="350" y1="30" x2="200" y2="100" class="edge"/>
+                    <line x1="350" y1="30" x2="500" y2="100" class="edge"/>
+                    
+                    <line x1="500" y1="100" x2="400" y2="170" class="edge"/>
+                    <line x1="500" y1="100" x2="600" y2="170" class="edge"/>
+                    
+                    <line x1="600" y1="170" x2="500" y2="240" class="edge"/>
+                    <line x1="600" y1="170" x2="700" y2="240" class="edge"/>
+                    
+                    <line x1="700" y1="240" x2="620" y2="310" class="edge"/>
+                    <line x1="700" y1="240" x2="780" y2="310" class="edge"/>
+
+                    <!-- Edge Labels (0s and 1s) -->
+                    <text x="260" y="55" class="edge-label">0</text>
+                    <text x="440" y="55" class="edge-label">1</text>
+                    
+                    <text x="440" y="125" class="edge-label">0</text>
+                    <text x="560" y="125" class="edge-label">1</text>
+                    
+                    <text x="540" y="195" class="edge-label">0</text>
+                    <text x="660" y="195" class="edge-label">1</text>
+                    
+                    <text x="650" y="265" class="edge-label">0</text>
+                    <text x="750" y="265" class="edge-label">1</text>
+
+                    <!-- Nodes -->
+                    <!-- Root -->
+                    <circle cx="350" cy="30" r="25" class="node-circle"/>
+                    <text x="350" y="30" class="node-text">1.00</text>
+
+                    <!-- Level 1 -->
+                    <circle cx="200" cy="100" r="25" class="node-leaf"/>
+                    <text x="200" y="100" class="node-text">0.40</text>
+                    <text x="200" y="140" class="leaf-label">Character 'b'</text>
+                    
+                    <circle cx="500" cy="100" r="25" class="node-circle"/>
+                    <text x="500" y="100" class="node-text">0.60</text>
+
+                    <!-- Level 2 -->
+                    <circle cx="400" cy="170" r="25" class="node-leaf"/>
+                    <text x="400" y="170" class="node-text">0.24</text>
+                    <text x="400" y="210" class="leaf-label">Character 'e'</text>
+
+                    <circle cx="600" cy="170" r="25" class="node-circle"/>
+                    <text x="600" y="170" class="node-text">0.36</text>
+
+                    <!-- Level 3 -->
+                    <circle cx="500" cy="240" r="25" class="node-leaf"/>
+                    <text x="500" y="240" class="node-text">0.16</text>
+                    <text x="500" y="280" class="leaf-label">Character 'c'</text>
+
+                    <circle cx="700" cy="240" r="25" class="node-circle"/>
+                    <text x="700" y="240" class="node-text">0.20</text>
+
+                    <!-- Level 4 -->
+                    <circle cx="620" cy="310" r="25" class="node-leaf"/>
+                    <text x="620" y="310" class="node-text">0.09</text>
+                    <text x="620" y="350" class="leaf-label">Character 'd'</text>
+
+                    <circle cx="780" cy="310" r="25" class="node-leaf"/>
+                    <text x="780" y="310" class="node-text">0.11</text>
+                    <text x="780" y="350" class="leaf-label">Character 'a'</text>
+                </svg>
+            </div>
+            <div class="callout">
+                <strong>Crucial Checkpoint</strong>
+                The root node must <strong>always equal 1.00</strong> when using full probabilities. If it doesn't, you have made a math error during addition!
+            </div>
+        </article>
+
+        <!-- Card 3: Math and Calculations -->
+        <article class="card">
+            <span class="card-tag">Calculations</span>
+            <h2>Step 2 & 3: Assign Codes & Calculate Average</h2>
+            <p>Assign a <code>0</code> to every left branch and a <code>1</code> to every right branch. Trace the path from the top root down to the letter.</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Char</th>
+                        <th>Probability (P)</th>
+                        <th>Trace Path (Code)</th>
+                        <th>Total Bits (b)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>a</td><td>0.11</td><td>1 1 1 1</td><td>4</td></tr>
+                    <tr><td>b</td><td>0.40</td><td>0</td><td>1</td></tr>
+                    <tr><td>c</td><td>0.16</td><td>1 1 0</td><td>3</td></tr>
+                    <tr><td>d</td><td>0.09</td><td>1 1 1 0</td><td>4</td></tr>
+                    <tr><td>e</td><td>0.24</td><td>1 0</td><td>2</td></tr>
+                </tbody>
+            </table>
+
+            <p><strong>The Formula:</strong> Average Length = Sum of (Probability × Number of Bits)</p>
+            <div class="math-block">
+                Avg = (0.11 × 4) + (0.40 × 1) + (0.16 × 3) + (0.09 × 4) + (0.24 × 2)<br><br>
+                Avg = 0.44 + 0.40 + 0.48 + 0.36 + 0.48<br><br>
+                <span>Avg = 2.16 bits per symbol</span>
+            </div>
+        </article>
+
+        <!-- Card 4: Exam Hacks -->
+        <article class="card">
+            <span class="card-tag" style="background: #fee2e2; color: #dc2626;">🔥 Exam Hacks</span>
+            <h2>Instructor's Pro Tips for Exams</h2>
+            <p>Time management is everything in NET/GATE. Here is how you speed this up:</p>
+            <ol style="margin-left: 20px;">
+                <li style="margin-bottom: 10px;"><strong>Skip the Table:</strong> During an exam, do not draw the large table she drew on the board. Just draw the tree, trace the lengths visually, and write the math equation directly to save time.</li>
+                <li><strong>The 100 Characters Trick:</strong> Sometimes the exam asks <em>"How many total bits are required to represent 100 characters?"</em> Since your average is bits <strong>per symbol</strong>, simply multiply your final answer by 100.<br>
+                <code style="background: #f1f5f9; padding: 2px 6px; border-radius: 4px;">2.16 × 100 = 216 total bits</code></li>
+            </ol>
+        </article>
+
+        <!-- Card 5: Fraction Problem -->
+        <article class="card">
+            <span class="card-tag">Problem 2: Fractions</span>
+            <h2>Handling Fractional Probabilities</h2>
+            <p>Given symbols <strong>A, B, C, D, E, F, G, H</strong> with probabilities <strong>1/30, 1/30, 1/30, 2/30, 3/30, 5/30, 5/30, 12/30</strong> respectively. What is the average Huffman code size in bits per symbol?</p>
+            
+            <div class="callout">
+                <strong>Instructor Tip: Do Not Simplify!</strong>
+                Because the denominators are all exactly the same (30), do not simplify the fractions (e.g., don't turn 5/30 into 1/6). Leaving them as /30 makes finding minimums and adding much faster. Just look at the numerators!
+            </div>
+        </article>
+
+        <!-- Card 6: Fraction Tree Viz -->
+        <article class="card">
+            <span class="card-tag">Visualization 2</span>
+            <h2>Building the Fraction Tree</h2>
+            <p>We build this exactly like the previous one, but we are effectively just adding the numerators.</p>
+            
+            <div class="viz-container">
+                <svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Edges -->
+                    <line x1="400" y1="30" x2="250" y2="100" class="edge"/>
+                    <line x1="400" y1="30" x2="550" y2="100" class="edge"/>
+                    
+                    <line x1="250" y1="100" x2="150" y2="180" class="edge"/>
+                    <line x1="250" y1="100" x2="350" y2="180" class="edge"/>
+                    
+                    <!-- Separate Branch for F & G -->
+                    <line x1="350" y1="180" x2="300" y2="260" class="edge"/>
+                    <line x1="350" y1="180" x2="400" y2="260" class="edge"/>
+                    
+                    <!-- Main Branch continuation -->
+                    <line x1="150" y1="180" x2="80" y2="260" class="edge"/>
+                    <line x1="150" y1="180" x2="220" y2="260" class="edge"/>
+                    
+                    <line x1="220" y1="260" x2="150" y2="340" class="edge"/>
+                    <line x1="220" y1="260" x2="290" y2="340" class="edge"/>
+                    
+                    <line x1="290" y1="340" x2="220" y2="420" class="edge"/>
+                    <line x1="290" y1="340" x2="360" y2="420" class="edge"/>
+
+                    <line x1="360" y1="420" x2="290" y2="500" class="edge"/>
+                    <line x1="360" y1="420" x2="430" y2="500" class="edge"/>
+
+                    <!-- Edge Labels -->
+                    <text x="310" y="55" class="edge-label">0</text><text x="490" y="55" class="edge-label">1</text>
+                    <text x="190" y="135" class="edge-label">0</text><text x="310" y="135" class="edge-label">1</text>
+                    <text x="100" y="215" class="edge-label">0</text><text x="200" y="215" class="edge-label">1</text>
+                    <text x="315" y="215" class="edge-label">0</text><text x="385" y="215" class="edge-label">1</text>
+                    <text x="175" y="295" class="edge-label">0</text><text x="265" y="295" class="edge-label">1</text>
+                    <text x="245" y="375" class="edge-label">0</text><text x="335" y="375" class="edge-label">1</text>
+                    <text x="315" y="455" class="edge-label">0</text><text x="405" y="455" class="edge-label">1</text>
+
+
+                    <!-- Nodes (Showing only Numerators to match whiteboard speed) -->
+                    <!-- Level 0 -->
+                    <circle cx="400" cy="30" r="22" class="node-circle"/><text x="400" y="30" class="node-text">30</text>
+                    
+                    <!-- Level 1 -->
+                    <circle cx="250" cy="100" r="22" class="node-circle"/><text x="250" y="100" class="node-text">18</text>
+                    <circle cx="550" cy="100" r="22" class="node-leaf"/><text x="550" y="100" class="node-text">12</text><text x="550" y="135" class="leaf-label">H</text>
+
+                    <!-- Level 2 -->
+                    <circle cx="150" cy="180" r="22" class="node-circle"/><text x="150" y="180" class="node-text">8</text>
+                    <circle cx="350" cy="180" r="22" class="node-circle"/><text x="350" y="180" class="node-text">10</text>
+
+                    <!-- Level 3 -->
+                    <circle cx="80" cy="260" r="22" class="node-leaf"/><text x="80" y="260" class="node-text">3</text><text x="80" y="295" class="leaf-label">E</text>
+                    <circle cx="220" cy="260" r="22" class="node-circle"/><text x="220" y="260" class="node-text">5</text>
+                    <circle cx="300" cy="260" r="22" class="node-leaf"/><text x="300" y="260" class="node-text">5</text><text x="300" y="295" class="leaf-label">F</text>
+                    <circle cx="400" cy="260" r="22" class="node-leaf"/><text x="400" y="260" class="node-text">5</text><text x="400" y="295" class="leaf-label">G</text>
+
+                    <!-- Level 4 -->
+                    <circle cx="150" cy="340" r="22" class="node-leaf"/><text x="150" y="340" class="node-text">2</text><text x="150" y="375" class="leaf-label">D</text>
+                    <circle cx="290" cy="340" r="22" class="node-circle"/><text x="290" y="340" class="node-text">3</text>
+
+                    <!-- Level 5 -->
+                    <circle cx="220" cy="420" r="22" class="node-leaf"/><text x="220" y="420" class="node-text">1</text><text x="220" y="455" class="leaf-label">C</text>
+                    <circle cx="360" cy="420" r="22" class="node-circle"/><text x="360" y="420" class="node-text">2</text>
+
+                    <!-- Level 6 -->
+                    <circle cx="290" cy="500" r="22" class="node-leaf"/><text x="290" y="500" class="node-text">1</text><text x="290" y="535" class="leaf-label">A</text>
+                    <circle cx="430" cy="500" r="22" class="node-leaf"/><text x="430" y="500" class="node-text">1</text><text x="430" y="535" class="leaf-label">B</text>
+
+                </svg>
+            </div>
+            <p><em>*Note: Graph nodes represent the numerators. Actual values are over 30 (e.g., 30/30, 18/30).</em></p>
+        </article>
+
+        <!-- Card 7: Direct Calculation -->
+        <article class="card">
+            <span class="card-tag">Final Step</span>
+            <h2>Direct Calculation (The Fast Way)</h2>
+            <p>Instead of building a table, look at the tree visually and count how many "steps" (bits) it takes from the top root to reach each letter. Multiply that step count by the numerator.</p>
+            
+            <ul style="margin-left: 20px; margin-bottom: 20px; line-height: 1.8;">
+                <li><strong>H (12/30):</strong> 1 step → <code>12 × 1 = 12</code></li>
+                <li><strong>F (5/30):</strong> 3 steps → <code>5 × 3 = 15</code></li>
+                <li><strong>G (5/30):</strong> 3 steps → <code>5 × 3 = 15</code></li>
+                <li><strong>E (3/30):</strong> 3 steps → <code>3 × 3 = 9</code></li>
+                <li><strong>D (2/30):</strong> 4 steps → <code>2 × 4 = 8</code></li>
+                <li><strong>C (1/30):</strong> 5 steps → <code>1 × 5 = 5</code></li>
+                <li><strong>A (1/30):</strong> 6 steps → <code>1 × 6 = 6</code></li>
+                <li><strong>B (1/30):</strong> 6 steps → <code>1 × 6 = 6</code></li>
+            </ul>
+
+            <div class="math-block">
+                Add all numerators: (12 + 15 + 15 + 9 + 8 + 5 + 6 + 6) / 30<br><br>
+                <span>Avg = 76 / 30 bits per symbol</span>
+            </div>
+        </article>
+
+        <footer style="text-align: center; color: var(--text-muted); padding: 20px 0; font-size: 0.9rem;">
+            You have completed the Huffman Coding Notes module. Good luck on your exams!
+        </footer>
+
+    </div>
+
+    <!-- Scroll Progress Script -->
+    <script>
+        window.onscroll = function() {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        };
+    </script>
+</body>
+</html>
