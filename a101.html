@@ -1,0 +1,607 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Merge Sort - Study Notes Feed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap');
+
+        :root {
+            --primary: #4f46e5;
+            --primary-light: #e0e7ff;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --bg-page: #f3f4f6;
+            --bg-card: #ffffff;
+            --border: #e5e7eb;
+            --array-bg: #f8fafc;
+            --highlight-green: #10b981;
+            --highlight-red: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-page);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        header {
+            background-color: var(--primary);
+            color: white;
+            padding: 2rem 1rem;
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            font-weight: 300;
+            opacity: 0.9;
+        }
+
+        /* Vertical Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 0 1rem;
+            position: relative;
+        }
+
+        /* Timeline vertical line */
+        .feed-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            left: 2rem;
+            width: 4px;
+            background-color: var(--primary-light);
+            border-radius: 4px;
+        }
+
+        .feed-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            position: relative;
+            margin-left: 3rem;
+            border: 1px solid var(--border);
+        }
+
+        /* Timeline dots */
+        .feed-card::before {
+            content: '';
+            position: absolute;
+            top: 2rem;
+            left: -1.75rem;
+            width: 16px;
+            height: 16px;
+            background-color: var(--primary);
+            border: 4px solid var(--bg-page);
+            border-radius: 50%;
+            transform: translateX(-50%);
+        }
+
+        .feed-card h2 {
+            color: var(--primary);
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-light);
+        }
+
+        .feed-card h3 {
+            margin: 1.5rem 0 0.5rem 0;
+            font-size: 1.2rem;
+        }
+
+        .feed-card p, .feed-card li {
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .feed-card ul {
+            margin-left: 1.5rem;
+            margin-bottom: 1rem;
+        }
+
+        .highlight {
+            font-weight: 600;
+            color: var(--primary);
+            background: var(--primary-light);
+            padding: 0.1rem 0.4rem;
+            border-radius: 4px;
+        }
+
+        /* Code Blocks */
+        pre {
+            background-color: #1e1e1e;
+            color: #d4d4d4;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.9rem;
+            margin: 1.5rem 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        /* Visualizations */
+        .visual-box {
+            background: var(--array-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 1.5rem 0;
+            text-align: center;
+        }
+
+        .array-row {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .array-cell {
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 2px solid var(--primary);
+            border-radius: 4px;
+            font-weight: bold;
+            color: var(--text-main);
+            position: relative;
+        }
+
+        .pointer {
+            position: absolute;
+            bottom: -25px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: var(--highlight-red);
+        }
+
+        .tree-level {
+            display: flex;
+            justify-content: center;
+            gap: 2rem;
+            margin-top: 1rem;
+        }
+        
+        .tree-branch {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .connection-line {
+            width: 2px;
+            height: 20px;
+            background-color: var(--primary);
+            margin: 5px 0;
+        }
+
+        .interactive-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+            margin-top: 1rem;
+        }
+
+        .interactive-btn:hover {
+            background-color: #4338ca;
+        }
+
+        .interactive-btn:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+
+        .status-text {
+            margin-top: 1rem;
+            font-weight: 600;
+            color: var(--primary);
+            min-height: 24px;
+        }
+
+        /* Complexity Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 1rem;
+            text-align: left;
+        }
+        th {
+            background-color: var(--primary-light);
+            color: var(--primary);
+        }
+
+        @media (max-width: 600px) {
+            .feed-container::before {
+                left: 1rem;
+            }
+            .feed-card {
+                margin-left: 1.5rem;
+                padding: 1.5rem 1rem;
+            }
+            .feed-card::before {
+                left: -1rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Merge Sort Algorithm</h1>
+        <p>In-Depth Study Notes & Visualizations based on Jenny's Lectures</p>
+    </header>
+
+    <div class="feed-container">
+
+        <!-- Phase 1: Introduction -->
+        <article class="feed-card">
+            <h2>1. The Core Concept</h2>
+            <p>Merge Sort is an algorithm that operates on the <span class="highlight">Divide and Conquer</span> principle, similar to Quick Sort.</p>
+            <p>It consists of two massive phases:</p>
+            <ul>
+                <li><strong>Divide:</strong> The complete list is repeatedly divided into equal sub-lists until you get sub-lists containing only <strong>one element</strong>. (A list with one element is naturally sorted).</li>
+                <li><strong>Merge:</strong> You repeatedly merge these single elements to produce new, sorted sub-lists until there is only one complete, sorted list remaining.</li>
+            </ul>
+        </article>
+
+        <!-- Phase 2: Divide Phase -->
+        <article class="feed-card">
+            <h2>2. Visualizing the "Divide" Phase</h2>
+            <p>Let's look at an array named <code>A</code> with 9 elements. To divide the array, we must find the midpoint using the formula: <code>mid = (lower_bound + upper_bound) / 2</code>.</p>
+            <p>For our starting array: <code>mid = (0 + 8) / 2 = 4</code>. We split it into <code>[0 to 4]</code> and <code>[5 to 8]</code>.</p>
+            
+            <div class="visual-box">
+                <div class="tree-branch">
+                    <div class="array-row">
+                        <div class="array-cell">15</div><div class="array-cell">5</div><div class="array-cell">24</div>
+                        <div class="array-cell">8</div><div class="array-cell">1</div><div class="array-cell" style="background:#e0e7ff">3</div>
+                        <div class="array-cell" style="background:#e0e7ff">16</div><div class="array-cell" style="background:#e0e7ff">10</div><div class="array-cell" style="background:#e0e7ff">20</div>
+                    </div>
+                    <p style="font-size:0.8rem; color:var(--text-muted)">Initial Array (mid = 4)</p>
+                    <div class="connection-line"></div>
+                    
+                    <div class="tree-level">
+                        <div class="tree-branch">
+                            <div class="array-row">
+                                <div class="array-cell">15</div><div class="array-cell">5</div><div class="array-cell">24</div>
+                                <div class="array-cell">8</div><div class="array-cell">1</div>
+                            </div>
+                            <p style="font-size:0.8rem; color:var(--text-muted)">Left [0 to 4]</p>
+                        </div>
+                        <div class="tree-branch">
+                            <div class="array-row">
+                                <div class="array-cell" style="background:#e0e7ff">3</div><div class="array-cell" style="background:#e0e7ff">16</div>
+                                <div class="array-cell" style="background:#e0e7ff">10</div><div class="array-cell" style="background:#e0e7ff">20</div>
+                            </div>
+                            <p style="font-size:0.8rem; color:var(--text-muted)">Right [5 to 8]</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <p>This process continues recursively until every element is in its own standalone array of size 1.</p>
+        </article>
+
+        <!-- Phase 3: MergeSort Function -->
+        <article class="feed-card">
+            <h2>3. The MergeSort Function Code</h2>
+            <p>How do we program the computer to do this? We write a recursive function.</p>
+<pre><code>MergeSort(A, lb, ub)
+{
+    if (lb < ub)  // Condition ensures at least 2 elements
+    {
+        mid = (lb + ub) / 2;
+        
+        // Recursive calls to Divide
+        MergeSort(A, lb, mid);       // Sort left half
+        MergeSort(A, mid + 1, ub);   // Sort right half
+        
+        // Combine the sorted halves
+        Merge(A, lb, mid, ub);
+    }
+}</code></pre>
+            <p><strong>Note on Execution:</strong> The computer uses <span class="highlight">Depth-First execution</span>. It doesn't divide everything left and right at the same time. It follows the function calls deeply down the left side until it hits a single element before it starts looking at the right side or merging.</p>
+        </article>
+
+        <!-- Phase 4: Merging Concept -->
+        <article class="feed-card">
+            <h2>4. Visualizing the "Merge" Phase</h2>
+            <p>Once we have single elements, we merge adjacent sub-lists. The trick is to sort them <em>while</em> merging them.</p>
+            <div class="visual-box">
+                <p>Merging single elements <code>[15]</code> and <code>[5]</code></p>
+                <div class="tree-level">
+                    <div class="array-cell">15</div>
+                    <div class="array-cell">5</div>
+                </div>
+                <div class="tree-branch">
+                    <div class="connection-line"></div>
+                    <div class="array-row">
+                        <div class="array-cell" style="background:#dcfce7">5</div>
+                        <div class="array-cell" style="background:#dcfce7">15</div>
+                    </div>
+                </div>
+            </div>
+            <p>This "bottom-up" merging continues. Two arrays of size 1 become an array of size 2. Arrays of size 2 merge into arrays of size 4, until the massive final halves merge.</p>
+        </article>
+
+        <!-- Phase 5: Two Pointer Interactive Visualizer -->
+        <article class="feed-card">
+            <h2>5. The Logic Behind Merging (Interactive)</h2>
+            <p>How does the code merge two lists? It uses the <span class="highlight">Two Pointer Approach</span> and a temporary array <code>B</code>.</p>
+            <ul>
+                <li>Pointer <code>i</code> tracks the Left Sublist.</li>
+                <li>Pointer <code>j</code> tracks the Right Sublist.</li>
+                <li>Pointer <code>k</code> tracks the new Auxiliary Array <code>B</code>.</li>
+            </ul>
+            <p>Click "Next Step" to watch the algorithm compare <code>A[i]</code> and <code>A[j]</code> and place the smaller value into <code>B[k]</code>.</p>
+
+            <div class="visual-box" id="merge-visualizer">
+                <div style="display:flex; justify-content:space-around; margin-bottom: 2rem;">
+                    <div>
+                        <p>Left Array (i)</p>
+                        <div class="array-row" id="left-array">
+                            <div class="array-cell">1<div class="pointer" id="ptr-i">i</div></div>
+                            <div class="array-cell">5</div>
+                            <div class="array-cell">8</div>
+                            <div class="array-cell">15</div>
+                            <div class="array-cell">24</div>
+                        </div>
+                    </div>
+                    <div>
+                        <p>Right Array (j)</p>
+                        <div class="array-row" id="right-array">
+                            <div class="array-cell">3<div class="pointer" id="ptr-j">j</div></div>
+                            <div class="array-cell">10</div>
+                            <div class="array-cell">16</div>
+                            <div class="array-cell">20</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <p>Temporary Array B (k)</p>
+                    <div class="array-row" id="temp-array">
+                        <div class="array-cell" style="border-style:dashed"><div class="pointer" id="ptr-k">k</div></div>
+                        <div class="array-cell" style="border-style:dashed"></div>
+                        <div class="array-cell" style="border-style:dashed"></div>
+                        <div class="array-cell" style="border-style:dashed"></div>
+                        <div class="array-cell" style="border-style:dashed"></div>
+                        <div class="array-cell" style="border-style:dashed"></div>
+                        <div class="array-cell" style="border-style:dashed"></div>
+                        <div class="array-cell" style="border-style:dashed"></div>
+                        <div class="array-cell" style="border-style:dashed"></div>
+                    </div>
+                </div>
+
+                <div class="status-text" id="merge-status">Ready to merge. Compare i and j.</div>
+                <button class="interactive-btn" id="next-btn" onclick="stepMerge()">Next Step</button>
+                <button class="interactive-btn" style="background:#4b5563; margin-left: 10px;" onclick="resetMerge()">Reset</button>
+            </div>
+            
+            <p><strong>Handling Exhaustion:</strong> Notice what happens at the end. When one pointer reaches the end of its list (e.g., <code>j</code> finishes), the other list still has numbers left. The algorithm simply copies all remaining elements directly into <code>B</code>.</p>
+        </article>
+
+        <!-- Phase 6: Merge Code -->
+        <article class="feed-card">
+            <h2>6. The Merge Function Code</h2>
+            <p>Here is the complete C-style logic for combining the arrays, representing exactly what you just visualized above.</p>
+<pre><code>Merge(A, lb, mid, ub)
+{
+    // Initialize pointers
+    i = lb;
+    j = mid + 1;
+    k = lb;
+
+    // Step 1: Compare and insert into temp array B
+    while (i <= mid && j <= ub) 
+    {
+        if (A[i] <= A[j]) 
+        {
+            B[k] = A[i];
+            i++; 
+        } 
+        else 
+        {
+            B[k] = A[j];
+            j++;
+        }
+        k++;
+    }
+
+    // Step 2: Handle remaining elements if one array finishes early
+    if (i > mid) // Left array is exhausted
+    {
+        while (j <= ub) 
+        {
+            B[k] = A[j];
+            j++; k++;
+        }
+    } 
+    else // Right array is exhausted
+    {
+        while (i <= mid) 
+        {
+            B[k] = A[i];
+            i++; k++;
+        }
+    }
+
+    // Step 3: Copy sorted elements back to original array A
+    for (k = lb; k <= ub; k++) 
+    {
+        A[k] = B[k];
+    }
+}</code></pre>
+        </article>
+
+        <!-- Phase 7: Complexity -->
+        <article class="feed-card">
+            <h2>7. Time & Space Complexity</h2>
+            <p>To merge two arrays of size <code>m</code> and <code>n</code>, the time required is <code>Θ(m + n)</code>.</p>
+            <p>Because the array is <strong>always</strong> divided completely in half regardless of its initial state, Merge Sort performs the exact same number of operations in all scenarios.</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Complexity Type</th>
+                        <th>Value</th>
+                        <th>Reasoning</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Best Case Time</strong></td>
+                        <td><code>O(n log n)</code></td>
+                        <td>Array is always split and merged recursively.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Average Case Time</strong></td>
+                        <td><code>O(n log n)</code></td>
+                        <td>Standard divide and conquer tree depth is log n, merging takes n.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Worst Case Time</strong></td>
+                        <td><code>O(n log n)</code></td>
+                        <td>Even if reverse sorted, divisions and merges remain constant.</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Space Complexity</strong></td>
+                        <td><code>O(n)</code></td>
+                        <td>Requires the creation of the temporary auxiliary array <code>B</code> to hold elements while merging. (Not an in-place sort).</td>
+                    </tr>
+                </tbody>
+            </table>
+        </article>
+
+    </div>
+
+    <script>
+        // Interactive visualizer logic
+        const leftArr = [1, 5, 8, 15, 24];
+        const rightArr = [3, 10, 16, 20];
+        let i = 0;
+        let j = 0;
+        let k = 0;
+        let tempArr = [];
+
+        function updateUI() {
+            // Update Left Array
+            const leftHTML = leftArr.map((val, index) => {
+                let ptr = index === i ? `<div class="pointer">i</div>` : '';
+                let bg = index < i ? '#f3f4f6' : 'white';
+                let color = index < i ? '#9ca3af' : 'inherit';
+                return `<div class="array-cell" style="background:${bg}; color:${color}">${val}${ptr}</div>`;
+            }).join('');
+            document.getElementById('left-array').innerHTML = leftHTML;
+
+            // Update Right Array
+            const rightHTML = rightArr.map((val, index) => {
+                let ptr = index === j ? `<div class="pointer" style="color:var(--primary)">j</div>` : '';
+                let bg = index < j ? '#f3f4f6' : 'white';
+                let color = index < j ? '#9ca3af' : 'inherit';
+                return `<div class="array-cell" style="background:${bg}; color:${color}">${val}${ptr}</div>`;
+            }).join('');
+            document.getElementById('right-array').innerHTML = rightHTML;
+
+            // Update Temp Array B
+            const tempHTML = Array.from({length: 9}).map((_, index) => {
+                let val = tempArr[index] !== undefined ? tempArr[index] : '';
+                let ptr = index === k ? `<div class="pointer" style="color:var(--highlight-green)">k</div>` : '';
+                let border = tempArr[index] !== undefined ? 'solid var(--primary)' : 'dashed #9ca3af';
+                let bg = tempArr[index] !== undefined ? '#dcfce7' : 'white';
+                return `<div class="array-cell" style="border:${border}; background:${bg}">${val}${ptr}</div>`;
+            }).join('');
+            document.getElementById('temp-array').innerHTML = tempHTML;
+        }
+
+        function stepMerge() {
+            const status = document.getElementById('merge-status');
+            const btn = document.getElementById('next-btn');
+
+            if (i < leftArr.length && j < rightArr.length) {
+                // Both arrays have elements
+                if (leftArr[i] <= rightArr[j]) {
+                    status.innerText = `${leftArr[i]} is less than or equal to ${rightArr[j]}. Moving ${leftArr[i]} to B[k].`;
+                    tempArr[k] = leftArr[i];
+                    i++;
+                } else {
+                    status.innerText = `${rightArr[j]} is less than ${leftArr[i]}. Moving ${rightArr[j]} to B[k].`;
+                    tempArr[k] = rightArr[j];
+                    j++;
+                }
+                k++;
+            } else if (i < leftArr.length) {
+                // Right array exhausted
+                status.innerText = `Right array exhausted. Copying remaining Left array element ${leftArr[i]} to B[k].`;
+                tempArr[k] = leftArr[i];
+                i++;
+                k++;
+            } else if (j < rightArr.length) {
+                // Left array exhausted
+                status.innerText = `Left array exhausted. Copying remaining Right array element ${rightArr[j]} to B[k].`;
+                tempArr[k] = rightArr[j];
+                j++;
+                k++;
+            } else {
+                status.innerText = "Merging Complete! Temporary array B is fully sorted.";
+                status.style.color = "var(--highlight-green)";
+                btn.disabled = true;
+                btn.innerText = "Done";
+            }
+            updateUI();
+        }
+
+        function resetMerge() {
+            i = 0; j = 0; k = 0;
+            tempArr = [];
+            document.getElementById('merge-status').innerText = "Ready to merge. Compare i and j.";
+            document.getElementById('merge-status').style.color = "var(--primary)";
+            const btn = document.getElementById('next-btn');
+            btn.disabled = false;
+            btn.innerText = "Next Step";
+            updateUI();
+        }
+
+        // Initialize UI
+        updateUI();
+    </script>
+</body>
+</html>
