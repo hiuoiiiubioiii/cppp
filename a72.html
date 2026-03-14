@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B-Tree Construction Study Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
+        /* Base & Reset */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f3f4f6;
+            color: #1f2937;
+            line-height: 1.6;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Typography */
+        h1 { font-size: 2.2rem; font-weight: 800; color: #111827; letter-spacing: -0.5px; }
+        h2 { font-size: 1.5rem; font-weight: 700; color: #374151; margin-bottom: 15px; border-bottom: 2px solid #e5e7eb; padding-bottom: 10px; }
+        h3 { font-size: 1.2rem; font-weight: 600; color: #4b5563; margin-top: 15px; }
+        p { margin-bottom: 15px; font-size: 1.05rem; }
+        strong { color: #2563eb; }
+        mark { background-color: #fef08a; padding: 2px 6px; border-radius: 4px; font-weight: 600; }
+
+        /* Cards */
+        .card {
+            background: #ffffff;
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e5e7eb;
+            transition: transform 0.2s ease;
+        }
+        .card:hover { transform: translateY(-2px); }
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .step-badge {
+            background: #2563eb;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-right: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        /* Instructor Tips */
+        .tip-box {
+            background: #eff6ff;
+            border-left: 5px solid #3b82f6;
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+            font-size: 0.95rem;
+        }
+        .tip-box h4 { color: #1e3a8a; margin-bottom: 5px; display: flex; align-items: center; gap: 8px;}
+
+        /* --- Custom CSS B-Tree Visualization --- */
+        .visual-container {
+            background: #f8fafc;
+            border: 2px dashed #cbd5e1;
+            border-radius: 12px;
+            padding: 40px 20px;
+            margin-top: 20px;
+            overflow-x: auto;
+            display: flex;
+            justify-content: center;
+        }
+        
+        .tree ul {
+            padding-top: 20px; position: relative;
+            transition: all 0.5s;
+            display: flex; justify-content: center; gap: 20px;
+        }
+        .tree li {
+            float: left; text-align: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 5px 0 5px;
+            transition: all 0.5s;
+        }
+        /* Connectors */
+        .tree li::before, .tree li::after {
+            content: ''; position: absolute; top: 0; right: 50%;
+            border-top: 2px solid #94a3b8;
+            width: 50%; height: 20px;
+        }
+        .tree li::after {
+            right: auto; left: 50%;
+            border-left: 2px solid #94a3b8;
+        }
+        .tree li:only-child::after, .tree li:only-child::before { display: none; }
+        .tree li:only-child { padding-top: 0; }
+        .tree li:first-child::before, .tree li:last-child::after { border: 0 none; }
+        .tree li:last-child::before {
+            border-right: 2px solid #94a3b8;
+            border-radius: 0 5px 0 0;
+        }
+        .tree li:first-child::after {
+            border-radius: 5px 0 0 0;
+        }
+        .tree ul ul::before {
+            content: ''; position: absolute; top: 0; left: 50%;
+            border-left: 2px solid #94a3b8;
+            width: 0; height: 20px;
+        }
+        
+        /* The Nodes */
+        .b-node {
+            display: inline-flex;
+            border: 2px solid #1e293b;
+            border-radius: 6px;
+            background: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 2;
+        }
+        .b-node.highlight {
+            border-color: #ef4444;
+            box-shadow: 0 0 0 4px rgba(239, 68, 68, 0.2);
+        }
+        .b-key {
+            padding: 10px 18px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: #0f172a;
+            border-right: 2px solid #e2e8f0;
+        }
+        .b-key:last-child {
+            border-right: none;
+        }
+        .b-empty {
+            padding: 10px 18px;
+            color: #cbd5e1;
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <!-- Title Section -->
+    <div style="text-align: center; margin-bottom: 20px;">
+        <span style="background: #e0e7ff; color: #4338ca; padding: 6px 16px; border-radius: 20px; font-weight: 700; font-size: 0.9rem;">Jenny's Lectures CS/IT Breakdown</span>
+        <h1 style="margin-top: 15px;">Constructing a B-Tree Step-by-Step</h1>
+        <p style="color: #6b7280; font-size: 1.1rem;">Order 3 • Inserting values 1 through 10</p>
+    </div>
+
+    <!-- Properties Card -->
+    <div class="card">
+        <h2>📌 1. The Core Rules & Properties</h2>
+        <p>Before drawing anything, the instructor defines the mathematical boundaries of the tree based on its "Order". This dictates the size of our nodes.</p>
+        
+        <div class="tip-box">
+            <h4>🧠 The Golden Formulas</h4>
+            <p><strong>Order (m)</strong> = 3</p>
+            <p><strong>Max Children per node</strong> = m = <strong>3</strong></p>
+            <p><strong>Max Keys per node</strong> = (m - 1) = 3 - 1 = <strong>2</strong></p>
+        </div>
+
+        <p>Because the Max Keys is 2, every node we draw will have <strong>two "slots"</strong> for numbers. Values are always inserted in <strong>sorted order</strong>, and insertions <strong>always happen at the leaf nodes (bottom)</strong>.</p>
+    </div>
+
+    <!-- Step 1 & 2 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="step-badge">Steps 1 & 2</span>
+            <h3>Insert 1 and 2</h3>
+        </div>
+        <p>We start with an empty root node. We insert <strong>1</strong>. Then we insert <strong>2</strong>.</p>
+        <p>Since the node has a maximum capacity of 2 keys, the node is now full. No splits are needed yet.</p>
+        
+        <div class="visual-container">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <div class="b-node">
+                            <div class="b-key">1</div>
+                            <div class="b-key">2</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="step-badge">Step 3</span>
+            <h3>Insert 3 (The First Split)</h3>
+        </div>
+        <p>We try to insert <strong>3</strong>. The node becomes <code>[ 1 | 2 | 3 ]</code>.</p>
+        <p><mark>Overflow Alert!</mark> A node can only hold 2 keys. We must apply the <strong>Split Rule</strong>:</p>
+        <ol style="margin-left: 20px; margin-bottom: 15px;">
+            <li>Find the Median (middle) element. Here, the median is <strong>2</strong>.</li>
+            <li>Push the median <strong>one level up</strong> to create a new root.</li>
+            <li>Split the remaining items to the left and right.</li>
+        </ol>
+
+        <div class="visual-container">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <div class="b-node"><div class="b-key">2</div></div>
+                        <ul>
+                            <li><div class="b-node"><div class="b-key">1</div></div></li>
+                            <li><div class="b-node"><div class="b-key">3</div></div></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="tip-box">
+            <h4>💡 Instructor Note</h4>
+            <p>"A B-Tree always grows <strong>upwards</strong>. The leaf nodes will always remain at the exact same level."</p>
+        </div>
+    </div>
+
+    <!-- Step 4 & 5 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="step-badge">Steps 4 & 5</span>
+            <h3>Insert 4 and 5 (The Second Split)</h3>
+        </div>
+        <p><strong>Insert 4:</strong> Start at Root (2). 4 is greater than 2, so go Right. Insert into the node containing 3. Node becomes <code>[ 3 | 4 ]</code>.</p>
+        <p><strong>Insert 5:</strong> Start at Root (2). 5 is greater than 2, so go Right. Try to insert into <code>[ 3 | 4 ]</code>.</p>
+        <p><mark>Overflow Alert!</mark> Node becomes <code>[ 3 | 4 | 5 ]</code>. The median is <strong>4</strong>. Push 4 up to the parent node. Split 3 (left) and 5 (right).</p>
+
+        <div class="visual-container">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <div class="b-node">
+                            <div class="b-key">2</div>
+                            <div class="b-key">4</div>
+                        </div>
+                        <ul>
+                            <li><div class="b-node"><div class="b-key">1</div></div></li>
+                            <li><div class="b-node"><div class="b-key">3</div></div></li>
+                            <li><div class="b-node"><div class="b-key">5</div></div></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <p>Notice how the root node now has its maximum allowed keys (2 keys). This will be important soon.</p>
+    </div>
+
+    <!-- Step 6 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="step-badge">Step 6</span>
+            <h3>Insert 6</h3>
+        </div>
+        <p>Start at Root. 6 is greater than 4, so follow the right-most path. Insert 6 next to 5. Leaf has space, so no split needed.</p>
+
+        <div class="visual-container">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <div class="b-node">
+                            <div class="b-key">2</div>
+                            <div class="b-key">4</div>
+                        </div>
+                        <ul>
+                            <li><div class="b-node"><div class="b-key">1</div></div></li>
+                            <li><div class="b-node"><div class="b-key">3</div></div></li>
+                            <li>
+                                <div class="b-node">
+                                    <div class="b-key">5</div>
+                                    <div class="b-key">6</div>
+                                </div>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 7 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="step-badge">Step 7</span>
+            <h3>Insert 7 (Double Overflow / Root Split)</h3>
+        </div>
+        <p>This is the most complex step in the video!</p>
+        <p><strong>Action 1:</strong> Try to insert 7. It goes to the bottom right node: <code>[ 5 | 6 | 7 ]</code>. <mark>Overflow.</mark></p>
+        <p><strong>Action 2:</strong> The median is <strong>6</strong>. Push 6 up to the parent. The remaining 5 and 7 split.</p>
+        <p><strong>Action 3:</strong> <mark>Parent Overflow!</mark> The parent node is the root <code>[ 2 | 4 ]</code>. Adding 6 makes it <code>[ 2 | 4 | 6 ]</code>.</p>
+        <p><strong>Action 4:</strong> Split the root! The median is <strong>4</strong>. Push 4 up to create a brand new root node.</p>
+
+        <div class="visual-container">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <!-- New Root -->
+                        <div class="b-node highlight"><div class="b-key">4</div></div>
+                        <ul>
+                            <li>
+                                <div class="b-node"><div class="b-key">2</div></div>
+                                <ul>
+                                    <li><div class="b-node"><div class="b-key">1</div></div></li>
+                                    <li><div class="b-node"><div class="b-key">3</div></div></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <div class="b-node"><div class="b-key">6</div></div>
+                                <ul>
+                                    <li><div class="b-node"><div class="b-key">5</div></div></li>
+                                    <li><div class="b-node"><div class="b-key">7</div></div></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div class="tip-box">
+            <h4>💡 Instructor Note</h4>
+            <p>Look at how the tree has grown. Because we pushed a value up from the root, the entire height of the tree increased by 1 level. This ensures the tree stays perfectly balanced.</p>
+        </div>
+    </div>
+
+    <!-- Step 8 & 9 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="step-badge">Steps 8 & 9</span>
+            <h3>Insert 8 and 9</h3>
+        </div>
+        <p><strong>Insert 8:</strong> Follow path: Right of 4 → Right of 6 → Insert into [7]. Node becomes <code>[ 7 | 8 ]</code>.</p>
+        <p><strong>Insert 9:</strong> Follow path to <code>[ 7 | 8 ]</code>. Insert 9. <mark>Overflow: [ 7 | 8 | 9 ]</mark>.</p>
+        <p>Split: Median is <strong>8</strong>. Push 8 UP to its parent <code>[ 6 ]</code>. The parent becomes <code>[ 6 | 8 ]</code>. Split 7 and 9.</p>
+
+        <div class="visual-container">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <div class="b-node"><div class="b-key">4</div></div>
+                        <ul>
+                            <li>
+                                <div class="b-node"><div class="b-key">2</div></div>
+                                <ul>
+                                    <li><div class="b-node"><div class="b-key">1</div></div></li>
+                                    <li><div class="b-node"><div class="b-key">3</div></div></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <div class="b-node">
+                                    <div class="b-key">6</div>
+                                    <div class="b-key">8</div>
+                                </div>
+                                <ul>
+                                    <li><div class="b-node"><div class="b-key">5</div></div></li>
+                                    <li><div class="b-node"><div class="b-key">7</div></div></li>
+                                    <li><div class="b-node"><div class="b-key">9</div></div></li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 10 -->
+    <div class="card">
+        <div class="card-header">
+            <span class="step-badge">Step 10 (Final)</span>
+            <h3>Insert 10</h3>
+        </div>
+        <p>Follow the path: Right of 4 → Right of 8 (since 10 > 8) → down to the leaf node <code>[ 9 ]</code>.</p>
+        <p>Insert 10 into the node. The node becomes <code>[ 9 | 10 ]</code>. There is space, so no overflow happens.</p>
+        <p><strong>This is the final completed B-Tree!</strong></p>
+
+        <div class="visual-container" style="border-color: #10b981; background: #ecfdf5;">
+            <div class="tree">
+                <ul>
+                    <li>
+                        <div class="b-node"><div class="b-key">4</div></div>
+                        <ul>
+                            <li>
+                                <div class="b-node"><div class="b-key">2</div></div>
+                                <ul>
+                                    <li><div class="b-node"><div class="b-key">1</div></div></li>
+                                    <li><div class="b-node"><div class="b-key">3</div></div></li>
+                                </ul>
+                            </li>
+                            <li>
+                                <div class="b-node">
+                                    <div class="b-key">6</div>
+                                    <div class="b-key">8</div>
+                                </div>
+                                <ul>
+                                    <li><div class="b-node"><div class="b-key">5</div></div></li>
+                                    <li><div class="b-node"><div class="b-key">7</div></div></li>
+                                    <li>
+                                        <div class="b-node">
+                                            <div class="b-key">9</div>
+                                            <div class="b-key">10</div>
+                                        </div>
+                                    </li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div style="text-align: center; color: #9ca3af; font-size: 0.9rem; margin-top: 20px;">
+        End of Lesson Feed. You are ready for your exam! 🎉
+    </div>
+
+</div>
+
+</body>
+</html>
