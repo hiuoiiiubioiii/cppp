@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B+ Tree Creation Study Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code:wght@500;700&display=swap');
+
+        :root {
+            --bg-color: #f1f5f9;
+            --text-main: #1e293b;
+            --text-muted: #475569;
+            --card-bg: #ffffff;
+            --primary: #2563eb;
+            --primary-light: #dbeafe;
+            --alert-bg: #fef2f2;
+            --alert-border: #ef4444;
+            --highlight: #fef08a;
+            --node-border: #334155;
+            --leaf-link: #10b981;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Feed Container */
+        .feed-container {
+            width: 100%;
+            max-width: 850px;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        /* Card Styles */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        h1 { font-size: 2.2rem; color: var(--primary); margin-bottom: 0.5rem; }
+        h2 { font-size: 1.5rem; margin-bottom: 1rem; margin-top: 1rem; border-bottom: 2px solid var(--primary-light); padding-bottom: 0.5rem; }
+        h3 { font-size: 1.2rem; margin-bottom: 0.5rem; color: var(--text-muted); }
+        p { margin-bottom: 1rem; }
+        ul { margin-left: 1.5rem; margin-bottom: 1rem; }
+        li { margin-bottom: 0.5rem; }
+
+        .data-array {
+            font-family: 'Fira Code', monospace;
+            background: var(--primary-light);
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 1.1rem;
+            text-align: center;
+            color: var(--primary);
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin-bottom: 1rem;
+        }
+
+        /* Alert Box */
+        .alert-box {
+            background-color: var(--alert-bg);
+            border-left: 5px solid var(--alert-border);
+            padding: 1.5rem;
+            border-radius: 4px;
+            margin: 1.5rem 0;
+        }
+        .alert-box h4 { color: var(--alert-border); margin-bottom: 0.5rem; }
+
+        /* Key takeaways */
+        .takeaways { background-color: #f0fdf4; border-left: 5px solid #22c55e; padding: 1.5rem; border-radius: 4px; margin-top: 2rem;}
+
+        /* Visualizations / Tree CSS */
+        .tree-container {
+            width: 100%;
+            overflow-x: auto;
+            padding: 2rem 0;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2rem;
+        }
+
+        .level {
+            display: flex;
+            gap: 2rem;
+            position: relative;
+        }
+
+        .node {
+            display: flex;
+            border: 2px solid var(--node-border);
+            border-radius: 6px;
+            background: #fff;
+            overflow: hidden;
+            font-family: 'Fira Code', monospace;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .key {
+            padding: 10px 15px;
+            border-right: 1px solid #cbd5e1;
+            min-width: 40px;
+            text-align: center;
+        }
+        .key:last-child { border-right: none; }
+        
+        .highlight { background-color: var(--highlight); }
+        .internal-node { border-color: var(--primary); }
+        .internal-node .key { background-color: #eff6ff; }
+        
+        .leaf-node { border-color: #047857; border-bottom-width: 4px;}
+
+        /* Connecting lines logic (Simplified for visuals) */
+        .line-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .vertical-line {
+            width: 2px;
+            height: 2rem;
+            background-color: var(--node-border);
+        }
+
+        /* Leaf Links */
+        .leaf-wrapper { display: flex; align-items: center; gap: 0.5rem; }
+        .leaf-arrow { color: var(--leaf-link); font-weight: bold; font-size: 1.5rem; }
+
+        .tag {
+            display: inline-block;
+            background: #e2e8f0;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+
+    </style>
+</head>
+<body>
+
+    <main class="feed-container">
+        <!-- HEADER CARD -->
+        <div class="card">
+            <h1>📚 B+ Tree Creation (Order = 5)</h1>
+            <p><strong>Instructor Notes & Visualizations</strong></p>
+            <p>This feed contains a complete step-by-step breakdown of creating a B+ Tree, combining the instructor's verbal explanations with exact whiteboard replicas.</p>
+            
+            <br>
+            <h3>Data Array to Insert:</h3>
+            <div class="data-array">
+                7, 10, 1, 23, 5, 15, 17, 9, 11, 39, 35, 8, 40, 25
+            </div>
+        </div>
+
+        <!-- RULES CARD -->
+        <div class="card">
+            <h2>⚙️ Step 1: Establish the Mathematical Rules</h2>
+            <p>Before drawing anything, the instructor defines the constraints of the tree based on the <strong>Order (m) = 5</strong>.</p>
+            
+            <ul>
+                <li><strong>Maximum Children:</strong> m = <strong>5</strong></li>
+                <li><strong>Minimum Children:</strong> ⌈m/2⌉ = ⌈5/2⌉ = <strong>3</strong></li>
+                <li><strong>Maximum Keys:</strong> m - 1 = 5 - 1 = <strong>4</strong> <em>(This means a node splits when it gets a 5th key)</em></li>
+                <li><strong>Minimum Keys:</strong> ⌈m/2⌉ - 1 = 3 - 1 = <strong>2</strong></li>
+            </ul>
+
+            <div class="alert-box">
+                <h4>🚨 The Root Node Exception</h4>
+                <p>The instructor explicitly states that the <strong>Root Node</strong> is exempt from the minimum children and minimum key rules. </p>
+                <ul>
+                    <li>If it's the only node, it can have 0 children.</li>
+                    <li>It is allowed to have only 2 children.</li>
+                    <li>It is allowed to have only 1 key.</li>
+                </ul>
+                <p><em>Note: The root MUST still obey the Maximum Key rule (max 4 keys).</em></p>
+            </div>
+        </div>
+
+        <!-- INSERTION PART 1 -->
+        <div class="card">
+            <h2>🌳 Step 2: Initial Insertions & The First Split</h2>
+            <p><strong>Inserting: 7, 10, 1, 23</strong></p>
+            <p>Because the maximum keys allowed is 4, we can fit all four of these numbers into a single sorted node.</p>
+            
+            <div class="tree-container">
+                <div class="tree">
+                    <div class="node leaf-node">
+                        <span class="key">1</span><span class="key">7</span><span class="key">10</span><span class="key">23</span>
+                    </div>
+                </div>
+            </div>
+
+            <p><strong>Inserting: 5 (Overflow!)</strong></p>
+            <p>We want to insert 5, creating a temporary state of <code>[1, 5, 7, 10, 23]</code>. This exceeds the max keys (4). We must split from the <strong>median element</strong>.</p>
+            <ul>
+                <li>The median of <code>[1, 5, 7, 10, 23]</code> is <span class="tag">7</span>.</li>
+                <li><strong>B+ Tree Leaf Rule:</strong> The median moves UP to become the parent, but a copy of it <strong>MUST REMAIN</strong> in the right-side leaf node.</li>
+            </ul>
+
+            <div class="tree-container">
+                <div class="tree">
+                    <div class="level">
+                        <div class="line-wrapper">
+                            <div class="node internal-node"><span class="key highlight">7</span></div>
+                        </div>
+                    </div>
+                    <div class="level">
+                        <div class="node leaf-node"><span class="key">1</span><span class="key">5</span></div>
+                        <div class="node leaf-node"><span class="key highlight">7</span><span class="key">10</span><span class="key">23</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- INSERTION PART 2 -->
+        <div class="card">
+            <h2>📈 Step 3: Growing the Tree</h2>
+            <p><strong>Inserting: 15, 17, 9, 11, 39</strong></p>
+            <p>We continue inserting following standard Binary Search Tree logic (less than goes left, greater/equal goes right). Let's fast forward through a few insertions that cause the right leaf to split at median <strong>15</strong>.</p>
+            
+            <p>After inserting 39, our tree looks like this:</p>
+            <div class="tree-container">
+                <div class="tree">
+                    <div class="level">
+                        <div class="node internal-node">
+                            <span class="key">7</span><span class="key">15</span>
+                        </div>
+                    </div>
+                    <div class="level">
+                        <div class="node leaf-node"><span class="key">1</span><span class="key">5</span></div>
+                        <div class="node leaf-node"><span class="key">7</span><span class="key">9</span><span class="key">10</span><span class="key">11</span></div>
+                        <div class="node leaf-node"><span class="key">15</span><span class="key">17</span><span class="key">23</span><span class="key">39</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- THE DOUBLE SPLIT -->
+        <div class="card">
+            <h2>🔥 Step 4: The "Double Split" (Crucial Concept)</h2>
+            <p>After inserting <strong>35, 8, and 40</strong>, our root node becomes completely full <code>[7 | 9 | 15 | 23]</code>.</p>
+            <p>Now, we <strong>Insert 25</strong>. It goes to the rightmost leaf, creating an overflow: <code>[23, 25, 35, 39, 40]</code>.</p>
+            
+            <ol>
+                <li><strong>First Split (Leaf Level):</strong> The median is <span class="tag">35</span>. It pushes UP to the root. The leaf splits into <code>[23 | 25]</code> and <code>[35 | 39 | 40]</code>.</li>
+                <li><strong>Second Split (Internal Node Level):</strong> The root receives 35 and overflows! Temporary state: <code>[7, 9, 15, 23, 35]</code>. We must split the root. The median is <span class="tag">15</span>.</li>
+            </ol>
+
+            <div class="alert-box">
+                <h4>⚠️ Internal Node Split Rule</h4>
+                <p>The instructor highlights a major difference here. When you split an <em>internal</em> node, the median moves UP to become the new parent, but it is <strong>NOT COPIED</strong> to the child node below it.</p>
+                <p>Internal nodes are just "indexes" or signposts. Actual data only lives in the leaves.</p>
+            </div>
+
+            <p>Median <span class="tag">15</span> moves up to form a brand new root node. Look at the resulting tree below:</p>
+
+            <div class="tree-container">
+                <div class="tree">
+                    <!-- Root -->
+                    <div class="level">
+                        <div class="node internal-node"><span class="key highlight">15</span></div>
+                    </div>
+                    <!-- Internal Level -->
+                    <div class="level">
+                        <div class="node internal-node"><span class="key">7</span><span class="key">9</span></div>
+                        <div class="node internal-node"><span class="key">23</span><span class="key">35</span></div>
+                    </div>
+                    <!-- Leaf Level -->
+                    <div class="level" style="gap: 1rem;">
+                        <div class="node leaf-node"><span class="key">1</span><span class="key">5</span></div>
+                        <div class="node leaf-node"><span class="key">7</span><span class="key">8</span></div>
+                        <div class="node leaf-node"><span class="key">9</span><span class="key">10</span><span class="key">11</span></div>
+                        <div class="node leaf-node"><span class="key">15</span><span class="key">17</span></div>
+                        <div class="node leaf-node"><span class="key">23</span><span class="key">25</span></div>
+                        <div class="node leaf-node"><span class="key">35</span><span class="key">39</span><span class="key">40</span></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- FINALIZING -->
+        <div class="card">
+            <h2>🔗 Step 5: Finalizing the B+ Tree (Linked Leaves)</h2>
+            <p>At the very end of the video, the instructor adds a visual detail that is <strong>mandatory</strong> for B+ Trees: linking the leaf nodes.</p>
+            <p>Unlike standard B-Trees, a B+ Tree connects all leaf nodes via a linked list. This allows for incredibly fast sequential searching (range queries).</p>
+
+            <div class="tree-container">
+                <div class="tree">
+                    <div class="level">
+                        <div class="node internal-node"><span class="key">15</span></div>
+                    </div>
+                    <div class="level">
+                        <div class="node internal-node"><span class="key">7</span><span class="key">9</span></div>
+                        <div class="node internal-node"><span class="key">23</span><span class="key">35</span></div>
+                    </div>
+                    <div class="level" style="gap: 0.5rem; flex-wrap: nowrap; overflow-x: auto; padding-bottom: 10px;">
+                        <div class="leaf-wrapper">
+                            <div class="node leaf-node"><span class="key">1</span><span class="key">5</span></div>
+                            <span class="leaf-arrow">➔</span>
+                        </div>
+                        <div class="leaf-wrapper">
+                            <div class="node leaf-node"><span class="key">7</span><span class="key">8</span></div>
+                            <span class="leaf-arrow">➔</span>
+                        </div>
+                        <div class="leaf-wrapper">
+                            <div class="node leaf-node"><span class="key">9</span><span class="key">10</span><span class="key">11</span></div>
+                            <span class="leaf-arrow">➔</span>
+                        </div>
+                        <div class="leaf-wrapper">
+                            <div class="node leaf-node"><span class="key">15</span><span class="key">17</span></div>
+                            <span class="leaf-arrow">➔</span>
+                        </div>
+                        <div class="leaf-wrapper">
+                            <div class="node leaf-node"><span class="key">23</span><span class="key">25</span></div>
+                            <span class="leaf-arrow">➔</span>
+                        </div>
+                        <div class="leaf-wrapper">
+                            <div class="node leaf-node"><span class="key">35</span><span class="key">39</span><span class="key">40</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <p><strong>Final Check:</strong> She points to the root node containing just <code>[15]</code>. Does it break the rules because it only has 1 key? No! The root is immune to the minimum key and minimum child constraints.</p>
+        </div>
+
+        <!-- CHEAT SHEET -->
+        <div class="card takeaways">
+            <h2>📝 Exam Cheat Sheet: Key Takeaways</h2>
+            <ul>
+                <li><strong>All Data in Leaves:</strong> In a B+ tree, every single inserted value must eventually appear in the leaf level.</li>
+                <li><strong>Leaf Node Splits:</strong> The middle element moves UP to the parent, <strong>AND</strong> a copy stays in the right-side leaf node.</li>
+                <li><strong>Internal Node Splits:</strong> The middle element moves UP to the parent, <strong>BUT DOES NOT</strong> stay in the child node. Internal nodes only hold indexes.</li>
+                <li><strong>Root Exceptions:</strong> The root node is immune to minimum key and minimum child constraints. It can be as small as 1 key and 2 children.</li>
+                <li><strong>Don't Forget the Arrows:</strong> Always draw horizontal arrows connecting your leaf nodes from left to right at the very end to prove it is a B+ tree, not a standard B-tree.</li>
+            </ul>
+        </div>
+    </main>
+
+</body>
+</html>
