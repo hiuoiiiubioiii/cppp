@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bellman-Ford Algorithm | Study Feed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&family=Fira+Code:wght@400;600&display=swap');
+
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --primary: #4F46E5;
+            --primary-light: #E0E7FF;
+            --secondary: #10B981;
+            --secondary-light: #D1FAE5;
+            --danger: #EF4444;
+            --danger-light: #FEE2E2;
+            --text-dark: #1F2937;
+            --text-muted: #6B7280;
+            --border: #E5E7EB;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-dark);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Reading Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: #e0e0e0;
+            z-index: 1000;
+        }
+        .progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 768px;
+            margin: 40px auto;
+            padding: 0 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        /* Card Styles */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 32px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            border: 1px solid var(--border);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+        }
+        .tag.blue { background: var(--primary-light); color: var(--primary); }
+        .tag.green { background: var(--secondary-light); color: var(--secondary); }
+        .tag.red { background: var(--danger-light); color: var(--danger); }
+
+        h1 { font-size: 2.5rem; margin-bottom: 10px; color: #111827; letter-spacing: -1px; }
+        h2 { font-size: 1.8rem; margin-bottom: 16px; color: #111827; }
+        h3 { font-size: 1.3rem; margin-top: 24px; margin-bottom: 10px; }
+        p { margin-bottom: 16px; font-size: 1.1rem; }
+        
+        ul { margin-left: 20px; margin-bottom: 16px; }
+        li { margin-bottom: 8px; font-size: 1.1rem; }
+
+        /* Code & Formula Blocks */
+        .code-block {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            font-family: 'Fira Code', monospace;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+            overflow-x: auto;
+            font-size: 1.05rem;
+        }
+        .highlight { color: #569cd6; } /* Blue */
+        .var { color: #9cdcfe; } /* Light Blue */
+        .operator { color: #d4d4d4; }
+
+        .formula-box {
+            background: var(--primary-light);
+            border-left: 5px solid var(--primary);
+            padding: 20px;
+            border-radius: 0 12px 12px 0;
+            margin: 20px 0;
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Distance Array Visualization */
+        .table-vis {
+            display: grid;
+            grid-template-columns: repeat(7, 1fr);
+            gap: 2px;
+            background: var(--border);
+            border-radius: 12px;
+            overflow: hidden;
+            margin: 20px 0;
+            text-align: center;
+        }
+        .table-vis > div {
+            background: #fff;
+            padding: 15px 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+        .table-vis .header { background: #f9fafb; color: var(--text-muted); font-size: 0.9rem; text-transform: uppercase; }
+        .table-vis .row-label { background: var(--primary); color: white; font-weight: 700; }
+        .table-vis .update { background: var(--secondary-light); color: var(--secondary); animation: pulse 2s infinite; }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        /* Visual Graph representation (Negative Cycle) */
+        .graph-vis {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 20px;
+            padding: 40px 20px;
+            background: var(--danger-light);
+            border-radius: 12px;
+            margin: 20px 0;
+            position: relative;
+        }
+        .node {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: 3px solid var(--danger);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            color: var(--danger);
+            z-index: 2;
+        }
+        .edge-arrow {
+            flex-grow: 1;
+            height: 3px;
+            background: var(--danger);
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .edge-arrow::after {
+            content: '';
+            position: absolute;
+            right: -2px;
+            top: -5px;
+            border-top: 6px solid transparent;
+            border-bottom: 6px solid transparent;
+            border-left: 10px solid var(--danger);
+        }
+        .edge-weight {
+            background: var(--danger);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.8rem;
+            font-weight: bold;
+            transform: translateY(-15px);
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="progressBar"></div>
+    </div>
+
+    <div class="feed-container">
+        
+        <!-- INTRO -->
+        <article class="card">
+            <span class="tag blue">Topic Overview</span>
+            <h1>The Bellman-Ford Algorithm</h1>
+            <p>Welcome! This feed contains your complete, in-depth study notes for the Bellman-Ford Algorithm. Keep scrolling to learn how it works, step-by-step.</p>
+            <hr style="border:0; border-top: 1px solid var(--border); margin: 20px 0;">
+            <h3>What is it?</h3>
+            <p>It is a <strong>Single-Source Shortest Path</strong> algorithm. It finds the shortest distance from one starting vertex (the source) to all other vertices in a weighted, directed graph.</p>
+            
+            <h3>Bellman-Ford vs. Dijkstra's Algorithm</h3>
+            <ul>
+                <li><strong>Dijkstra's Algorithm</strong> is generally faster, but it fails (or gives incorrect answers) if the graph contains <strong>negative edge weights</strong>.</li>
+                <li><strong>Bellman-Ford</strong> guarantees the correct answer even if the graph has negative edge weights.</li>
+                <li><strong>The Trade-off:</strong> Bellman-Ford is slower. You should use Dijkstra's for positive-only graphs, and Bellman-Ford when negatives are involved.</li>
+            </ul>
+        </article>
+
+        <!-- THE RULE -->
+        <article class="card">
+            <span class="tag blue">Core Concept</span>
+            <h2>The Golden Rule</h2>
+            <p>The entire algorithm is built on one simple, repetitive principle.</p>
+            
+            <div class="formula-box">
+                "Go on relaxing all the edges (n - 1) times."
+            </div>
+            <p><em>Where <strong>n</strong> = the total number of vertices in the graph.</em></p>
+            
+            <h3>Why exactly (n - 1) times?</h3>
+            <p>In the absolute worst-case scenario, a graph is a straight line. The shortest path between the first node and the last node can contain at most <code>n - 1</code> edges. Repeating the process <code>n - 1</code> times guarantees that the shortest path has enough "time" to propagate to the furthest node.</p>
+        </article>
+
+        <!-- RELAXATION FORMULA -->
+        <article class="card">
+            <span class="tag green">The Math</span>
+            <h2>The Relaxation Formula</h2>
+            <p>"Relaxing" an edge is just a fancy term for asking a simple question: <em>"Have I found a shorter path to this node?"</em></p>
+            <ul>
+                <li>Let <code style="color:var(--primary)">u</code> = Starting node of an edge</li>
+                <li>Let <code style="color:var(--primary)">v</code> = Destination node of an edge</li>
+                <li>Let <code style="color:var(--primary)">d[]</code> = Array storing the current shortest distance to a node</li>
+                <li>Let <code style="color:var(--primary)">c(u, v)</code> = The cost/weight of the edge between u and v</li>
+            </ul>
+
+            <div class="code-block">
+<span class="highlight">if</span> (<span class="var">d</span>[<span class="var">u</span>] <span class="operator">+</span> <span class="var">c</span>(<span class="var">u</span>, <span class="var">v</span>) <span class="operator"><</span> <span class="var">d</span>[<span class="var">v</span>]) {
+    <span class="var">d</span>[<span class="var">v</span>] <span class="operator">=</span> <span class="var">d</span>[<span class="var">u</span>] <span class="operator">+</span> <span class="var">c</span>(<span class="var">u</span>, <span class="var">v</span>);
+}
+            </div>
+            <p><strong>Translation:</strong> If the distance to node <code>u</code> plus the weight of the edge to <code>v</code> is strictly <strong>less than</strong> the currently known distance to <code>v</code>, update <code>v</code>'s distance to the new, smaller number.</p>
+        </article>
+
+        <!-- WALKTHROUGH VISUALIZATION -->
+        <article class="card">
+            <span class="tag blue">Step-by-Step Walkthrough</span>
+            <h2>Visualizing the Iterations</h2>
+            <p>Let's look at the graph from the video. It has <strong>6 vertices (n = 6)</strong>, so we must run our loop <code>6 - 1 = 5</code> times. We start at Source Node <strong>A</strong>.</p>
+            
+            <div class="table-vis">
+                <div class="header">State</div>
+                <div class="header">A</div>
+                <div class="header">B</div>
+                <div class="header">C</div>
+                <div class="header">D</div>
+                <div class="header">E</div>
+                <div class="header">F</div>
+
+                <!-- Init -->
+                <div class="row-label">Initial</div>
+                <div>0</div>
+                <div>∞</div>
+                <div>∞</div>
+                <div>∞</div>
+                <div>∞</div>
+                <div>∞</div>
+
+                <!-- Iter 1 -->
+                <div class="row-label">Iter 1</div>
+                <div>0</div>
+                <div class="update">1</div>
+                <div class="update">3</div>
+                <div class="update">5</div>
+                <div class="update">5</div>
+                <div class="update">4</div>
+
+                <!-- Iter 2 -->
+                <div class="row-label">Iter 2</div>
+                <div>0</div>
+                <div>1</div>
+                <div>3</div>
+                <div>5</div>
+                <div class="update">0</div>
+                <div class="update">3</div>
+
+                <!-- Iter 3 -->
+                <div class="row-label">Iter 3</div>
+                <div>0</div>
+                <div>1</div>
+                <div>3</div>
+                <div>5</div>
+                <div>0</div>
+                <div>3</div>
+            </div>
+
+            <h3>What just happened?</h3>
+            <ul>
+                <li><strong>Iteration 1:</strong> We process all edges. D updates C (to 3) and F (to 4). Because C was updated early, it actually updates B to 1 right away (3 - 2 = 1).</li>
+                <li><strong>Iteration 2:</strong> With B now sitting at 1, processing edge (B, E) drops E to 0 (1 - 1 = 0). With E at 0, processing (E, F) drops F to 3 (0 + 3 = 3).</li>
+                <li><strong>Iteration 3:</strong> We check all edges again. No numbers get smaller.</li>
+            </ul>
+            <p><em>Instructor Note:</em> Because no changes happened in Iteration 3, iterations 4 and 5 will also yield no changes. In an exam, you can stop here. A computer will finish the loop.</p>
+        </article>
+
+        <!-- TIME COMPLEXITY -->
+        <article class="card">
+            <span class="tag green">Analysis</span>
+            <h2>Time Complexity Breakdown</h2>
+            <p>How long does Bellman-Ford take to run?</p>
+            
+            <div class="formula-box">
+                O(E × V)
+            </div>
+            
+            <p><strong>The Math:</strong> We check every Edge (<code>E</code>), and we repeat this process <code>V - 1</code> times (where V is vertices). Thus, <code>E × (V - 1)</code> simplifies to <strong>O(E × V)</strong>.</p>
+            
+            <h3>The Worst-Case Scenario</h3>
+            <p>In a "complete graph," every vertex connects to every other vertex. The maximum number of edges <code>E</code> becomes roughly <code>V²</code>.</p>
+            <p>Substitute <code>V²</code> for <code>E</code> in our formula:<br>
+            <code>O(V² × V) = O(V³)</code></p>
+            <p>The worst-case time complexity is <strong>O(V³)</strong> (or O(n³)).</p>
+        </article>
+
+        <!-- DRAWBACK & NEGATIVE CYCLES -->
+        <article class="card">
+            <span class="tag red">The Major Drawback</span>
+            <h2>Negative Weight Cycles</h2>
+            <p>Bellman-Ford handles negative edges perfectly, <strong>BUT</strong> it completely breaks if the graph contains a <strong>Negative Weight Cycle</strong>.</p>
+            
+            <p>A negative cycle is a closed loop where the sum of the edge weights equals a negative number. Let's look at the cycle drawn by the instructor:</p>
+
+            <div class="graph-vis">
+                <div class="node">2</div>
+                <div class="edge-arrow"><div class="edge-weight">7</div></div>
+                <div class="node">4</div>
+                <div class="edge-arrow"><div class="edge-weight">-15</div></div>
+                <div class="node">3</div>
+                <div class="edge-arrow"><div class="edge-weight">7</div></div>
+                <div class="node" style="opacity: 0.3;">(2)</div>
+            </div>
+
+            <p><strong>Cycle Math:</strong> <code>7 + (-15) + 7 = -1</code></p>
+            
+            <h3>Why does this break the algorithm?</h3>
+            <p>If you keep circling through this loop, the total distance drops by 1 every single time. It will keep getting smaller towards negative infinity. Therefore, an actual "shortest" path doesn't exist.</p>
+
+            <h3>How Bellman-Ford Detects This:</h3>
+            <p>To detect a negative cycle, the algorithm does a clever trick:</p>
+            <ol>
+                <li>Run the standard algorithm <code>n - 1</code> times.</li>
+                <li><strong>Run it ONE extra time (the <code>n</code>th iteration).</strong></li>
+                <li>If any distance <em>still</em> gets smaller during this extra loop, it proves a negative cycle exists, and the algorithm throws an error.</li>
+            </ol>
+        </article>
+
+        <div style="text-align: center; color: var(--text-muted); margin-bottom: 40px; font-weight: bold;">
+            🎉 You've reached the end of the notes!
+        </div>
+
+    </div>
+
+    <!-- JavaScript for Feed Animations & Progress Bar -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            
+            // 1. Reading Progress Bar
+            window.addEventListener("scroll", () => {
+                const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+                const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+                const scrolled = (winScroll / height) * 100;
+                document.getElementById("progressBar").style.width = scrolled + "%";
+            });
+
+            // 2. Intersection Observer for Fade-in Feed Cards
+            const cards = document.querySelectorAll('.card');
+            
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15 // Trigger when 15% of the card is visible
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target); // Stop observing once visible
+                    }
+                });
+            }, observerOptions);
+
+            cards.forEach(card => {
+                observer.observe(card);
+            });
+            
+            // Make the first card visible immediately
+            if(cards.length > 0) cards[0].classList.add('visible');
+        });
+    </script>
+</body>
+</html>
