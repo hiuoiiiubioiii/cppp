@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Huffman Coding | Vertical Study Feed</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --success: #27ae60;
+            --bg: #f8f9fa;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-light: #7f8c8d;
+            --code-bg: #f1f2f6;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Vertical Feed Container */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 0 20px 40px 20px;
+        }
+
+        /* Typography */
+        h1, h2, h3 { color: var(--primary); margin-bottom: 15px; }
+        h1 { font-size: 2.5rem; text-align: center; margin: 40px 0 10px 0; }
+        .subtitle { text-align: center; color: var(--text-light); font-size: 1.2rem; margin-bottom: 40px; }
+        
+        p { margin-bottom: 15px; font-size: 1.05rem; }
+        
+        .highlight { font-weight: bold; color: var(--secondary); }
+        .alert { color: var(--accent); font-weight: bold; }
+        .win { color: var(--success); font-weight: bold; font-size: 1.2rem;}
+
+        /* Code & Math Styling */
+        code, .bit {
+            background-color: var(--code-bg);
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', Courier, monospace;
+            color: var(--accent);
+            font-weight: bold;
+        }
+        
+        .math-box {
+            background: var(--primary);
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.1rem;
+            margin: 15px 0;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+        }
+        .math-box span { color: #f1c40f; }
+
+        /* Feed Cards */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--secondary);
+            opacity: 0;
+            transform: translateY(40px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        /* String Display */
+        .string-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            justify-content: center;
+            margin: 20px 0;
+        }
+        .char-box {
+            background: var(--secondary);
+            color: white;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 1.1rem;
+        }
+
+        /* Tables */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        th, td {
+            padding: 12px;
+            text-align: center;
+            border-bottom: 1px solid #ddd;
+        }
+        th { background-color: var(--code-bg); color: var(--primary); }
+
+        /* Tree Construction Visuals */
+        .tree-step {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 15px;
+            margin: 20px 0;
+            padding: 20px;
+            background: var(--bg);
+            border-radius: 8px;
+        }
+        .node {
+            width: 50px;
+            height: 50px;
+            background: white;
+            border: 3px solid var(--secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            color: var(--primary);
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .node.parent { border-color: var(--accent); }
+        
+        /* Final Tree SVG Container */
+        .svg-container {
+            width: 100%;
+            overflow-x: auto;
+            text-align: center;
+            margin: 20px 0;
+            background: var(--bg);
+            border-radius: 12px;
+            padding: 20px 0;
+        }
+
+        /* Summary List */
+        .summary-list {
+            list-style: none;
+        }
+        .summary-list li {
+            padding: 15px;
+            background: var(--code-bg);
+            margin-bottom: 10px;
+            border-radius: 8px;
+            border-left: 4px solid var(--success);
+            font-size: 1.1rem;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <!-- Header -->
+        <h1>Huffman Coding</h1>
+        <p class="subtitle">Complete Master Study Guide & Vertical Feed</p>
+
+        <!-- Section 1 -->
+        <div class="card">
+            <h2>1. The Example Message</h2>
+            <p>Data compression reduces the size of a message to save storage space or reduce network transfer costs. The instructor starts with this 20-character string:</p>
+            
+            <div class="string-display">
+                <div class="char-box">A</div><div class="char-box">B</div><div class="char-box">B</div><div class="char-box">C</div><div class="char-box">C</div>
+                <div class="char-box">D</div><div class="char-box">C</div><div class="char-box">C</div><div class="char-box">D</div><div class="char-box">A</div>
+                <div class="char-box">A</div><div class="char-box">B</div><div class="char-box">B</div><div class="char-box">E</div><div class="char-box">E</div>
+                <div class="char-box">E</div><div class="char-box">B</div><div class="char-box">E</div><div class="char-box">A</div><div class="char-box">B</div>
+            </div>
+
+            <table>
+                <tr>
+                    <th>Total Characters</th>
+                    <th>Unique Characters</th>
+                </tr>
+                <tr>
+                    <td><strong>20</strong></td>
+                    <td><strong>5 (A, B, C, D, E)</strong></td>
+                </tr>
+            </table>
+        </div>
+
+        <!-- Section 2 -->
+        <div class="card">
+            <h2>2. The Baseline: Standard Fixed-Length Coding</h2>
+            <p>Before compressing, we must understand how much space the message normally takes. Computers normally store text using ASCII, where every character is converted to an 8-bit binary number.</p>
+            <ul>
+                <li><strong>A</strong> = ASCII 65 = <code>01000001</code></li>
+                <li><strong>B</strong> = ASCII 66 = <code>01000010</code></li>
+            </ul>
+            <div class="math-box">
+                Total Size = 20 characters × 8 bits<br>
+                <span>Baseline Cost = 160 bits</span>
+            </div>
+        </div>
+
+        <!-- Section 3 -->
+        <div class="card">
+            <h2>3. Attempt 1: Custom Fixed-Length Coding</h2>
+            <p>Since we only have 5 unique characters, we don't <em>need</em> 8 bits per character. 3 bits gives us 8 combinations (<math>2<sup>3</sup> = 8</math>), which is enough for our 5 letters.</p>
+            
+            <p><strong>Custom Codes:</strong> A=<code>000</code>, B=<code>001</code>, C=<code>010</code>, D=<code>011</code>, E=<code>100</code></p>
+            
+            <p class="alert">The Catch (The Decoding Table):</p>
+            <p>If you just send the compressed message, the receiver has no idea what <code>000</code> means. You <strong>must</strong> also send the decoding table along with the message so they can read it.</p>
+
+            <div class="math-box">
+                Message = 20 chars × 3 bits = <span>60 bits</span><br>
+                Table = (5 chars × 8 bits) + (5 codes × 3 bits) = <span>55 bits</span><br>
+                <br>
+                Total Custom Cost = 60 + 55 = <span>115 bits</span>
+            </div>
+            <p><em>Better than 160, but we can still improve!</em></p>
+        </div>
+
+        <!-- Section 4 -->
+        <div class="card">
+            <h2>4. The Solution: Huffman Coding</h2>
+            <p><strong>Core Concept (Variable-Length):</strong> Give shorter codes to characters that appear often, and longer codes to characters that rarely appear.</p>
+            
+            <h3>Step 1: Frequency Table</h3>
+            <table>
+                <tr><th>Character</th><th>Frequency (Count)</th></tr>
+                <tr><td>B</td><td>7 (Highest)</td></tr>
+                <tr><td>A</td><td>4</td></tr>
+                <tr><td>E</td><td>4</td></tr>
+                <tr><td>C</td><td>3</td></tr>
+                <tr><td>D</td><td>2 (Lowest)</td></tr>
+            </table>
+
+            <h3>Step 2: Build the Tree</h3>
+            <p><span class="highlight">Golden Rule:</span> Always take the <strong>two lowest available frequencies</strong> and merge them. Smaller number goes left, larger goes right.</p>
+            
+            <p><strong>Merge 1:</strong> Take the lowest (D:2 and C:3) and merge them into a parent node of 5.</p>
+            <div class="tree-step">
+                <div class="node">D:2</div> + <div class="node">C:3</div> ➔ <div class="node parent">5</div>
+            </div>
+
+            <p><strong>Merge 2:</strong> The next lowest are E:4 and A:4. Merge them into a parent node of 8.</p>
+            <div class="tree-step">
+                <div class="node">E:4</div> + <div class="node">A:4</div> ➔ <div class="node parent">8</div>
+            </div>
+
+            <p><strong>Merge 3:</strong> We now have a node of 5, B(7), and a node of 8. Merge the lowest two (5 and 7) into 12.</p>
+            <div class="tree-step">
+                <div class="node parent">5</div> + <div class="node">B:7</div> ➔ <div class="node parent">12</div>
+            </div>
+
+            <p><strong>Merge 4 (Root):</strong> Merge our final two nodes (8 and 12) into our Root Node of 20.</p>
+            <div class="tree-step">
+                <div class="node parent">8</div> + <div class="node parent">12</div> ➔ <div class="node parent" style="border-color:#27ae60">20</div>
+            </div>
+        </div>
+
+        <!-- Section 5 -->
+        <div class="card">
+            <h2>5. The Final Huffman Tree</h2>
+            <p>Starting from the Root (20): Write a <span class="highlight">0 on every Left branch</span>, and a <span class="highlight">1 on every Right branch</span>. Note that all characters end up as "Leaf Nodes" at the bottom.</p>
+            
+            <div class="svg-container">
+                <svg width="600" height="400" viewBox="0 0 800 400" style="max-width: 100%; height: auto;">
+                    <!-- Edges -->
+                    <line x1="400" y1="50" x2="200" y2="150" stroke="#3498db" stroke-width="3"/>
+                    <line x1="400" y1="50" x2="600" y2="150" stroke="#3498db" stroke-width="3"/>
+                    
+                    <line x1="200" y1="150" x2="100" y2="250" stroke="#3498db" stroke-width="3"/>
+                    <line x1="200" y1="150" x2="300" y2="250" stroke="#3498db" stroke-width="3"/>
+
+                    <line x1="600" y1="150" x2="450" y2="250" stroke="#3498db" stroke-width="3"/>
+                    <line x1="600" y1="150" x2="750" y2="250" stroke="#3498db" stroke-width="3"/>
+
+                    <line x1="450" y1="250" x2="350" y2="350" stroke="#3498db" stroke-width="3"/>
+                    <line x1="450" y1="250" x2="550" y2="350" stroke="#3498db" stroke-width="3"/>
+
+                    <!-- Edge Labels (0s and 1s) -->
+                    <text x="280" y="90" fill="#e74c3c" font-size="20" font-weight="bold">0</text>
+                    <text x="510" y="90" fill="#e74c3c" font-size="20" font-weight="bold">1</text>
+                    
+                    <text x="130" y="190" fill="#e74c3c" font-size="20" font-weight="bold">0</text>
+                    <text x="265" y="190" fill="#e74c3c" font-size="20" font-weight="bold">1</text>
+                    
+                    <text x="510" y="190" fill="#e74c3c" font-size="20" font-weight="bold">0</text>
+                    <text x="690" y="190" fill="#e74c3c" font-size="20" font-weight="bold">1</text>
+                    
+                    <text x="380" y="290" fill="#e74c3c" font-size="20" font-weight="bold">0</text>
+                    <text x="515" y="290" fill="#e74c3c" font-size="20" font-weight="bold">1</text>
+
+                    <!-- Nodes -->
+                    <!-- Root -->
+                    <circle cx="400" cy="50" r="25" fill="#ffffff" stroke="#e74c3c" stroke-width="3"/>
+                    <text x="400" y="56" font-size="20" text-anchor="middle" font-weight="bold">20</text>
+
+                    <!-- L1 -->
+                    <circle cx="200" cy="150" r="25" fill="#ffffff" stroke="#e74c3c" stroke-width="3"/>
+                    <text x="200" y="156" font-size="20" text-anchor="middle" font-weight="bold">8</text>
+
+                    <circle cx="600" cy="150" r="25" fill="#ffffff" stroke="#e74c3c" stroke-width="3"/>
+                    <text x="600" y="156" font-size="20" text-anchor="middle" font-weight="bold">12</text>
+
+                    <!-- L2 -->
+                    <rect x="75" y="225" width="50" height="50" fill="#ffffff" stroke="#2c3e50" stroke-width="3" rx="5"/>
+                    <text x="100" y="256" font-size="20" text-anchor="middle" font-weight="bold">E(4)</text>
+
+                    <rect x="275" y="225" width="50" height="50" fill="#ffffff" stroke="#2c3e50" stroke-width="3" rx="5"/>
+                    <text x="300" y="256" font-size="20" text-anchor="middle" font-weight="bold">A(4)</text>
+
+                    <circle cx="450" cy="250" r="25" fill="#ffffff" stroke="#e74c3c" stroke-width="3"/>
+                    <text x="450" y="256" font-size="20" text-anchor="middle" font-weight="bold">5</text>
+
+                    <rect x="725" y="225" width="50" height="50" fill="#ffffff" stroke="#2c3e50" stroke-width="3" rx="5"/>
+                    <text x="750" y="256" font-size="20" text-anchor="middle" font-weight="bold">B(7)</text>
+
+                    <!-- L3 -->
+                    <rect x="325" y="325" width="50" height="50" fill="#ffffff" stroke="#2c3e50" stroke-width="3" rx="5"/>
+                    <text x="350" y="356" font-size="20" text-anchor="middle" font-weight="bold">D(2)</text>
+
+                    <rect x="525" y="325" width="50" height="50" fill="#ffffff" stroke="#2c3e50" stroke-width="3" rx="5"/>
+                    <text x="550" y="356" font-size="20" text-anchor="middle" font-weight="bold">C(3)</text>
+                </svg>
+            </div>
+            
+            <p><strong>Tracing the Codes (Top to Bottom):</strong></p>
+            <ul>
+                <li><strong>E:</strong> Left ➔ Left = <code>00</code></li>
+                <li><strong>A:</strong> Left ➔ Right = <code>01</code></li>
+                <li><strong>B:</strong> Right ➔ Right = <code>11</code></li>
+                <li><strong>D:</strong> Right ➔ Left ➔ Left = <code>100</code></li>
+                <li><strong>C:</strong> Right ➔ Left ➔ Right = <code>101</code></li>
+            </ul>
+        </div>
+
+        <!-- Section 6 -->
+        <div class="card">
+            <h2>6. Huffman Compression Final Math</h2>
+            <p>Notice that <strong>B</strong>, which appears the most (7 times), got a short 2-bit code. <strong>D</strong>, which appears the least (2 times), got a longer 3-bit code.</p>
+
+            <div class="math-box">
+                <strong>Message Size (Freq × Code Length):</strong><br>
+                A: 4 × 2 = 8 bits<br>
+                B: 7 × 2 = 14 bits<br>
+                C: 3 × 3 = 9 bits<br>
+                D: 2 × 3 = 6 bits<br>
+                E: 4 × 2 = 8 bits<br>
+                Message Total = <span>45 bits</span>
+                <br><br>
+                <strong>Table Size (Characters + Sent Codes):</strong><br>
+                Chars: (5 × 8 bits) = 40 bits<br>
+                Codes: (2+2+3+3+2) = 12 bits<br>
+                Table Total = <span>52 bits</span>
+                <br><br>
+                Grand Total (45 + 52) = <span class="win">97 bits 🏆</span>
+            </div>
+        </div>
+
+        <!-- Section 7 -->
+        <div class="card">
+            <h2>7. The Prefix Rule (Crucial Concept)</h2>
+            <p><em>Why doesn't a variable-length code get confusing when the receiver tries to read it?</em></p>
+            <p class="highlight" style="font-size: 1.2rem; text-align: center; margin: 20px 0;">"No code is a prefix of another code."</p>
+            
+            <p><strong>Example of a BAD Code:</strong> If A = <code>0</code>, B = <code>1</code>, and C = <code>01</code>. If the receiver gets <code>001</code>, does it mean A-A-C or A-B? It's ambiguous.</p>
+            <p><strong>Why Huffman is GOOD:</strong> Look at our codes: <code>00, 01, 11, 100, 101</code>. None of these codes forms the exact beginning of any other code. Because characters only exist at the <em>Leaf Nodes</em>, you never pass *through* a character to get to another character!</p>
+        </div>
+
+        <!-- Section 8 -->
+        <div class="card">
+            <h2>8. Instructor Summary Notes</h2>
+            <ul class="summary-list">
+                <li><strong>History:</strong> Developed by David Huffman in 1951.</li>
+                <li><strong>Rule:</strong> Encoding strictly follows the <strong>Prefix Rule</strong>, ensuring no ambiguity during decoding.</li>
+                <li><strong>Core Logic:</strong> The most generated character gets the smallest code; the least generated gets the largest code.</li>
+                <li><strong>Time Complexity:</strong> <code>O(N log N)</code>, where N is the number of unique characters being sorted and placed into the tree.</li>
+            </ul>
+        </div>
+
+    </div>
+
+    <script>
+        // Simple Intersection Observer to fade in cards as user scrolls down the feed
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.card');
+            
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15 // Trigger when 15% of the card is visible
+            };
+
+            const cardObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target); // Stop observing once it's visible
+                    }
+                });
+            }, observerOptions);
+
+            cards.forEach(card => {
+                cardObserver.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>
