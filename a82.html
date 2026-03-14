@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DFS Edge Classification - Study Feed</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;600&display=swap');
+
+        :root {
+            --bg-color: #f4f7f6;
+            --feed-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --accent-blue: #2563eb;
+            --edge-tree: #2563eb;    /* Blue */
+            --edge-forward: #16a34a; /* Green */
+            --edge-back: #dc2626;    /* Red */
+            --edge-cross: #ea580c;   /* Orange */
+            --radius: 16px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px 10px;
+        }
+
+        /* Continuous Feed Container */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px; /* Space between feed items */
+        }
+
+        /* Feed Cards */
+        .feed-card {
+            background-color: var(--feed-bg);
+            border-radius: var(--radius);
+            padding: 40px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            border-top: 5px solid transparent;
+        }
+
+        .feed-card h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+            color: #111827;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .feed-card p {
+            margin-bottom: 15px;
+            font-size: 1.1rem;
+        }
+
+        code {
+            font-family: 'Fira Code', monospace;
+            background: #f1f5f9;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #db2777;
+            font-size: 0.95em;
+        }
+
+        /* Edge Type Definitions Grid */
+        .edge-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .edge-box {
+            padding: 20px;
+            border-radius: 12px;
+            border-left: 5px solid;
+            background: #fafafa;
+        }
+
+        .edge-box.tree { border-color: var(--edge-tree); }
+        .edge-box.forward { border-color: var(--edge-forward); }
+        .edge-box.back { border-color: var(--edge-back); }
+        .edge-box.cross { border-color: var(--edge-cross); }
+
+        .edge-box h3 {
+            margin-bottom: 10px;
+            font-size: 1.3rem;
+        }
+
+        .formula {
+            background: #1e293b;
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: 'Fira Code', monospace;
+            margin: 15px 0;
+            overflow-x: auto;
+        }
+
+        /* Table Styling */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: #fff;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background-color: #f8fafc;
+            font-weight: 600;
+            color: #475569;
+        }
+
+        tbody tr:hover {
+            background-color: #f1f5f9;
+        }
+
+        /* Visualization Sandbox */
+        .visualization-box {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 20px;
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .legend span {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+
+        /* Steps Timeline */
+        .timeline {
+            border-left: 3px solid #e2e8f0;
+            margin-left: 20px;
+            padding-left: 20px;
+        }
+
+        .step {
+            position: relative;
+            margin-bottom: 20px;
+        }
+
+        .step::before {
+            content: '';
+            position: absolute;
+            left: -29px;
+            top: 5px;
+            width: 15px;
+            height: 15px;
+            background: var(--accent-blue);
+            border-radius: 50%;
+            border: 3px solid #fff;
+        }
+
+        .highlight {
+            font-weight: 600;
+            color: var(--accent-blue);
+        }
+
+        .golden-rule {
+            background: linear-gradient(135deg, #fef3c7, #fde68a);
+            border-left: 5px solid #f59e0b;
+            padding: 20px;
+            border-radius: 12px;
+            font-size: 1.2rem;
+            font-weight: 600;
+            text-align: center;
+            color: #92400e;
+            margin-top: 30px;
+        }
+
+        @media (max-width: 600px) {
+            .feed-card { padding: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <!-- Welcome Title Card -->
+        <div class="feed-card" style="border-top-color: var(--accent-blue);">
+            <h1>📚 Classification of Edges in DFS Traversal</h1>
+            <p style="color: var(--text-muted); margin-top: 10px;">
+                A continuous, in-depth study guide based on the instructor's video lecture. Scroll to explore definitions, step-by-step traversal, timeline logs, and graphical visualizations.
+            </p>
+        </div>
+
+        <!-- Concept 1: The Core Variables -->
+        <div class="feed-card">
+            <h2>⏱️ The Time Variable Matrix</h2>
+            <p>During a Depth First Search (DFS), we use a global <code>time</code> variable to track our journey. The instructor heavily relies on this to classify edges.</p>
+            <p>For every node, we record two specific timestamps:</p>
+            <ul>
+                <li style="margin-bottom: 10px;"><strong>Start/Discovery Time:</strong> The exact moment we arrive at a brand new node. The instructor refers to this as the moment a node <i>"appears"</i>.</li>
+                <li><strong>Finish Time:</strong> The exact moment we have fully explored all paths from a node and are forced to <i>backtrack</i>.</li>
+            </ul>
+        </div>
+
+        <!-- Concept 2: The 4 Edge Types -->
+        <div class="feed-card">
+            <h2>🗂️ The Four Types of Edges</h2>
+            <p>When looking at an edge <code>e:(x, y)</code> pointing from node <strong>X</strong> to node <strong>Y</strong>, we can categorize it into one of four types based on its timestamps and path structure.</p>
+            
+            <div class="edge-grid">
+                <!-- Tree Edge -->
+                <div class="edge-box tree">
+                    <h3 style="color: var(--edge-tree);">1. Tree Edge</h3>
+                    <p>An edge that is an actual member of the DFS traversal. You use this edge to discover a node for the very first time.</p>
+                </div>
+
+                <!-- Forward Edge -->
+                <div class="edge-box forward">
+                    <h3 style="color: var(--edge-forward);">2. Forward Edge</h3>
+                    <p>Node <strong>Y</strong> appears <i>after</i> Node <strong>X</strong>.<br>
+                    <strong>Condition:</strong> StartTime(x) &lt; StartTime(y)<br>
+                    <strong>Requirement:</strong> There must be a path from X down to Y through the DFS tree.</p>
+                </div>
+
+                <!-- Back Edge -->
+                <div class="edge-box back">
+                    <h3 style="color: var(--edge-back);">3. Back Edge</h3>
+                    <p>Node <strong>Y</strong> appears <i>before</i> Node <strong>X</strong>.<br>
+                    <strong>Condition:</strong> StartTime(y) &lt; StartTime(x)<br>
+                    <strong>Requirement:</strong> There must be a path from Y down to X. <i>(This creates a cycle!)</i></p>
+                </div>
+
+                <!-- Cross Edge -->
+                <div class="edge-box cross">
+                    <h3 style="color: var(--edge-cross);">4. Cross Edge</h3>
+                    <p>Node <strong>Y</strong> appears <i>before</i> Node <strong>X</strong>, BUT they belong to different branches.<br>
+                    <strong>Requirement:</strong> There is <strong>NO path</strong> from Y to X.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Concept 3: The Data Table -->
+        <div class="feed-card">
+            <h2>📊 Master Timestamp Table</h2>
+            <p>Following the instructor's path starting at Node <strong>a</strong>, we track the global time. Every discovery and every backtrack increments the clock by +1.</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Node</th>
+                        <th>Start Time (Discovered)</th>
+                        <th>Finish Time (Backtracked)</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td>a</td><td>1</td><td>26</td></tr>
+                    <tr><td>b</td><td>2</td><td>9</td></tr>
+                    <tr><td>c</td><td>3</td><td>8</td></tr>
+                    <tr><td>d</td><td>6</td><td>7</td></tr>
+                    <tr><td>e</td><td>4</td><td>5</td></tr>
+                    <tr><td>f</td><td>10</td><td>25</td></tr>
+                    <tr><td>g</td><td>11</td><td>24</td></tr>
+                    <tr><td>h</td><td>14</td><td>23</td></tr>
+                    <tr><td>i</td><td>15</td><td>18</td></tr>
+                    <tr><td>j</td><td>16</td><td>17</td></tr>
+                    <tr><td>k</td><td>19</td><td>22</td></tr>
+                    <tr><td>l</td><td>12</td><td>13</td></tr>
+                    <tr><td>m</td><td>20</td><td>21</td></tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Concept 4: Evaluation Breakdown -->
+        <div class="feed-card">
+            <h2>🔍 Evaluating the Non-Tree Edges</h2>
+            <p>Once all <strong>Tree Edges</strong> are marked, we evaluate the remaining edges using our table.</p>
+
+            <div class="formula">
+                <p><strong>Example 1: Edge (d, b)</strong></p>
+                <p>x = d (Start: 6), y = b (Start: 2)</p>
+                <p><i>y appeared before x. Is there a path from y to x? Yes (b → c → d).</i></p>
+                <p style="color: #fca5a5; margin-top: 10px;">Result: Back Edge</p>
+            </div>
+
+            <div class="formula">
+                <p><strong>Example 2: Edge (g, m)</strong></p>
+                <p>x = g (Start: 11), y = m (Start: 20)</p>
+                <p><i>y appeared AFTER x. Is there a path from x to y? Yes (g → h → k → m).</i></p>
+                <p style="color: #86efac; margin-top: 10px;">Result: Forward Edge</p>
+            </div>
+
+            <div class="formula">
+                <p><strong>Example 3: Edge (d, e)</strong></p>
+                <p>x = d (Start: 6), y = e (Start: 4)</p>
+                <p><i>y appeared before x. Is there a path from y to x (e → d)? NO.</i></p>
+                <p style="color: #fdba74; margin-top: 10px;">Result: Cross Edge</p>
+            </div>
+        </div>
+
+        <!-- Concept 5: Final Graph Visualization -->
+        <div class="feed-card">
+            <h2>🎨 Final Classified Graph</h2>
+            <p>Below is the digital representation of the whiteboard graph, fully mapped out with the correct edge classifications.</p>
+            
+            <div class="visualization-box">
+                <div class="legend">
+                    <span><div class="dot" style="background: var(--edge-tree);"></div> Tree Edge</span>
+                    <span><div class="dot" style="background: var(--edge-forward);"></div> Forward Edge</span>
+                    <span><div class="dot" style="background: var(--edge-back);"></div> Back Edge</span>
+                    <span><div class="dot" style="background: var(--edge-cross);"></div> Cross Edge</span>
+                </div>
+                
+                <!-- SVG Graph Representation -->
+                <svg viewBox="0 0 500 400" width="100%" height="auto" style="max-width: 600px;">
+                    <defs>
+                        <!-- Arrowheads -->
+                        <marker id="arrow-tree" markerWidth="10" markerHeight="10" refX="28" refY="3" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#2563eb" />
+                        </marker>
+                        <marker id="arrow-fwd" markerWidth="10" markerHeight="10" refX="28" refY="3" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#16a34a" />
+                        </marker>
+                        <marker id="arrow-back" markerWidth="10" markerHeight="10" refX="28" refY="3" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#dc2626" />
+                        </marker>
+                        <marker id="arrow-cross" markerWidth="10" markerHeight="10" refX="28" refY="3" orient="auto" markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#ea580c" />
+                        </marker>
+                    </defs>
+
+                    <!-- Nodes mapped approximately to video layout -->
+                    <!-- Left column -->
+                    <circle cx="100" cy="50" r="18" fill="#f8fafc" stroke="#333" stroke-width="2"/>
+                    <text x="100" y="55" text-anchor="middle" font-weight="bold">a</text>
+
+                    <circle cx="100" cy="150" r="18" fill="#f8fafc" stroke="#333" stroke-width="2"/>
+                    <text x="100" y="155" text-anchor="middle" font-weight="bold">f</text>
+
+                    <circle cx="100" cy="250" r="18" fill="#f8fafc" stroke="#333" stroke-width="2"/>
+                    <text x="100" y="255" text-anchor="middle" font-weight="bold">g</text>
+
+                    <circle cx="100" cy="350" r="18" fill="#f8fafc" stroke="#333" stroke-width="2"/>
+                    <text x="100" y="355" text-anchor="middle" font-weight="bold">l</text>
+
+                    <!-- Mid Column -->
+                    <circle cx="200" cy="50" r="18" fill="#f8fafc" stroke="#333" stroke-width="2"/>
+                    <text x="200" y="55" text-anchor="middle" font-weight="bold">b</text>
+
+                    <circle cx="250" cy="250" r="18" fill="#f8fafc" stroke="#333" stroke-width="2"/>
+                    <text x="250" y="255" text-anchor="middle" font-weight="bold">h</text>
+
+                    <circle cx="250" cy="350" r="18" fill="#f8fafc" stroke="#333" stroke-width="2"/>
+                    <text x="250" y="355" text-anchor="middle" font-weight="bold">k</text>
+
+                    <!-- Right Column -->
+                    <circle cx="300" cy="50" r="18" fill="#f8fafc" stroke="#333" stroke-width="2"/>
+                    <text x="300" y="55" text-anchor="middle" font-weight="bold">c</text>
+
+                    <circle cx="280" cy="150" r="18" fill="#f8fafc" stroke="#333" stroke-width="2"/>
+                    <text x="280" y="155" text-anchor="middle" font-weight="bold">d</text>
+
+                    <circle cx="400" cy="100" r="18" fill="#f8fafc" stroke="#333" stroke-width="2"/>
+                    <text x="400" y="105" text-anchor="middle" font-weight="bold">e</text>
+
+                    <circle cx="350" cy="250" r="18" fill="#f8fafc" stroke="#333" stroke-width="2"/>
+                    <text x="350" y="255" text-anchor="middle" font-weight="bold">i</text>
+
+                    <circle cx="450" cy="250" r="18" fill="#f8fafc" stroke="#333" stroke-width="2"/>
+                    <text x="450" y="255" text-anchor="middle" font-weight="bold">j</text>
+
+                    <circle cx="400" cy="350" r="18" fill="#f8fafc" stroke="#333" stroke-width="2"/>
+                    <text x="400" y="355" text-anchor="middle" font-weight="bold">m</text>
+
+                    <!-- Edges (Lines) -->
+                    <!-- Tree Edges (Blue, Solid) -->
+                    <line x1="100" y1="50" x2="200" y2="50" stroke="var(--edge-tree)" stroke-width="3" marker-end="url(#arrow-tree)"/> <!-- a-b -->
+                    <line x1="200" y1="50" x2="300" y2="50" stroke="var(--edge-tree)" stroke-width="3" marker-end="url(#arrow-tree)"/> <!-- b-c -->
+                    <line x1="300" y1="50" x2="400" y2="100" stroke="var(--edge-tree)" stroke-width="3" marker-end="url(#arrow-tree)"/> <!-- c-e -->
+                    <line x1="300" y1="50" x2="280" y2="150" stroke="var(--edge-tree)" stroke-width="3" marker-end="url(#arrow-tree)"/> <!-- c-d -->
+                    <line x1="100" y1="50" x2="100" y2="150" stroke="var(--edge-tree)" stroke-width="3" marker-end="url(#arrow-tree)"/> <!-- a-f -->
+                    <line x1="100" y1="150" x2="100" y2="250" stroke="var(--edge-tree)" stroke-width="3" marker-end="url(#arrow-tree)"/> <!-- f-g -->
+                    <line x1="100" y1="250" x2="100" y2="350" stroke="var(--edge-tree)" stroke-width="3" marker-end="url(#arrow-tree)"/> <!-- g-l -->
+                    <line x1="100" y1="250" x2="250" y2="250" stroke="var(--edge-tree)" stroke-width="3" marker-end="url(#arrow-tree)"/> <!-- g-h -->
+                    <line x1="250" y1="250" x2="350" y2="250" stroke="var(--edge-tree)" stroke-width="3" marker-end="url(#arrow-tree)"/> <!-- h-i -->
+                    <line x1="350" y1="250" x2="450" y2="250" stroke="var(--edge-tree)" stroke-width="3" marker-end="url(#arrow-tree)"/> <!-- i-j -->
+                    <line x1="250" y1="250" x2="250" y2="350" stroke="var(--edge-tree)" stroke-width="3" marker-end="url(#arrow-tree)"/> <!-- h-k -->
+                    <line x1="250" y1="350" x2="400" y2="350" stroke="var(--edge-tree)" stroke-width="3" marker-end="url(#arrow-tree)"/> <!-- k-m -->
+
+                    <!-- Forward Edge (Green, Dashed) -->
+                    <path d="M 100 250 Q 250 400 400 350" fill="none" stroke="var(--edge-forward)" stroke-width="3" stroke-dasharray="8,4" marker-end="url(#arrow-fwd)"/> <!-- g-m -->
+
+                    <!-- Back Edges (Red, Dashed) -->
+                    <line x1="280" y1="150" x2="200" y2="50" stroke="var(--edge-back)" stroke-width="3" stroke-dasharray="8,4" marker-end="url(#arrow-back)"/> <!-- d-b -->
+                    <line x1="250" y1="250" x2="100" y2="150" stroke="var(--edge-back)" stroke-width="3" stroke-dasharray="8,4" marker-end="url(#arrow-back)"/> <!-- h-f -->
+                    <line x1="400" y1="350" x2="250" y2="250" stroke="var(--edge-back)" stroke-width="3" stroke-dasharray="8,4" marker-end="url(#arrow-back)"/> <!-- m-h -->
+
+                    <!-- Cross Edges (Orange, Dashed) -->
+                    <line x1="280" y1="150" x2="400" y2="100" stroke="var(--edge-cross)" stroke-width="3" stroke-dasharray="8,4" marker-end="url(#arrow-cross)"/> <!-- d-e -->
+                    <line x1="250" y1="350" x2="100" y2="350" stroke="var(--edge-cross)" stroke-width="3" stroke-dasharray="8,4" marker-end="url(#arrow-cross)"/> <!-- k-l -->
+                    <line x1="400" y1="350" x2="350" y2="250" stroke="var(--edge-cross)" stroke-width="3" stroke-dasharray="8,4" marker-end="url(#arrow-cross)"/> <!-- m-i -->
+                    <line x1="350" y1="250" x2="280" y2="150" stroke="var(--edge-cross)" stroke-width="3" stroke-dasharray="8,4" marker-end="url(#arrow-cross)"/> <!-- i-d -->
+                </svg>
+            </div>
+        </div>
+
+        <!-- Concept 6: The Golden Rule & Conclusion -->
+        <div class="feed-card">
+            <h2>📝 The Final Lists</h2>
+            <p>Based on our DFS algorithm, here is the complete classification for the graph:</p>
+            <ul>
+                <li><strong style="color: var(--edge-tree);">Tree Edges:</strong> (a,b), (b,c), (c,e), (c,d), (a,f), (f,g), (g,l), (g,h), (h,i), (i,j), (h,k), (k,m)</li>
+                <li><strong style="color: var(--edge-forward);">Forward Edges:</strong> (g,m)</li>
+                <li><strong style="color: var(--edge-back);">Back Edges:</strong> (d,b), (h,f), (m,h)</li>
+                <li><strong style="color: var(--edge-cross);">Cross Edges:</strong> (d,e), (k,l), (m,i), (i,d)</li>
+            </ul>
+
+            <div class="golden-rule">
+                "The Union of the Tree Edges + Forward Edges + Back Edges + Cross Edges is exactly equal to ALL edges in the original graph. No edge is left behind!"
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
