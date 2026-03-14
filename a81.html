@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Graph Traversals: BFS & DFS</title>
+    <style>
+        /* Base Styles */
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #333;
+            --card-bg: #ffffff;
+            --bfs-color: #007bff;
+            --dfs-color: #6f42c1;
+            --visited-color: #28a745;
+            --deadend-color: #dc3545;
+            --queue-bg: #e9f5ff;
+            --stack-bg: #f3e8ff;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Vertical Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        .header-card {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+        }
+
+        .header-card h1 {
+            margin: 0 0 10px 0;
+            font-size: 2.5rem;
+        }
+
+        /* Content Cards */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-left: 5px solid #ccc;
+        }
+
+        .card.bfs-card { border-left-color: var(--bfs-color); }
+        .card.dfs-card { border-left-color: var(--dfs-color); }
+        .card.alert-card { border-left-color: #ffc107; background-color: #fffdf5; }
+
+        h2 { margin-top: 0; border-bottom: 2px solid #eee; padding-bottom: 10px;}
+        .bfs-title { color: var(--bfs-color); }
+        .dfs-title { color: var(--dfs-color); }
+
+        /* Graph Visualization Area */
+        .graph-display {
+            background: #fff;
+            border: 2px dashed #ddd;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .adj-list {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.1rem;
+        }
+
+        /* Visualizing Nodes */
+        .node-badge {
+            display: inline-block;
+            width: 30px;
+            height: 30px;
+            line-height: 30px;
+            text-align: center;
+            background: #eee;
+            border-radius: 50%;
+            font-weight: bold;
+            margin: 0 4px;
+            border: 2px solid #aaa;
+        }
+        .node-badge.visited {
+            background: var(--visited-color);
+            color: white;
+            border-color: #1e7e34;
+        }
+        .node-badge.deadend {
+            background: var(--deadend-color);
+            color: white;
+            border-color: #a71d2a;
+            animation: shake 0.5s;
+        }
+
+        /* Visualizing Data Structures */
+        .data-structure-box {
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .queue-container {
+            background: var(--queue-bg);
+            border: 2px solid var(--bfs-color);
+        }
+
+        .stack-container {
+            background: var(--stack-bg);
+            border: 2px solid var(--dfs-color);
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+        }
+
+        .visual-array {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .visual-stack {
+            display: flex;
+            flex-direction: column-reverse; /* Builds from bottom up */
+            gap: 5px;
+            width: 80px;
+            border-left: 3px solid var(--dfs-color);
+            border-right: 3px solid var(--dfs-color);
+            border-bottom: 3px solid var(--dfs-color);
+            padding: 10px 5px;
+            background: white;
+        }
+
+        .ds-item {
+            background: white;
+            border: 2px solid #ccc;
+            padding: 10px 20px;
+            font-weight: bold;
+            border-radius: 4px;
+            text-align: center;
+        }
+
+        .stack-item {
+            background: white;
+            border: 2px solid #ccc;
+            padding: 8px;
+            font-weight: bold;
+            text-align: center;
+            border-radius: 4px;
+        }
+
+        .result-box {
+            background: #333;
+            color: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            margin-top: 10px;
+        }
+
+        .step-row {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+
+        /* Animations */
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+            100% { transform: translateX(0); }
+        }
+
+        .rule-text {
+            font-style: italic;
+            color: #555;
+            background: #eee;
+            padding: 5px 10px;
+            border-radius: 4px;
+            display: inline-block;
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+
+    <!-- Header -->
+    <div class="header-card">
+        <h1>Graph Traversals</h1>
+        <p>A complete breakdown of Breadth-First Search (BFS) & Depth-First Search (DFS)</p>
+        <p><i>Scroll down to follow the instructor's exact whiteboard steps.</i></p>
+    </div>
+
+    <!-- Intro & Base Graph -->
+    <div class="card">
+        <h2>1. The Base Graph & Adjacencies</h2>
+        <p>Traversing a graph means visiting every vertex (node) in the graph systematically. The instructor provides an example graph with 7 nodes (0 through 6). Before we traverse, we must understand how they are connected.</p>
+        
+        <div class="graph-display">
+            <!-- Inline SVG representing the instructor's graph -->
+            <svg width="300" height="250" viewBox="0 0 300 250">
+                <!-- Lines (Edges) -->
+                <line x1="150" y1="30" x2="60" y2="100" stroke="#999" stroke-width="3"/>
+                <line x1="150" y1="30" x2="240" y2="100" stroke="#999" stroke-width="3"/>
+                <line x1="60" y1="100" x2="240" y2="100" stroke="#999" stroke-width="3"/>
+                <line x1="60" y1="100" x2="150" y2="150" stroke="#999" stroke-width="3"/>
+                <line x1="240" y1="100" x2="150" y2="150" stroke="#999" stroke-width="3"/>
+                <line x1="240" y1="100" x2="280" y2="180" stroke="#999" stroke-width="3"/>
+                <line x1="150" y1="150" x2="280" y2="180" stroke="#999" stroke-width="3"/>
+                <line x1="60" y1="100" x2="100" y2="220" stroke="#999" stroke-width="3"/>
+                <line x1="150" y1="150" x2="100" y2="220" stroke="#999" stroke-width="3"/>
+                <line x1="150" y1="150" x2="220" y2="220" stroke="#999" stroke-width="3"/>
+                <line x1="240" y1="100" x2="220" y2="220" stroke="#999" stroke-width="3"/>
+                <line x1="100" y1="220" x2="220" y2="220" stroke="#999" stroke-width="3"/>
+                
+                <!-- Nodes (Vertices) -->
+                <circle cx="150" cy="30" r="20" fill="#fff" stroke="#333" stroke-width="3"/> <text x="145" y="35" font-family="sans-serif" font-weight="bold">0</text>
+                <circle cx="240" cy="100" r="20" fill="#fff" stroke="#333" stroke-width="3"/> <text x="235" y="105" font-family="sans-serif" font-weight="bold">1</text>
+                <circle cx="60" cy="100" r="20" fill="#fff" stroke="#333" stroke-width="3"/> <text x="55" y="105" font-family="sans-serif" font-weight="bold">3</text>
+                <circle cx="150" cy="150" r="20" fill="#fff" stroke="#333" stroke-width="3"/> <text x="145" y="155" font-family="sans-serif" font-weight="bold">2</text>
+                <circle cx="280" cy="180" r="20" fill="#fff" stroke="#333" stroke-width="3"/> <text x="275" y="185" font-family="sans-serif" font-weight="bold">5</text>
+                <circle cx="100" cy="220" r="20" fill="#fff" stroke="#333" stroke-width="3"/> <text x="95" y="225" font-family="sans-serif" font-weight="bold">4</text>
+                <circle cx="220" cy="220" r="20" fill="#fff" stroke="#333" stroke-width="3"/> <text x="215" y="225" font-family="sans-serif" font-weight="bold">6</text>
+            </svg>
+        </div>
+
+        <h3>Adjacency List (Who is connected to who?)</h3>
+        <div class="adj-list">
+            Node 0 -> 1, 3<br>
+            Node 1 -> 0, 3, 2, 5, 6<br>
+            Node 2 -> 1, 3, 4, 5, 6<br>
+            Node 3 -> 0, 1, 2, 4<br>
+            Node 4 -> 3, 2, 6<br>
+            Node 5 -> 1, 2<br>
+            Node 6 -> 1, 2, 4
+        </div>
+        <p><i>Note: The instructor states you can start a traversal from ANY node. For these examples, we will use Node <strong>0</strong> as our starting Root Node.</i></p>
+    </div>
+
+    <!-- BFS SECTION -->
+    <div class="card bfs-card">
+        <h2 class="bfs-title">Breadth-First Search (BFS) Concept</h2>
+        <p>Also known as <strong>Level-Order Traversal</strong>. We explore all adjacent nodes (the closest neighbors) of the current node <i>before</i> moving deeper.</p>
+        <ul>
+            <li><strong>Data Structure Used:</strong> Queue (FIFO - First In, First Out)</li>
+            <li><span class="rule-text">Golden Rule:</span> Only insert adjacent nodes into the queue if they are <strong>unvisited</strong> and <strong>not already in the queue</strong>.</li>
+        </ul>
+    </div>
+
+    <!-- BFS STEPS -->
+    <div class="card bfs-card">
+        <h2 class="bfs-title">BFS Step-by-Step Walkthrough</h2>
+        
+        <div class="step-row">
+            <strong>Step 1: Start at root node 0.</strong>
+            <p>Insert 0 into Queue. Pop 0 to Result. Mark 0 visited. Find adjacencies of 0: (1, 3). Insert them into Queue.</p>
+        </div>
+        <div class="data-structure-box queue-container">
+            <strong>Queue State:</strong>
+            <div class="visual-array">
+                <div class="ds-item">1</div>
+                <div class="ds-item">3</div>
+            </div>
+            <div class="result-box">Result: <span class="node-badge visited">0</span></div>
+        </div>
+
+        <hr>
+
+        <div class="step-row">
+            <strong>Step 2: Process Queue Front (1).</strong>
+            <p>Pop 1 to Result. Mark 1 visited. Adjacencies of 1: (0, 3, 2, 5, 6).<br> 
+            <em>0 is visited. 3 is in queue. Insert unvisited: 2, 5, 6.</em></p>
+        </div>
+        <div class="data-structure-box queue-container">
+            <strong>Queue State:</strong>
+            <div class="visual-array">
+                <div class="ds-item">3</div>
+                <div class="ds-item">2</div>
+                <div class="ds-item">5</div>
+                <div class="ds-item">6</div>
+            </div>
+            <div class="result-box">Result: <span class="node-badge visited">0</span>, <span class="node-badge visited">1</span></div>
+        </div>
+
+        <hr>
+
+        <div class="step-row">
+            <strong>Step 3: Process Queue Front (3).</strong>
+            <p>Pop 3. Adjacencies of 3: (0, 1, 2, 4).<br> 
+            <em>0, 1 visited. 2 in queue. Insert unvisited: 4.</em></p>
+        </div>
+        <div class="data-structure-box queue-container">
+            <strong>Queue State:</strong>
+            <div class="visual-array">
+                <div class="ds-item">2</div>
+                <div class="ds-item">5</div>
+                <div class="ds-item">6</div>
+                <div class="ds-item">4</div>
+            </div>
+            <div class="result-box">Result: <span class="node-badge visited">0</span>, <span class="node-badge visited">1</span>, <span class="node-badge visited">3</span></div>
+        </div>
+
+        <hr>
+
+        <div class="step-row">
+            <strong>Step 4: Process remaining Queue items.</strong>
+            <p>Pop 2. (Adjacencies 1, 3, 4, 5, 6 are visited/in queue). Insert nothing.<br>
+            Pop 5. (Adjacencies 1, 2 are visited). Insert nothing.<br>
+            Pop 6. (Adjacencies 1, 2, 4 are visited/in queue). Insert nothing.<br>
+            Pop 4. (Adjacencies 3, 2, 6 are visited). Insert nothing.</p>
+        </div>
+        <div class="data-structure-box queue-container">
+            <strong>Queue State:</strong> <em>Empty</em>
+            <div class="result-box">Final BFS: <span class="node-badge visited">0</span>, <span class="node-badge visited">1</span>, <span class="node-badge visited">3</span>, <span class="node-badge visited">2</span>, <span class="node-badge visited">5</span>, <span class="node-badge visited">6</span>, <span class="node-badge visited">4</span></div>
+        </div>
+    </div>
+
+    <!-- DFS SECTION -->
+    <div class="card dfs-card">
+        <h2 class="dfs-title">Depth-First Search (DFS) Concept</h2>
+        <p>We go as deep as possible down one path. When we hit a "dead end" (no unvisited neighbors), we <strong>backtrack</strong> to the previous node and try a different path.</p>
+        <ul>
+            <li><strong>Data Structure Used:</strong> Stack (LIFO - Last In, First Out)</li>
+            <li><span class="rule-text">Golden Rule:</span> Pick <strong>only ONE</strong> unvisited adjacent node at a time. Push it to the stack, mark it visited, and immediately dive into its neighbors.</li>
+        </ul>
+    </div>
+
+    <!-- DFS STEPS -->
+    <div class="card dfs-card">
+        <h2 class="dfs-title">DFS Step-by-Step Walkthrough</h2>
+        
+        <div class="step-row">
+            <strong>Step 1 to 4: Diving Deep</strong>
+            <p>Start 0. Push 0. Pick adj 1. Push 1.<br>
+            From 1, pick adj 3. Push 3.<br>
+            From 3, pick adj 2. Push 2.<br>
+            From 2, pick adj 5. Push 5.</p>
+        </div>
+        <div class="data-structure-box stack-container">
+            <div>
+                <strong>Stack State:</strong>
+                <div class="visual-stack">
+                    <div class="stack-item">5</div>
+                    <div class="stack-item">2</div>
+                    <div class="stack-item">3</div>
+                    <div class="stack-item">1</div>
+                    <div class="stack-item">0</div>
+                </div>
+            </div>
+            <div style="flex-grow: 1;">
+                <div class="result-box">Result: 0, 1, 3, 2, 5</div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="step-row">
+            <strong>Step 5: The First Dead End!</strong>
+            <p>Look at Node <span class="node-badge deadend">5</span>. Its adjacencies are 1 and 2. <strong>Both are already visited!</strong> We cannot go deeper. We must <strong>backtrack</strong>. Pop 5 off the Stack.</p>
+        </div>
+        
+        <hr>
+
+        <div class="step-row">
+            <strong>Step 6 & 7: Backtrack and Dive Again</strong>
+            <p>Backtrack to 2. Look at 2's adjacencies. 4 and 6 are unvisited. Pick 4. Push 4.<br>
+            From 4, look at adjacencies. 6 is unvisited. Pick 6. Push 6.</p>
+        </div>
+        <div class="data-structure-box stack-container">
+            <div>
+                <strong>Stack State:</strong>
+                <div class="visual-stack">
+                    <div class="stack-item">6</div>
+                    <div class="stack-item">4</div>
+                    <div class="stack-item">2</div>
+                    <div class="stack-item">3</div>
+                    <div class="stack-item">1</div>
+                    <div class="stack-item">0</div>
+                </div>
+            </div>
+            <div style="flex-grow: 1;">
+                <div class="result-box">Result: 0, 1, 3, 2, 5, 4, 6</div>
+            </div>
+        </div>
+
+        <hr>
+
+        <div class="step-row">
+            <strong>Step 8: Final Backtracking</strong>
+            <p>Look at Node <span class="node-badge deadend">6</span>. Adjacencies 1, 2, 4 are all visited. Dead end. Pop 6.<br>
+            Backtrack down the stack: 4 (all visited) -> Pop 4.<br>
+            2 (all visited) -> Pop 2. ... Pop 3. Pop 1. Pop 0. Stack empty!</p>
+        </div>
+        <div class="data-structure-box stack-container">
+            <div>
+                <strong>Stack State:</strong> <em>Empty</em>
+            </div>
+            <div style="flex-grow: 1;">
+                <div class="result-box">Final DFS: <span class="node-badge visited">0</span>, <span class="node-badge visited">1</span>, <span class="node-badge visited">3</span>, <span class="node-badge visited">2</span>, <span class="node-badge visited">5</span>, <span class="node-badge visited">4</span>, <span class="node-badge visited">6</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Instructor's Final Note -->
+    <div class="card alert-card">
+        <h2>⚠️ Instructor's Golden Note</h2>
+        <p><strong>"This is not the ONLY valid answer!"</strong></p>
+        <p>Because nodes have multiple neighbors, the order you choose to visit them changes the final result. For example, in DFS Step 1, if we chose to explore Node <strong>3</strong> instead of Node <strong>1</strong>, the entire sequence would change. <strong>Both answers would be 100% correct</strong> as long as you follow the structural rules of Queues (BFS) and Stacks (DFS).</p>
+    </div>
+
+</div>
+
+</body>
+</html>
