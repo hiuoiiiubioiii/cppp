@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hashing & Collision Resolution | Study Feed</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- MathJax for rendering math formulas -->
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+    <style>
+        body { font-family: 'Inter', system-ui, -apple-system, sans-serif; background-color: #f8fafc; }
+        .math-block { background-color: #f1f5f9; padding: 1rem; border-radius: 0.5rem; border-left: 4px solid #3b82f6; overflow-x: auto;}
+        .hash-index { width: 40px; height: 40px; background: #e2e8f0; color: #64748b; font-family: monospace; display: flex; align-items: center; justify-content: center; font-size: 0.875rem; border: 1px solid #cbd5e1; border-top-left-radius: 0.25rem; border-bottom-left-radius: 0.25rem;}
+        .hash-val { width: 60px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: 600; border: 1px solid #cbd5e1; border-top-right-radius: 0.25rem; border-bottom-right-radius: 0.25rem;}
+        .val-empty { background: #f8fafc; color: #cbd5e1; }
+        .val-filled { background: #dbf4ff; color: #1e3a8a; border-color: #93c5fd; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .val-chain { background: #dcfce7; color: #065f46; border-color: #86efac; border-radius: 0.25rem; }
+    </style>
+</head>
+<body class="text-slate-800 antialiased leading-relaxed pb-20">
+
+    <!-- Header -->
+    <header class="bg-blue-900 text-white py-12 px-6 shadow-md sticky top-0 z-50">
+        <div class="max-w-3xl mx-auto">
+            <h1 class="text-3xl md:text-4xl font-bold mb-2">Types of Hashing & Collisions</h1>
+            <p class="text-blue-200 text-lg">Continuous Study Feed • Scroll to learn</p>
+        </div>
+    </header>
+
+    <!-- Main Feed Container -->
+    <main class="max-w-3xl mx-auto p-4 md:p-0 space-y-8 mt-8">
+
+        <!-- Card 1: Core Concept -->
+        <article class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="bg-blue-100 text-blue-600 p-2 rounded-lg"><i class="fas fa-bolt text-xl"></i></div>
+                <h2 class="text-2xl font-bold text-slate-800">1. Why Hashing?</h2>
+            </div>
+            <p class="mb-4">Data processing relies heavily on storing and retrieving data efficiently. Traditional search methods depend on \(n\) (the number of elements):</p>
+            <ul class="space-y-3 mb-6">
+                <li class="flex items-center"><span class="bg-red-100 text-red-700 font-mono px-2 py-1 rounded text-sm mr-3">O(n)</span> Linear Search (Worst case)</li>
+                <li class="flex items-center"><span class="bg-amber-100 text-amber-700 font-mono px-2 py-1 rounded text-sm mr-3">O(log n)</span> Binary Search</li>
+            </ul>
+            <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-4">
+                <p class="text-emerald-800 font-medium"><i class="fas fa-check-circle mr-2"></i>The Solution is Hashing</p>
+                <p class="text-emerald-700 mt-1">Hashing is a searching/storing technique designed to achieve a constant time complexity of <span class="font-mono font-bold bg-emerald-200 px-1 rounded">O(1)</span>, meaning the search time does not depend on the number of elements.</p>
+            </div>
+        </article>
+
+        <!-- Card 2: Mechanics & Collisions -->
+        <article class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="bg-indigo-100 text-indigo-600 p-2 rounded-lg"><i class="fas fa-cogs text-xl"></i></div>
+                <h2 class="text-2xl font-bold text-slate-800">2. The Mechanics & Collisions</h2>
+            </div>
+            <p class="mb-4">To perform hashing, you need a <strong>Hash Table</strong> (an array of size \(m\)) and a <strong>Hash Function</strong> \(h(k)\). The most common method is the <strong>Division Method</strong>:</p>
+            
+            <div class="math-block mb-6 text-lg text-center">
+                \[ \text{Location} = h(k) \pmod m \]
+            </div>
+
+            <h3 class="text-lg font-bold text-red-600 mb-2"><i class="fas fa-car-crash mr-2"></i>What is a Collision?</h3>
+            <p class="mb-4">A collision occurs when the hash function generates the <strong>exact same index for two different keys</strong>.</p>
+            
+            <div class="bg-slate-50 border border-slate-200 rounded-lg p-4 font-mono text-sm space-y-2">
+                <p class="text-slate-500">// Example: Hash table size m = 10</p>
+                <p>Key = 6 &nbsp;&rarr; 6 % 10  = <span class="bg-blue-200 text-blue-900 px-2 py-1 rounded font-bold">6</span> (Store at index 6)</p>
+                <p>Key = 26 &rarr; 26 % 10 = <span class="bg-red-200 text-red-900 px-2 py-1 rounded font-bold">6</span> <span class="text-red-600 ml-2">&larr; COLLISION! Index 6 is full.</span></p>
+            </div>
+        </article>
+
+        <!-- Card 3: Classification -->
+        <article class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <div class="flex items-center space-x-3 mb-6">
+                <div class="bg-purple-100 text-purple-600 p-2 rounded-lg"><i class="fas fa-sitemap text-xl"></i></div>
+                <h2 class="text-2xl font-bold text-slate-800">3. Classification of Hashing</h2>
+            </div>
+            
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- Open Hashing -->
+                <div class="border-2 border-emerald-200 rounded-xl p-5 bg-emerald-50">
+                    <h3 class="text-emerald-800 font-bold text-lg border-b border-emerald-200 pb-2 mb-3">Open Hashing</h3>
+                    <p class="text-sm text-emerald-600 mb-3 italic">Also called: Closed Addressing</p>
+                    <ul class="list-disc pl-5 text-slate-700 space-y-2">
+                        <li>Uses <strong>Chaining</strong>.</li>
+                        <li>Elements can be stored outside the main array using Linked Lists.</li>
+                    </ul>
+                </div>
+                
+                <!-- Closed Hashing -->
+                <div class="border-2 border-amber-200 rounded-xl p-5 bg-amber-50">
+                    <h3 class="text-amber-800 font-bold text-lg border-b border-amber-200 pb-2 mb-3">Closed Hashing</h3>
+                    <p class="text-sm text-amber-600 mb-3 italic">Also called: Open Addressing</p>
+                    <ul class="list-disc pl-5 text-slate-700 space-y-2">
+                        <li>Elements <em>must</em> be stored strictly inside the hash table array.</li>
+                        <li><strong>1. Linear Probing</strong></li>
+                        <li><strong>2. Quadratic Probing</strong></li>
+                        <li><strong>3. Double Hashing</strong></li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 4: Practice Problem Setup -->
+        <article class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="bg-slate-800 text-white p-2 rounded-lg"><i class="fas fa-laptop-code text-xl"></i></div>
+                <h2 class="text-2xl font-bold text-slate-800">4. Practice Problem Setup</h2>
+            </div>
+            <p class="mb-6">The instructor uses this exact setup to demonstrate both Chaining and Linear Probing.</p>
+            
+            <div class="grid grid-cols-1 gap-4 font-mono text-sm sm:text-base">
+                <div class="bg-slate-100 p-4 rounded-lg flex flex-col sm:flex-row sm:items-center">
+                    <span class="text-slate-500 font-bold w-24">Keys (A):</span>
+                    <span class="text-slate-800">[3, 2, 9, 6, 11, 13, 7, 12]</span>
+                </div>
+                <div class="bg-slate-100 p-4 rounded-lg flex flex-col sm:flex-row sm:items-center">
+                    <span class="text-slate-500 font-bold w-24">Table (m):</span>
+                    <span class="text-slate-800">10 (Indices 0 to 9)</span>
+                </div>
+                <div class="bg-blue-100 border border-blue-200 p-4 rounded-lg flex flex-col sm:flex-row sm:items-center">
+                    <span class="text-blue-800 font-bold w-24">Formula:</span>
+                    <span class="text-blue-900 font-bold text-lg">\[ (2k + 3) \pmod{10} \]</span>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 5: Chaining Method -->
+        <article class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-emerald-100 text-emerald-600 p-2 rounded-lg"><i class="fas fa-link text-xl"></i></div>
+                    <h2 class="text-2xl font-bold text-slate-800">5. Solving with Chaining</h2>
+                </div>
+                <span class="hidden sm:inline-block bg-emerald-100 text-emerald-800 text-xs font-bold px-3 py-1 rounded-full">Open Hashing</span>
+            </div>
+            <p class="mb-6 text-slate-600"><strong>Rule:</strong> If a collision happens, create a Linked List (a chain) extending outward from that specific index.</p>
+
+            <div class="flex flex-col md:flex-row gap-8">
+                <!-- Calculations Table -->
+                <div class="flex-1 overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50 text-slate-500">
+                            <tr>
+                                <th class="py-3 px-4 rounded-tl-lg">Key</th>
+                                <th class="py-3 px-4">Calculation</th>
+                                <th class="py-3 px-4 rounded-tr-lg">Target Index</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-mono">
+                            <tr><td class="py-2 px-4 font-bold text-slate-800">3</td><td class="py-2 px-4">(6+3)%10</td><td class="py-2 px-4 text-blue-600 font-bold">9</td></tr>
+                            <tr><td class="py-2 px-4 font-bold text-slate-800">2</td><td class="py-2 px-4">(4+3)%10</td><td class="py-2 px-4 text-blue-600 font-bold">7</td></tr>
+                            <tr><td class="py-2 px-4 font-bold text-slate-800">9</td><td class="py-2 px-4">(18+3)%10</td><td class="py-2 px-4 text-blue-600 font-bold">1</td></tr>
+                            <tr><td class="py-2 px-4 font-bold text-slate-800">6</td><td class="py-2 px-4">(12+3)%10</td><td class="py-2 px-4 text-blue-600 font-bold">5</td></tr>
+                            <tr class="bg-red-50"><td class="py-2 px-4 font-bold text-slate-800">11</td><td class="py-2 px-4">(22+3)%10</td><td class="py-2 px-4 text-red-600 font-bold">5 (Collision!)</td></tr>
+                            <tr class="bg-red-50"><td class="py-2 px-4 font-bold text-slate-800">13</td><td class="py-2 px-4">(26+3)%10</td><td class="py-2 px-4 text-red-600 font-bold">9 (Collision!)</td></tr>
+                            <tr class="bg-red-50"><td class="py-2 px-4 font-bold text-slate-800">7</td><td class="py-2 px-4">(14+3)%10</td><td class="py-2 px-4 text-red-600 font-bold">7 (Collision!)</td></tr>
+                            <tr class="bg-red-50"><td class="py-2 px-4 font-bold text-slate-800">12</td><td class="py-2 px-4">(24+3)%10</td><td class="py-2 px-4 text-red-600 font-bold">7 (Collision!)</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Visual Representation -->
+                <div class="flex-none bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 text-center">Visual Hash Table</h3>
+                    <div class="space-y-1">
+                        <!-- Index 0 -->
+                        <div class="flex items-center"><div class="hash-index">0</div><div class="hash-val val-empty">-</div></div>
+                        <!-- Index 1 -->
+                        <div class="flex items-center"><div class="hash-index">1</div><div class="hash-val val-filled">9</div></div>
+                        <!-- Index 2 -->
+                        <div class="flex items-center"><div class="hash-index">2</div><div class="hash-val val-empty">-</div></div>
+                        <!-- Index 3 -->
+                        <div class="flex items-center"><div class="hash-index">3</div><div class="hash-val val-empty">-</div></div>
+                        <!-- Index 4 -->
+                        <div class="flex items-center"><div class="hash-index">4</div><div class="hash-val val-empty">-</div></div>
+                        <!-- Index 5 (Chaining) -->
+                        <div class="flex items-center">
+                            <div class="hash-index">5</div><div class="hash-val val-filled">6</div>
+                            <i class="fas fa-arrow-right text-emerald-400 mx-2 text-xs"></i>
+                            <div class="hash-val val-chain w-12">11</div>
+                        </div>
+                        <!-- Index 6 -->
+                        <div class="flex items-center"><div class="hash-index">6</div><div class="hash-val val-empty">-</div></div>
+                        <!-- Index 7 (Chaining x2) -->
+                        <div class="flex items-center">
+                            <div class="hash-index">7</div><div class="hash-val val-filled">2</div>
+                            <i class="fas fa-arrow-right text-emerald-400 mx-2 text-xs"></i>
+                            <div class="hash-val val-chain w-12">7</div>
+                            <i class="fas fa-arrow-right text-emerald-400 mx-2 text-xs"></i>
+                            <div class="hash-val val-chain w-12">12</div>
+                        </div>
+                        <!-- Index 8 -->
+                        <div class="flex items-center"><div class="hash-index">8</div><div class="hash-val val-empty">-</div></div>
+                        <!-- Index 9 (Chaining) -->
+                        <div class="flex items-center">
+                            <div class="hash-index">9</div><div class="hash-val val-filled">3</div>
+                            <i class="fas fa-arrow-right text-emerald-400 mx-2 text-xs"></i>
+                            <div class="hash-val val-chain w-12">13</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Card 6: Linear Probing -->
+        <article class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <div class="flex items-center justify-between mb-6 border-b border-slate-100 pb-4">
+                <div class="flex items-center space-x-3">
+                    <div class="bg-amber-100 text-amber-600 p-2 rounded-lg"><i class="fas fa-arrow-down-short-wide text-xl"></i></div>
+                    <h2 class="text-2xl font-bold text-slate-800">6. Solving with Linear Probing</h2>
+                </div>
+                <span class="hidden sm:inline-block bg-amber-100 text-amber-800 text-xs font-bold px-3 py-1 rounded-full">Closed Hashing</span>
+            </div>
+            <p class="mb-6 text-slate-600"><strong>Rule:</strong> If a collision happens, you must store the element inside the array. You search ("probe") for the very next available empty slot (Index + 1). If you hit the bottom (index 9), loop back to top (index 0).</p>
+
+            <div class="flex flex-col md:flex-row gap-8">
+                <!-- Calculations Table -->
+                <div class="flex-1 overflow-x-auto">
+                    <table class="w-full text-sm text-left">
+                        <thead class="bg-slate-50 text-slate-500">
+                            <tr>
+                                <th class="py-3 px-3 rounded-tl-lg">Key</th>
+                                <th class="py-3 px-3">Target</th>
+                                <th class="py-3 px-3">Probes</th>
+                                <th class="py-3 px-3 rounded-tr-lg">Final Index</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-slate-100 font-mono">
+                            <tr><td class="py-2 px-3 font-bold text-slate-800">3</td><td class="py-2 px-3">9</td><td class="py-2 px-3">1</td><td class="py-2 px-3 text-blue-600 font-bold">9</td></tr>
+                            <tr><td class="py-2 px-3 font-bold text-slate-800">2</td><td class="py-2 px-3">7</td><td class="py-2 px-3">1</td><td class="py-2 px-3 text-blue-600 font-bold">7</td></tr>
+                            <tr><td class="py-2 px-3 font-bold text-slate-800">9</td><td class="py-2 px-3">1</td><td class="py-2 px-3">1</td><td class="py-2 px-3 text-blue-600 font-bold">1</td></tr>
+                            <tr><td class="py-2 px-3 font-bold text-slate-800">6</td><td class="py-2 px-3">5</td><td class="py-2 px-3">1</td><td class="py-2 px-3 text-blue-600 font-bold">5</td></tr>
+                            <tr class="bg-amber-50"><td class="py-2 px-3 font-bold text-slate-800">11</td><td class="py-2 px-3 line-through text-slate-400">5</td><td class="py-2 px-3 text-amber-700">2</td><td class="py-2 px-3 text-amber-600 font-bold">6 <span class="text-xs font-sans font-normal">(5+1)</span></td></tr>
+                            <tr class="bg-amber-50"><td class="py-2 px-3 font-bold text-slate-800">13</td><td class="py-2 px-3 line-through text-slate-400">9</td><td class="py-2 px-3 text-amber-700">2</td><td class="py-2 px-3 text-amber-600 font-bold">0 <span class="text-xs font-sans font-normal">(loop)</span></td></tr>
+                            <tr class="bg-amber-50"><td class="py-2 px-3 font-bold text-slate-800">7</td><td class="py-2 px-3 line-through text-slate-400">7</td><td class="py-2 px-3 text-amber-700">2</td><td class="py-2 px-3 text-amber-600 font-bold">8 <span class="text-xs font-sans font-normal">(7+1)</span></td></tr>
+                            <tr class="bg-red-50"><td class="py-2 px-3 font-bold text-slate-800">12</td><td class="py-2 px-3 line-through text-slate-400">7</td><td class="py-2 px-3 text-red-600 font-bold">6</td><td class="py-2 px-3 text-red-600 font-bold">2 <span class="text-xs font-sans font-normal">(7,8,9,0,1,2)</span></td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <!-- Visual Representation -->
+                <div class="flex-none bg-slate-50 p-6 rounded-xl border border-slate-200">
+                    <h3 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-4 text-center">Final Array Sequence</h3>
+                    <div class="space-y-1">
+                        <div class="flex items-center"><div class="hash-index">0</div><div class="hash-val bg-amber-100 border-amber-300 text-amber-800">13</div></div>
+                        <div class="flex items-center"><div class="hash-index">1</div><div class="hash-val val-filled">9</div></div>
+                        <div class="flex items-center"><div class="hash-index">2</div><div class="hash-val bg-red-100 border-red-300 text-red-800">12</div></div>
+                        <div class="flex items-center"><div class="hash-index">3</div><div class="hash-val val-empty">-</div></div>
+                        <div class="flex items-center"><div class="hash-index">4</div><div class="hash-val val-empty">-</div></div>
+                        <div class="flex items-center"><div class="hash-index">5</div><div class="hash-val val-filled">6</div></div>
+                        <div class="flex items-center"><div class="hash-index">6</div><div class="hash-val bg-amber-100 border-amber-300 text-amber-800">11</div></div>
+                        <div class="flex items-center"><div class="hash-index">7</div><div class="hash-val val-filled">2</div></div>
+                        <div class="flex items-center"><div class="hash-index">8</div><div class="hash-val bg-amber-100 border-amber-300 text-amber-800">7</div></div>
+                        <div class="flex items-center"><div class="hash-index">9</div><div class="hash-val val-filled">3</div></div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="mt-6 bg-slate-800 text-white p-4 rounded-lg flex items-center justify-between shadow-inner overflow-x-auto">
+                <span class="font-bold whitespace-nowrap mr-4">Exam Output Array:</span>
+                <span class="font-mono text-emerald-400 tracking-widest whitespace-nowrap">[ 13, 9, 12, _, _, 6, 11, 2, 7, 3 ]</span>
+            </div>
+        </article>
+
+        <!-- Card 7: Math Definition -->
+        <article class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 md:p-8">
+            <div class="flex items-center space-x-3 mb-4">
+                <div class="bg-rose-100 text-rose-600 p-2 rounded-lg"><i class="fas fa-square-root-variable text-xl"></i></div>
+                <h2 class="text-2xl font-bold text-slate-800">7. Formal Mathematical Definition</h2>
+            </div>
+            <p class="mb-4">While visually searching "the next empty spot" is easy, university exams require you to know the formal Linear Probing formula:</p>
+            
+            <div class="math-block mb-6 text-lg text-center font-bold">
+                \[ (u + i) \pmod m \]
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8 text-sm">
+                <div class="bg-slate-50 p-3 rounded border border-slate-200"><span class="font-bold font-mono text-blue-600">u</span> = Original calculated index</div>
+                <div class="bg-slate-50 p-3 rounded border border-slate-200"><span class="font-bold font-mono text-blue-600">i</span> = Probe attempt (0, 1, 2...)</div>
+                <div class="bg-slate-50 p-3 rounded border border-slate-200"><span class="font-bold font-mono text-blue-600">m</span> = Hash table size</div>
+            </div>
+
+            <h3 class="font-bold text-slate-800 mb-3">Formula Proof (Using Key 11 from earlier):</h3>
+            <ul class="space-y-3 font-mono text-sm bg-slate-800 text-slate-200 p-5 rounded-xl shadow-inner">
+                <li><span class="text-slate-400">// u = 5, m = 10</span></li>
+                <li class="flex items-start">
+                    <span class="text-rose-400 mr-4 font-bold">i = 0</span>
+                    <span>(5 + 0) % 10 = <span class="text-white font-bold">5</span> <span class="text-slate-400 italic">-> Collision (Location full)</span></span>
+                </li>
+                <li class="flex items-start">
+                    <span class="text-emerald-400 mr-4 font-bold">i = 1</span>
+                    <span>(5 + 1) % 10 = <span class="text-white font-bold">6</span> <span class="text-emerald-300 italic">-> Empty! Successfully stored.</span></span>
+                </li>
+            </ul>
+        </article>
+
+        <div class="text-center text-slate-400 pt-8 pb-4 text-sm">
+            <i class="fas fa-check-circle mb-2 text-2xl text-emerald-400"></i>
+            <p>End of Study Feed. You're ready for the exam!</p>
+        </div>
+
+    </main>
+
+</body>
+</html>
