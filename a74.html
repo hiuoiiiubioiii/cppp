@@ -1,0 +1,574 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B-Tree Construction Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+
+        :root {
+            --bg-color: #f3f6f9;
+            --card-bg: #ffffff;
+            --text-main: #2d3436;
+            --text-muted: #636e72;
+            --primary: #0984e3;
+            --accent-red: #d63031;
+            --accent-green: #00b894;
+            --node-border: #2d3436;
+            --node-bg: #fdfdfd;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        header {
+            width: 100%;
+            background: var(--primary);
+            color: white;
+            padding: 40px 20px;
+            text-align: center;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            z-index: 10;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        main {
+            width: 100%;
+            max-width: 900px;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+            margin-top: 20px;
+        }
+
+        /* Feed Card Styles */
+        .feed-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+            opacity: 0; /* For scroll animation */
+            transform: translateY(30px);
+            transition: all 0.6s cubic-bezier(0.23, 1, 0.32, 1);
+        }
+
+        .feed-card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .step-badge {
+            display: inline-block;
+            background: var(--primary);
+            color: white;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .warning-badge {
+            background: var(--accent-red);
+        }
+
+        .success-badge {
+            background: var(--accent-green);
+        }
+
+        h2 {
+            font-size: 1.6rem;
+            margin-bottom: 15px;
+            color: var(--text-main);
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+
+        p, li {
+            font-size: 1.05rem;
+            color: var(--text-muted);
+            margin-bottom: 10px;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 20px;
+        }
+
+        .highlight {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        /* Tree Visualization Styles */
+        .tree-container {
+            width: 100%;
+            overflow-x: auto; /* Handles wide trees on mobile */
+            padding: 20px 0;
+            margin-top: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #fafbfc;
+            border: 1px dashed #ccc;
+            border-radius: 8px;
+        }
+
+        .tree-level {
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            margin-bottom: 30px;
+            position: relative;
+        }
+
+        /* Connecting lines logic (Simple CSS approximation) */
+        .tree-level:not(:last-child)::after {
+            content: '';
+            position: absolute;
+            bottom: -20px;
+            width: 2px;
+            height: 20px;
+            background: var(--node-border);
+        }
+
+        .node {
+            display: flex;
+            background: var(--node-bg);
+            border: 2px solid var(--node-border);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+            position: relative;
+        }
+
+        .key {
+            padding: 8px 16px;
+            font-weight: 700;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            border-right: 1px solid var(--node-border);
+        }
+
+        .key:last-child {
+            border-right: none;
+        }
+
+        .median {
+            background-color: rgba(214, 48, 49, 0.1);
+            color: var(--accent-red);
+        }
+
+        .action-box {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 4px 4px 0;
+        }
+
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>B-Tree Construction Breakdown</h1>
+        <p>A continuous, step-by-step visual guide to building a B-Tree of Order 5 using alphabetical data.</p>
+    </header>
+
+    <main id="feed">
+
+        <!-- SETUP -->
+        <article class="feed-card visible">
+            <span class="step-badge">Theory & Rules</span>
+            <h2>Setup & Core Properties</h2>
+            <p><strong>Goal:</strong> Construct a B-tree of order 5 with the data: <br>
+            <span class="highlight">D, H, Z, K, B, P, Q, E, A, S, W, T, C, L, N, Y, M</span></p>
+            <ul>
+                <li><strong>Order (m):</strong> 5</li>
+                <li><strong>Maximum Children:</strong> m = 5</li>
+                <li><strong>Maximum Keys per Node:</strong> m - 1 = 4</li>
+                <li><strong>Minimum Keys per Node (Internal):</strong> ⌈m/2⌉ - 1 = ⌈2.5⌉ - 1 = 3 - 1 = 2</li>
+                <li><strong>Sorting Rule:</strong> Data is ALWAYS inserted in <em>ascending alphabetical order</em>.</li>
+                <li><strong>Growth Rule:</strong> Insertions happen at the leaf nodes. The tree grows <em>upwards</em> when a node splits.</li>
+            </ul>
+        </article>
+
+        <!-- STEP 1 -->
+        <article class="feed-card">
+            <span class="step-badge">Step 1</span>
+            <h2>Insert D, H, Z, K</h2>
+            <p>We begin with an empty root node. We insert elements alphabetically. The maximum capacity is 4.</p>
+            <div class="action-box">
+                <strong>Instructor's Warning:</strong> Do not just append 'K' at the end! It must be sorted. K comes before Z.
+            </div>
+            <p>Resulting sequence: D ➔ H ➔ Z ➔ K (sorted to D, H, K, Z).</p>
+            <div class="tree-container">
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key">D</div>
+                        <div class="key">H</div>
+                        <div class="key">K</div>
+                        <div class="key">Z</div>
+                    </div>
+                </div>
+                <p style="margin-top:10px; color:#d63031; font-weight:600; font-size:0.9rem;">Node is now FULL (4 keys)</p>
+            </div>
+        </article>
+
+        <!-- STEP 2 -->
+        <article class="feed-card">
+            <span class="step-badge warning-badge">Step 2: Split 1</span>
+            <h2>Insert B (The First Split)</h2>
+            <p>Attempting to insert <strong>B</strong> alphabetically yields: <code>[B, D, H, K, Z]</code>. This exceeds our max key limit of 4. We must split!</p>
+            <ul>
+                <li>Find the median element: <span class="median" style="padding:2px 6px; border-radius:4px;">H</span></li>
+                <li>Push <strong>H</strong> up to become the new root.</li>
+                <li>Elements to the left `[B, D]` become the left child.</li>
+                <li>Elements to the right `[K, Z]` become the right child.</li>
+            </ul>
+            <div class="tree-container">
+                <div class="tree-level">
+                    <div class="node"><div class="key">H</div></div>
+                </div>
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key">B</div>
+                        <div class="key">D</div>
+                    </div>
+                    <div class="node" style="margin-left: 20px;">
+                        <div class="key">K</div>
+                        <div class="key">Z</div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- STEP 3 -->
+        <article class="feed-card">
+            <span class="step-badge">Step 3</span>
+            <h2>Insert P, Q, E, A</h2>
+            <p>We traverse from the root (H) down to the appropriate leaf nodes.</p>
+            <ul>
+                <li><strong>P & Q:</strong> Both are > H. Go to the right child. Insert sorted. Node becomes `[K, P, Q, Z]`.</li>
+                <li><strong>E & A:</strong> Both are < H. Go to the left child. Insert sorted. Node becomes `[A, B, D, E]`.</li>
+            </ul>
+            <div class="tree-container">
+                <div class="tree-level">
+                    <div class="node"><div class="key">H</div></div>
+                </div>
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key">A</div>
+                        <div class="key">B</div>
+                        <div class="key">D</div>
+                        <div class="key">E</div>
+                    </div>
+                    <div class="node" style="margin-left: 20px;">
+                        <div class="key">K</div>
+                        <div class="key">P</div>
+                        <div class="key">Q</div>
+                        <div class="key">Z</div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- STEP 4 -->
+        <article class="feed-card">
+            <span class="step-badge warning-badge">Step 4: Split 2</span>
+            <h2>Insert S</h2>
+            <p><strong>S</strong> > H, so it goes to the right child. However, the sequence <code>[K, P, Q, S, Z]</code> causes an overflow.</p>
+            <ul>
+                <li>Find the median: <span class="median" style="padding:2px 6px; border-radius:4px;">Q</span></li>
+                <li>Push <strong>Q</strong> up to the parent (Root node). Root becomes `[H, Q]`.</li>
+                <li>Split the remaining elements into two children: `[K, P]` and `[S, Z]`.</li>
+            </ul>
+            <div class="tree-container">
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key">H</div>
+                        <div class="key">Q</div>
+                    </div>
+                </div>
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key">A</div>
+                        <div class="key">B</div>
+                        <div class="key">D</div>
+                        <div class="key">E</div>
+                    </div>
+                    <div class="node">
+                        <div class="key">K</div>
+                        <div class="key">P</div>
+                    </div>
+                    <div class="node">
+                        <div class="key">S</div>
+                        <div class="key">Z</div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- STEP 5 -->
+        <article class="feed-card">
+            <span class="step-badge">Step 5</span>
+            <h2>Insert W, T</h2>
+            <p>Both <strong>W</strong> and <strong>T</strong> are alphabetically greater than Q. They belong in the rightmost child.</p>
+            <p>Insert them sorted: W goes between S and Z. T goes between S and W. The rightmost node is now FULL.</p>
+            <div class="tree-container">
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key">H</div>
+                        <div class="key">Q</div>
+                    </div>
+                </div>
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key">A</div>
+                        <div class="key">B</div>
+                        <div class="key">D</div>
+                        <div class="key">E</div>
+                    </div>
+                    <div class="node">
+                        <div class="key">K</div>
+                        <div class="key">P</div>
+                    </div>
+                    <div class="node">
+                        <div class="key">S</div>
+                        <div class="key">T</div>
+                        <div class="key">W</div>
+                        <div class="key">Z</div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- STEP 6 -->
+        <article class="feed-card">
+            <span class="step-badge warning-badge">Step 6: Split 3</span>
+            <h2>Insert C</h2>
+            <p><strong>C</strong> < H. It goes to the leftmost child. Sequence <code>[A, B, C, D, E]</code> overflows.</p>
+            <ul>
+                <li>Find the median: <span class="median" style="padding:2px 6px; border-radius:4px;">C</span></li>
+                <li>Push <strong>C</strong> up to the root. Maintain sorted order: `[C, H, Q]`.</li>
+                <li>Split the rest into `[A, B]` and `[D, E]`.</li>
+            </ul>
+            <div class="tree-container">
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key">C</div>
+                        <div class="key">H</div>
+                        <div class="key">Q</div>
+                    </div>
+                </div>
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key">A</div>
+                        <div class="key">B</div>
+                    </div>
+                    <div class="node">
+                        <div class="key">D</div>
+                        <div class="key">E</div>
+                    </div>
+                    <div class="node">
+                        <div class="key">K</div>
+                        <div class="key">P</div>
+                    </div>
+                    <div class="node">
+                        <div class="key">S</div>
+                        <div class="key">T</div>
+                        <div class="key">W</div>
+                        <div class="key">Z</div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- STEP 7 -->
+        <article class="feed-card">
+            <span class="step-badge">Step 7</span>
+            <h2>Insert L, N</h2>
+            <p>Compare with root: <strong>C < H < L, N < Q</strong>. They belong in the 3rd child `[K, P]`.</p>
+            <p>Insert them sorted to get `[K, L, N, P]`. This node is now FULL.</p>
+            <div class="tree-container">
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key">C</div>
+                        <div class="key">H</div>
+                        <div class="key">Q</div>
+                    </div>
+                </div>
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key">A</div>
+                        <div class="key">B</div>
+                    </div>
+                    <div class="node">
+                        <div class="key">D</div>
+                        <div class="key">E</div>
+                    </div>
+                    <div class="node">
+                        <div class="key">K</div>
+                        <div class="key">L</div>
+                        <div class="key">N</div>
+                        <div class="key">P</div>
+                    </div>
+                    <div class="node">
+                        <div class="key">S</div>
+                        <div class="key">T</div>
+                        <div class="key">W</div>
+                        <div class="key">Z</div>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- STEP 8 -->
+        <article class="feed-card">
+            <span class="step-badge warning-badge">Step 8: Split 4</span>
+            <h2>Insert Y</h2>
+            <p><strong>Y</strong> > Q. Belongs in rightmost child. Sequence <code>[S, T, W, Y, Z]</code> overflows.</p>
+            <ul>
+                <li>Find the median: <span class="median" style="padding:2px 6px; border-radius:4px;">W</span></li>
+                <li>Push <strong>W</strong> up to the root. Root becomes `[C, H, Q, W]` (FULL).</li>
+                <li>Split the rest into `[S, T]` and `[Y, Z]`.</li>
+            </ul>
+            <div class="tree-container">
+                <div class="tree-level">
+                    <div class="node">
+                        <div class="key">C</div>
+                        <div class="key">H</div>
+                        <div class="key">Q</div>
+                        <div class="key">W</div>
+                    </div>
+                </div>
+                <div class="tree-level" style="gap:15px;">
+                    <div class="node"><div class="key">A</div><div class="key">B</div></div>
+                    <div class="node"><div class="key">D</div><div class="key">E</div></div>
+                    <div class="node"><div class="key">K</div><div class="key">L</div><div class="key">N</div><div class="key">P</div></div>
+                    <div class="node"><div class="key">S</div><div class="key">T</div></div>
+                    <div class="node"><div class="key">Y</div><div class="key">Z</div></div>
+                </div>
+            </div>
+        </article>
+
+        <!-- STEP 9 (CLIMAX) -->
+        <article class="feed-card">
+            <span class="step-badge warning-badge">Step 9: Double Split!</span>
+            <h2>Insert M (The Climax)</h2>
+            <p><strong>M</strong> belongs in the middle child `[K, L, N, P]`. Sequence <code>[K, L, M, N, P]</code> overflows.</p>
+            <ol>
+                <li>Find median of child: <span class="highlight">M</span>. Push M up to the root.</li>
+                <li><strong>CRITICAL ISSUE:</strong> The root is already full (`[C, H, Q, W]`). Pushing M up creates <code>[C, H, M, Q, W]</code>. <strong>The root overflows!</strong></li>
+                <li>We must perform a <strong>Double Split</strong>. Find the median of the overflowing root: <span class="median" style="padding:2px 6px; border-radius:4px;">M</span></li>
+                <li><strong>M</strong> moves up to become the brand new Root node. The tree grows in height!</li>
+                <li>Split the old root into left `[C, H]` and right `[Q, W]`.</li>
+                <li>Re-attach all leaf nodes to their appropriate parents based on alphabetical ranges.</li>
+            </ol>
+            
+            <div class="tree-container">
+                <div class="tree-level">
+                    <div class="node"><div class="key" style="background-color:#e74c3c; color:white;">M</div></div>
+                </div>
+                <!-- Layer 2 -->
+                <div class="tree-level" style="gap: 100px;">
+                    <div class="node">
+                        <div class="key">C</div>
+                        <div class="key">H</div>
+                    </div>
+                    <div class="node">
+                        <div class="key">Q</div>
+                        <div class="key">W</div>
+                    </div>
+                </div>
+                <!-- Layer 3 (Leaves) -->
+                <div class="tree-level" style="gap: 20px;">
+                    <!-- Under C,H -->
+                    <div class="node"><div class="key">A</div><div class="key">B</div></div>
+                    <div class="node"><div class="key">D</div><div class="key">E</div></div>
+                    <div class="node"><div class="key">K</div><div class="key">L</div></div>
+                    
+                    <!-- Under Q,W -->
+                    <div class="node" style="margin-left: 20px;"><div class="key">N</div><div class="key">P</div></div>
+                    <div class="node"><div class="key">S</div><div class="key">T</div></div>
+                    <div class="node"><div class="key">Y</div><div class="key">Z</div></div>
+                </div>
+            </div>
+        </article>
+
+        <!-- FINAL VERIFICATION -->
+        <article class="feed-card">
+            <span class="step-badge success-badge">Verification</span>
+            <h2>Instructor's Final Checklist</h2>
+            <p>At the end of the video, the instructor verifies the tree to ensure no B-tree rules were broken:</p>
+            <div class="action-box" style="border-color: var(--accent-green); background: #e8f8f5;">
+                <ul>
+                    <li>✅ <strong>Sorted Data:</strong> All data inside every node is in alphabetical (ascending) order.</li>
+                    <li>✅ <strong>Leaf Level:</strong> All leaf nodes are at the exact same depth/level.</li>
+                    <li>✅ <strong>Minimum Keys:</strong> The minimum number of keys a non-root node can have is 2. Every single leaf node and internal node has exactly 2 keys.</li>
+                    <li>✅ <strong>Maximum Keys:</strong> No node exceeds 4 keys.</li>
+                </ul>
+            </div>
+            <p style="text-align: center; font-weight: 600; margin-top: 20px;">🎉 B-Tree Construction Complete!</p>
+        </article>
+
+    </main>
+
+    <script>
+        // Intersection Observer to create the smooth "Feed" scroll-reveal effect
+        document.addEventListener("DOMContentLoaded", () => {
+            const cards = document.querySelectorAll('.feed-card');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15 // Triggers when 15% of the card is visible
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        // Optional: Un-comment the line below to stop observing once revealed
+                        // observer.unobserve(entry.target);
+                    }
+                });
+            }, observerOptions);
+
+            cards.forEach(card => {
+                observer.observe(card);
+            });
+        });
+    </script>
+
+</body>
+</html>
