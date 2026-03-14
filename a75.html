@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B-Tree Construction Masterclass</title>
+    <style>
+        /* === BASE STYLES & TYPOGRAPHY === */
+        :root {
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --accent-green: #10b981;
+            --accent-orange: #f59e0b;
+            --accent-red: #ef4444;
+            --node-border: #475569;
+            --line-color: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .feed-container {
+            max-width: 800px;
+            width: 100%;
+        }
+
+        h1, h2, h3 {
+            color: #0f172a;
+            margin-bottom: 10px;
+        }
+
+        p {
+            margin-bottom: 15px;
+        }
+
+        .highlight-green { color: var(--accent-green); font-weight: bold; }
+        .highlight-orange { color: var(--accent-orange); font-weight: bold; }
+        .highlight-blue { color: var(--accent-blue); font-weight: bold; }
+
+        /* === FEED LAYOUT === */
+        .header-card {
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            color: white;
+            padding: 40px 30px;
+            border-radius: 16px;
+            margin-bottom: 40px;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header-card h1 {
+            color: white;
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+        }
+
+        .rules-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-left: 4px solid var(--accent-blue);
+            padding: 20px;
+            border-radius: 8px;
+            text-align: left;
+            margin-top: 20px;
+        }
+
+        .rules-box ul {
+            list-style-type: none;
+        }
+
+        .rules-box li {
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .feed-step {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            opacity: 0; /* For scroll animation */
+            transform: translateY(30px); /* For scroll animation */
+            transition: all 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .feed-step.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .step-header {
+            display: flex;
+            align-items: center;
+            border-bottom: 2px solid #e2e8f0;
+            padding-bottom: 15px;
+            margin-bottom: 25px;
+        }
+
+        .step-number {
+            background: var(--accent-blue);
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            margin-right: 15px;
+            flex-shrink: 0;
+        }
+
+        .instructor-note {
+            background-color: #fffbeb;
+            border-left: 4px solid var(--accent-orange);
+            padding: 15px 20px;
+            margin: 20px 0;
+            border-radius: 0 8px 8px 0;
+            font-style: italic;
+            color: #92400e;
+        }
+
+        /* === CSS B-TREE VISUALIZATION === */
+        .tree-container {
+            width: 100%;
+            overflow-x: auto;
+            padding: 20px 0 40px 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* The Tree Framework */
+        .tree ul {
+            padding-top: 20px;
+            position: relative;
+            display: flex;
+            justify-content: center;
+            padding-left: 0;
+            margin: 0;
+            gap: 20px;
+        }
+
+        .tree li {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            list-style-type: none;
+            position: relative;
+            padding: 20px 0 0 0;
+        }
+
+        /* Connectors */
+        .tree li::before, .tree li::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 50%;
+            border-top: 2px solid var(--line-color);
+            width: 50%;
+            height: 20px;
+            z-index: 1;
+        }
+        .tree li::after {
+            right: auto;
+            left: 50%;
+            border-left: 2px solid var(--line-color);
+        }
+        .tree li:only-child::after, .tree li:only-child::before {
+            display: none;
+        }
+        .tree li:only-child {
+            padding-top: 0;
+        }
+        .tree li:first-child::before, .tree li:last-child::after {
+            border: 0 none;
+        }
+        .tree li:last-child::before {
+            border-right: 2px solid var(--line-color);
+            border-radius: 0 5px 0 0;
+        }
+        .tree li:first-child::after {
+            border-radius: 5px 0 0 0;
+        }
+        .tree ul ul::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            border-left: 2px solid var(--line-color);
+            width: 0;
+            height: 20px;
+            z-index: 1;
+        }
+
+        /* B-Tree Node Styling */
+        .btree-node {
+            display: inline-flex;
+            background: white;
+            border: 2px solid var(--node-border);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            position: relative;
+            z-index: 2;
+        }
+
+        .btree-key {
+            padding: 8px 16px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            color: var(--text-main);
+            border-right: 2px solid var(--node-border);
+            min-width: 40px;
+            text-align: center;
+        }
+
+        .btree-key:last-child {
+            border-right: none;
+        }
+
+        /* Key States */
+        .key-new {
+            background-color: #d1fae5; /* Light green */
+            color: #065f46;
+            animation: pulse 2s infinite;
+        }
+
+        .key-split {
+            background-color: #fef3c7; /* Light yellow/orange */
+            color: #92400e;
+        }
+
+        @keyframes pulse {
+            0% { background-color: #d1fae5; }
+            50% { background-color: #a7f3d0; }
+            100% { background-color: #d1fae5; }
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <!-- Header & Rules -->
+        <header class="header-card">
+            <h1>Constructing a B-Tree</h1>
+            <p style="font-size: 1.2rem; color: #cbd5e1;">Mastering the step-by-step insertion algorithm</p>
+            
+            <div class="rules-box">
+                <h3 style="color: white; border-bottom: 1px solid #3b82f6; padding-bottom: 10px; margin-bottom: 10px;">📋 The Foundational Rules (Memorize These!)</h3>
+                <ul>
+                    <li><strong>Sequence:</strong> 5, 3, 21, 9, 1, 13, 2, 7, 10, 12, 4, 8</li>
+                    <li><strong>Order (m):</strong> 4 <em>(A node can have a max of 4 children)</em></li>
+                    <li><strong>Max Keys per Node:</strong> m - 1 = <strong>3</strong></li>
+                    <li><strong>Sorting Rule:</strong> Keys inside a node are ALWAYS sorted in ascending order.</li>
+                    <li><strong>Insertion Rule:</strong> You MUST insert new numbers into a <strong>leaf node</strong> at the bottom.</li>
+                </ul>
+            </div>
+        </header>
+
+        <!-- Feed Steps -->
+        
+        <!-- Step 1 -->
+        <article class="feed-step">
+            <div class="step-header">
+                <div class="step-number">1</div>
+                <h2>Insert <span class="highlight-blue">5</span></h2>
+            </div>
+            <p>The tree is currently empty. We start by creating a brand new root node with 3 empty slots, and we place our first number, <strong>5</strong>, inside it.</p>
+            <div class="tree-container">
+                <div class="tree">
+                    <ul>
+                        <li>
+                            <div class="btree-node">
+                                <div class="btree-key key-new">5</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- Step 2 -->
+        <article class="feed-step">
+            <div class="step-header">
+                <div class="step-number">2</div>
+                <h2>Insert <span class="highlight-blue">3</span></h2>
+            </div>
+            <p>Because elements in a B-Tree node must be sorted, we compare 3 and 5. Since 3 is less than 5, it sits to the left of 5 inside the node.</p>
+            <div class="tree-container">
+                <div class="tree">
+                    <ul>
+                        <li>
+                            <div class="btree-node">
+                                <div class="btree-key key-new">3</div>
+                                <div class="btree-key">5</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- Step 3 -->
+        <article class="feed-step">
+            <div class="step-header">
+                <div class="step-number">3</div>
+                <h2>Insert <span class="highlight-blue">21</span></h2>
+            </div>
+            <p>Compare 21 to the existing numbers. It is greater than 5, so it goes to the far right. <strong>Note:</strong> The node is now full, as it has reached our max capacity of 3 keys!</p>
+            <div class="tree-container">
+                <div class="tree">
+                    <ul>
+                        <li>
+                            <div class="btree-node">
+                                <div class="btree-key">3</div>
+                                <div class="btree-key">5</div>
+                                <div class="btree-key key-new">21</div>
+                            </div>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- Step 4 -->
+        <article class="feed-step">
+            <div class="step-header">
+                <div class="step-number">4</div>
+                <h2>Insert <span class="highlight-orange">9</span> — FIRST SPLIT!</h2>
+            </div>
+            <p>If we insert 9, the sorted array would temporarily be <code>[3, 5, 9, 21]</code>. This is 4 keys, which breaks our rule! We must perform a <strong>split</strong>.</p>
+            
+            <div class="instructor-note">
+                <strong>👩‍🏫 Instructor Insight: Left-Biased vs Right-Biased</strong><br>
+                When splitting 4 numbers, there is no single middle number. The middle elements are 5 and 9. If we push 5 up, we are creating a <strong>Left-Biased</strong> tree. If we push 9 up, it's a <strong>Right-Biased</strong> tree. Both are mathematically correct, but you must pick one and stick to it! Let's choose Left-Biased and push <strong>5</strong> up.
+            </div>
+
+            <p><strong>The Action:</strong> The 5 moves up to become the new root. The 3 becomes the left child, and 9 and 21 become the right child.</p>
+
+            <div class="tree-container">
+                <div class="tree">
+                    <ul>
+                        <li>
+                            <div class="btree-node">
+                                <div class="btree-key key-split">5</div>
+                            </div>
+                            <ul>
+                                <li>
+                                    <div class="btree-node"><div class="btree-key">3</div></div>
+                                </li>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key key-new">9</div>
+                                        <div class="btree-key">21</div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- Step 5 -->
+        <article class="feed-step">
+            <div class="step-header">
+                <div class="step-number">5</div>
+                <h2>Insert <span class="highlight-blue">1</span></h2>
+            </div>
+            <p>Always start from the root. 1 is less than 5, so we travel down the left path to the node <code>[3]</code>. We insert 1 in sorted order.</p>
+            <div class="tree-container">
+                <div class="tree">
+                    <ul>
+                        <li>
+                            <div class="btree-node"><div class="btree-key">5</div></div>
+                            <ul>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key key-new">1</div>
+                                        <div class="btree-key">3</div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key">9</div>
+                                        <div class="btree-key">21</div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- Step 6 -->
+        <article class="feed-step">
+            <div class="step-header">
+                <div class="step-number">6</div>
+                <h2>Insert <span class="highlight-blue">13</span></h2>
+            </div>
+            <p>Start at the root (5). 13 is greater than 5, so we go down the right path. We insert 13 in the middle of 9 and 21 to keep it sorted. That node is now full.</p>
+            <div class="tree-container">
+                <div class="tree">
+                    <ul>
+                        <li>
+                            <div class="btree-node"><div class="btree-key">5</div></div>
+                            <ul>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key">1</div>
+                                        <div class="btree-key">3</div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key">9</div>
+                                        <div class="btree-key key-new">13</div>
+                                        <div class="btree-key">21</div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- Step 7 -->
+        <article class="feed-step">
+            <div class="step-header">
+                <div class="step-number">7</div>
+                <h2>Insert <span class="highlight-blue">2</span></h2>
+            </div>
+            <p>Start at the root (5). 2 is less than 5, so go down the left path. Insert 2 between 1 and 3. The left node is now also full.</p>
+            <div class="tree-container">
+                <div class="tree">
+                    <ul>
+                        <li>
+                            <div class="btree-node"><div class="btree-key">5</div></div>
+                            <ul>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key">1</div>
+                                        <div class="btree-key key-new">2</div>
+                                        <div class="btree-key">3</div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key">9</div>
+                                        <div class="btree-key">13</div>
+                                        <div class="btree-key">21</div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- Step 8 -->
+        <article class="feed-step">
+            <div class="step-header">
+                <div class="step-number">8</div>
+                <h2>Insert <span class="highlight-orange">7</span> — SECOND SPLIT!</h2>
+            </div>
+            <p>Traversing from the root, 7 is greater than 5, so we arrive at the right node <code>[9 | 13 | 21]</code>. Trying to insert 7 gives us <code>[7 | 9 | 13 | 21]</code>. Overflow!</p>
+            <p><strong>The Action:</strong> Based on our Left-Biased rule, the median is <strong>9</strong>. We push 9 UP to join its parent (the root). The 7 becomes its left child, and 13 & 21 become its right child.</p>
+            <div class="tree-container">
+                <div class="tree">
+                    <ul>
+                        <li>
+                            <div class="btree-node">
+                                <div class="btree-key">5</div>
+                                <div class="btree-key key-split">9</div>
+                            </div>
+                            <ul>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key">1</div>
+                                        <div class="btree-key">2</div>
+                                        <div class="btree-key">3</div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="btree-node"><div class="btree-key key-new">7</div></div>
+                                </li>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key">13</div>
+                                        <div class="btree-key">21</div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- Step 9 -->
+        <article class="feed-step">
+            <div class="step-header">
+                <div class="step-number">9</div>
+                <h2>Insert <span class="highlight-blue">10</span></h2>
+            </div>
+            <p>Start at the root <code>[5 | 9]</code>. Since 10 is greater than 9, follow the rightmost path down to <code>[13 | 21]</code>. Insert 10 in sorted order.</p>
+            <div class="tree-container">
+                <div class="tree">
+                    <ul>
+                        <li>
+                            <div class="btree-node">
+                                <div class="btree-key">5</div>
+                                <div class="btree-key">9</div>
+                            </div>
+                            <ul>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key">1</div>
+                                        <div class="btree-key">2</div>
+                                        <div class="btree-key">3</div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="btree-node"><div class="btree-key">7</div></div>
+                                </li>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key key-new">10</div>
+                                        <div class="btree-key">13</div>
+                                        <div class="btree-key">21</div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- Step 10 -->
+        <article class="feed-step">
+            <div class="step-header">
+                <div class="step-number">10</div>
+                <h2>Insert <span class="highlight-orange">12</span> — THIRD SPLIT!</h2>
+            </div>
+            <p>Start at root. 12 > 9, so go to the rightmost leaf <code>[10 | 13 | 21]</code>. Inserting 12 causes an overflow: <code>[10 | 12 | 13 | 21]</code>.</p>
+            <p><strong>The Action:</strong> The left-biased median is <strong>12</strong>. We push 12 UP into the root node. The root is now completely full.</p>
+            <div class="tree-container">
+                <div class="tree">
+                    <ul>
+                        <li>
+                            <div class="btree-node">
+                                <div class="btree-key">5</div>
+                                <div class="btree-key">9</div>
+                                <div class="btree-key key-split">12</div>
+                            </div>
+                            <ul>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key">1</div>
+                                        <div class="btree-key">2</div>
+                                        <div class="btree-key">3</div>
+                                    </div>
+                                </li>
+                                <li>
+                                    <div class="btree-node"><div class="btree-key">7</div></div>
+                                </li>
+                                <li>
+                                    <div class="btree-node"><div class="btree-key">10</div></div>
+                                </li>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key">13</div>
+                                        <div class="btree-key">21</div>
+                                    </div>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- Step 11 -->
+        <article class="feed-step">
+            <div class="step-header">
+                <div class="step-number">11</div>
+                <h2>Insert <span class="highlight-orange">4</span> — CASCADING SPLIT!</h2>
+            </div>
+            <p>Traversing down, 4 goes to the far-left node: <code>[1 | 2 | 3]</code>. Overflow occurs: <code>[1 | 2 | 3 | 4]</code>. The median <strong>2</strong> pushes UP to the root.</p>
+            <p><strong>Uh Oh!</strong> The root was already full! Pushing 2 up creates a temporary root of <code>[2 | 5 | 9 | 12]</code>. We have to <strong>split the root!</strong></p>
+            <div class="instructor-note">
+                <strong>👩‍🏫 Instructor Insight: The Cascading Split</strong><br>
+                When a parent node overflows because a child pushed a number up, we simply apply the exact same rule. Find the median of the root <code>[2 | 5 | 9 | 12]</code>, which is <strong>5</strong>. We push 5 UP to become a brand new root level, increasing the height of the entire tree!
+            </div>
+            <div class="tree-container">
+                <div class="tree">
+                    <ul>
+                        <li>
+                            <div class="btree-node">
+                                <div class="btree-key key-split">5</div>
+                            </div>
+                            <ul>
+                                <li>
+                                    <div class="btree-node"><div class="btree-key key-split">2</div></div>
+                                    <ul>
+                                        <li>
+                                            <div class="btree-node"><div class="btree-key">1</div></div>
+                                        </li>
+                                        <li>
+                                            <div class="btree-node">
+                                                <div class="btree-key">3</div>
+                                                <div class="btree-key key-new">4</div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key">9</div>
+                                        <div class="btree-key">12</div>
+                                    </div>
+                                    <ul>
+                                        <li>
+                                            <div class="btree-node"><div class="btree-key">7</div></div>
+                                        </li>
+                                        <li>
+                                            <div class="btree-node"><div class="btree-key">10</div></div>
+                                        </li>
+                                        <li>
+                                            <div class="btree-node">
+                                                <div class="btree-key">13</div>
+                                                <div class="btree-key">21</div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <!-- Step 12 -->
+        <article class="feed-step">
+            <div class="step-header">
+                <div class="step-number">12</div>
+                <h2>Insert <span class="highlight-green">8</span> — Final Step</h2>
+            </div>
+            <p>Start at the new root (5). 8 is greater than 5, so go right to <code>[9 | 12]</code>. 8 is less than 9, so follow 9's left child. We arrive at the leaf node <code>[7]</code>. We successfully insert 8, completing the B-Tree!</p>
+            <div class="tree-container">
+                <div class="tree">
+                    <ul>
+                        <li>
+                            <div class="btree-node">
+                                <div class="btree-key">5</div>
+                            </div>
+                            <ul>
+                                <li>
+                                    <div class="btree-node"><div class="btree-key">2</div></div>
+                                    <ul>
+                                        <li>
+                                            <div class="btree-node"><div class="btree-key">1</div></div>
+                                        </li>
+                                        <li>
+                                            <div class="btree-node">
+                                                <div class="btree-key">3</div>
+                                                <div class="btree-key">4</div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </li>
+                                <li>
+                                    <div class="btree-node">
+                                        <div class="btree-key">9</div>
+                                        <div class="btree-key">12</div>
+                                    </div>
+                                    <ul>
+                                        <li>
+                                            <div class="btree-node">
+                                                <div class="btree-key">7</div>
+                                                <div class="btree-key key-new">8</div>
+                                            </div>
+                                        </li>
+                                        <li>
+                                            <div class="btree-node"><div class="btree-key">10</div></div>
+                                        </li>
+                                        <li>
+                                            <div class="btree-node">
+                                                <div class="btree-key">13</div>
+                                                <div class="btree-key">21</div>
+                                            </div>
+                                        </li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </article>
+
+        <header class="header-card" style="margin-top: 60px; background: linear-gradient(135deg, #059669, #047857);">
+            <h2>🎉 You Did It!</h2>
+            <p style="font-size: 1.1rem; margin-top: 10px;">You've successfully tracked the construction of an Order 4 B-Tree. Remember: Always traverse from the top, always insert at the bottom, and split "upwards" when you hit the capacity limit!</p>
+        </header>
+
+    </div>
+
+    <!-- Scroll Animation Script -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            const steps = document.querySelectorAll('.feed-step');
+            
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15 
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target); // Stop observing once it's visible
+                    }
+                });
+            }, observerOptions);
+
+            steps.forEach(step => {
+                observer.observe(step);
+            });
+            
+            // Trigger visibility for the first couple of items immediately in case they are in viewport on load
+            setTimeout(() => {
+                steps[0].classList.add('visible');
+                if(steps[1] && steps[1].getBoundingClientRect().top < window.innerHeight) {
+                    steps[1].classList.add('visible');
+                }
+            }, 100);
+        });
+    </script>
+</body>
+</html>
