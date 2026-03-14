@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B+ Tree Construction - Study Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #333;
+            --text-muted: #555;
+            --primary: #4F46E5;
+            --primary-light: #E0E7FF;
+            --secondary: #10B981;
+            --secondary-light: #D1FAE5;
+            --card-bg: #ffffff;
+            --border: #e5e7eb;
+            
+            /* Node Colors */
+            --node-internal-bg: #EFF6FF;
+            --node-internal-border: #3B82F6;
+            --node-leaf-bg: #F0FDF4;
+            --node-leaf-border: #22C55E;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+        }
+
+        .feed-container {
+            max-width: 900px;
+            width: 100%;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+        }
+
+        /* Typography */
+        h1 { font-size: 2.5rem; color: #111; text-align: center; margin-bottom: 0.5rem; }
+        h2 { font-size: 1.8rem; color: var(--primary); border-bottom: 2px solid var(--primary-light); padding-bottom: 0.5rem; margin-top: 0; }
+        h3 { font-size: 1.3rem; color: #111; margin-bottom: 1rem; }
+        p { margin-bottom: 1rem; font-size: 1.05rem; }
+        strong { color: #111; }
+
+        /* Cards / Sections */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+        }
+
+        .highlight-box {
+            background: #FFFBEB;
+            border-left: 4px solid #F59E0B;
+            padding: 1rem 1.5rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+        }
+
+        ul { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+        li { margin-bottom: 0.5rem; font-size: 1.05rem; }
+
+        /* Tree Visualization CSS */
+        .tree-vis {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1.5rem;
+            margin: 2rem 0;
+            padding: 2rem;
+            background: #f8fafc;
+            border-radius: 12px;
+            border: 1px dashed #cbd5e1;
+            overflow-x: auto;
+        }
+
+        .tree-level {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 2rem;
+            position: relative;
+        }
+
+        /* Linked List Level for Leaves */
+        .leaf-level {
+            gap: 0.5rem; 
+        }
+
+        /* Individual Node */
+        .node {
+            display: flex;
+            border-radius: 6px;
+            overflow: hidden;
+            font-weight: 600;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .node-internal {
+            background: var(--node-internal-bg);
+            border: 2px solid var(--node-internal-border);
+        }
+
+        .node-leaf {
+            background: var(--node-leaf-bg);
+            border: 2px solid var(--node-leaf-border);
+        }
+
+        .key {
+            padding: 0.6rem 1rem;
+            border-right: 1px solid rgba(0,0,0,0.1);
+            min-width: 20px;
+            text-align: center;
+        }
+        .key:last-child { border-right: none; }
+
+        /* Connectors */
+        .arrow { color: #94a3b8; font-weight: bold; font-size: 1.2rem; margin: 0 0.2rem; }
+        
+        /* Legend */
+        .legend {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 0.9rem;
+        }
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; }
+        .box { width: 16px; height: 16px; border-radius: 4px; }
+        .box-internal { background: var(--node-internal-bg); border: 2px solid var(--node-internal-border); }
+        .box-leaf { background: var(--node-leaf-bg); border: 2px solid var(--node-leaf-border); }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .feed-container { padding: 1rem; gap: 2rem; }
+            .card { padding: 1.5rem; }
+            .tree-vis { padding: 1rem; align-items: flex-start; }
+            .key { padding: 0.4rem 0.6rem; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <!-- Title Section -->
+    <div>
+        <h1>Constructing a B+ Tree</h1>
+        <p style="text-align: center; color: var(--text-muted);">Comprehensive visual notes based on Jenny's Lectures</p>
+    </div>
+
+    <!-- Rule Setup Card -->
+    <div class="card">
+        <h2>1. The Core Rules & Formulas</h2>
+        <p>Before inserting numbers, we must establish the boundaries of our B+ Tree. The instructor writes the following formulas on the board based on the given order.</p>
+        
+        <div class="highlight-box">
+            <strong>Given Order (m) = 4</strong><br><br>
+            <ul>
+                <li><strong>Max Children (Pointers):</strong> <code>m = 4</code></li>
+                <li><strong>Min Children:</strong> <code>⌈m/2rceil = 2</code></li>
+                <li><strong>Max Keys (Data per node):</strong> <code>m - 1 = 3</code> <em>(Crucial: A node can only hold 3 numbers!)</em></li>
+                <li><strong>Min Keys:</strong> <code>⌈m/2rceil - 1 = 1</code></li>
+            </ul>
+        </div>
+
+        <h3>Dataset to Insert:</h3>
+        <p><code>1, 4, 7, 10, 17, 21, 31, 25, 19, 20, 28, 42</code></p>
+    </div>
+
+    <!-- Theory Section -->
+    <div class="card">
+        <h2>2. B-Tree vs. B+ Tree Properties</h2>
+        <p>The instructor highlights three major theoretical differences that govern how we build this tree:</p>
+        <ul>
+            <li><strong>Data Location:</strong> In a B+ Tree, the actual data is <strong>ONLY stored in the leaf nodes</strong> (the bottom row).</li>
+            <li><strong>Internal Nodes:</strong> The internal (parent) nodes act purely as "guideposts" or indexes to direct the search. They do not hold actual records.</li>
+            <li><strong>The Linked List:</strong> All leaf nodes are connected to each other sequentially via a linked list. This allows for rapid range queries.</li>
+        </ul>
+
+        <div class="highlight-box">
+            <strong>The "Right-Biased" Splitting Rule:</strong><br>
+            When a node overflows (gets 4 elements), we must split it. Because 4 is an even number, the middle could be the 2nd or 3rd element. The instructor uses a <strong>Right-Biased</strong> approach, choosing the 3rd element to move up.
+        </div>
+    </div>
+
+    <!-- Insertion Steps feed -->
+    <div class="card">
+        <h2>3. Step-by-Step Insertion</h2>
+        
+        <div class="legend">
+            <div class="legend-item"><div class="box box-leaf"></div> Leaf Node (Data)</div>
+            <div class="legend-item"><div class="box box-internal"></div> Internal Node (Guidepost)</div>
+        </div>
+
+        <!-- Step 1 -->
+        <h3>Step 1: Inserting 1, 4, 7</h3>
+        <p>We start with an empty root node. As we insert 1, 4, and 7, they fill up the node. Because the maximum number of keys is 3, the node is now perfectly full.</p>
+        <div class="tree-vis">
+            <div class="tree-level leaf-level">
+                <div class="node node-leaf">
+                    <div class="key">1</div><div class="key">4</div><div class="key">7</div>
+                </div>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 2rem 0;">
+
+        <!-- Step 2 -->
+        <h3>Step 2: Inserting 10 (First Split)</h3>
+        <p>Inserting 10 causes an <strong>overflow</strong> <code>[1, 4, 7, 10]</code>. We find the middle element (right-biased) which is <strong>7</strong>.</p>
+        <ul>
+            <li><strong>7 goes UP</strong> to become the new root.</li>
+            <li>Because it is a leaf node splitting, a copy of 7 <strong>stays</strong> in the right-hand leaf node so no data is lost at the bottom level.</li>
+        </ul>
+        <div class="tree-vis">
+            <div class="tree-level">
+                <div class="node node-internal"><div class="key">7</div></div>
+            </div>
+            <div>↓</div>
+            <div class="tree-level leaf-level">
+                <div class="node node-leaf"><div class="key">1</div><div class="key">4</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">7</div><div class="key">10</div></div>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 2rem 0;">
+
+        <!-- Step 3 -->
+        <h3>Step 3: Inserting 17 and 21</h3>
+        <p>17 is greater than 7, so it goes to the right leaf: <code>[7, 10, 17]</code>. When 21 is inserted, the right node overflows: <code>[7, 10, 17, 21]</code>. </p>
+        <p>The middle is <strong>17</strong>. It moves UP to the parent. The parent now has room to hold it.</p>
+        <div class="tree-vis">
+            <div class="tree-level">
+                <div class="node node-internal"><div class="key">7</div><div class="key">17</div></div>
+            </div>
+            <div>↙ &nbsp; &nbsp; &nbsp; ↓ &nbsp; &nbsp; &nbsp; ↘</div>
+            <div class="tree-level leaf-level">
+                <div class="node node-leaf"><div class="key">1</div><div class="key">4</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">7</div><div class="key">10</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">17</div><div class="key">21</div></div>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 2rem 0;">
+
+        <!-- Step 4 -->
+        <h3>Step 4: Inserting 31 and 25</h3>
+        <p>31 fits nicely into the rightmost node. 25 belongs between 21 and 31. This causes an overflow: <code>[17, 21, 25, 31]</code>.</p>
+        <p>The middle is <strong>25</strong>. 25 moves UP. The root node is now completely full: <code>[7, 17, 25]</code>.</p>
+        <div class="tree-vis">
+            <div class="tree-level">
+                <div class="node node-internal"><div class="key">7</div><div class="key">17</div><div class="key">25</div></div>
+            </div>
+            <div>↙ &nbsp; &nbsp; &nbsp; ↓ &nbsp; &nbsp; &nbsp; ↓ &nbsp; &nbsp; &nbsp; ↘</div>
+            <div class="tree-level leaf-level">
+                <div class="node node-leaf"><div class="key">1</div><div class="key">4</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">7</div><div class="key">10</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">17</div><div class="key">21</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">25</div><div class="key">31</div></div>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 2rem 0;">
+
+        <!-- Step 5 -->
+        <h3>Step 5: Inserting 19 and 20 (Double Split!)</h3>
+        <p>19 fits in the middle-right node: <code>[17, 19, 21]</code>. 20 causes an overflow in that node: <code>[17, 19, 20, 21]</code>.</p>
+        <p><strong>The Leaf Split:</strong> The middle is <strong>20</strong>. It pushes UP to the root.</p>
+        <p><strong>The Root Split:</strong> The root is already full! Pushing 20 up makes it <code>[7, 17, 20, 25]</code>. We must split the root. The middle is <strong>20</strong>. </p>
+        
+        <div class="highlight-box">
+            <strong>Internal Node Split Rule:</strong> Notice that when the internal node splits and pushes 20 up to form a new root, <strong>20 is NOT copied</strong> to the right child. Copies only happen at the leaf level!
+        </div>
+
+        <div class="tree-vis">
+            <div class="tree-level">
+                <div class="node node-internal"><div class="key">20</div></div>
+            </div>
+            <div>↙ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ↘</div>
+            <div class="tree-level">
+                <div class="node node-internal"><div class="key">7</div><div class="key">17</div></div>
+                &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+                <div class="node node-internal"><div class="key">25</div></div>
+            </div>
+            
+            <div class="tree-level leaf-level" style="margin-top:1rem;">
+                <div class="node node-leaf"><div class="key">1</div><div class="key">4</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">7</div><div class="key">10</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">17</div><div class="key">19</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">20</div><div class="key">21</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">25</div><div class="key">31</div></div>
+            </div>
+        </div>
+
+        <hr style="border: 0; border-top: 1px solid #e5e7eb; margin: 2rem 0;">
+
+        <!-- Step 6 -->
+        <h3>Step 6: Inserting 28 and 42</h3>
+        <p>28 goes to the rightmost leaf. Fits fine. 42 causes an overflow in the rightmost leaf: <code>[25, 28, 31, 42]</code>.</p>
+        <p>The middle is <strong>31</strong>. 31 pushes UP into the internal node <code>[25]</code>, which has plenty of room, becoming <code>[25, 31]</code>.</p>
+
+    </div>
+
+    <!-- Final Summary -->
+    <div class="card">
+        <h2>4. The Final B+ Tree Structure</h2>
+        <p>Here is the final structure exactly as the instructor draws it. Notice how elegant searching becomes: Follow the blue guideposts to reach the exact data you need in the green leaf nodes.</p>
+
+        <div class="tree-vis">
+            <!-- Level 1 -->
+            <div class="tree-level">
+                <div class="node node-internal"><div class="key">20</div></div>
+            </div>
+            <div>↙ &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; ↘</div>
+            
+            <!-- Level 2 -->
+            <div class="tree-level">
+                <div class="node node-internal"><div class="key">7</div><div class="key">17</div></div>
+                &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp;
+                <div class="node node-internal"><div class="key">25</div><div class="key">31</div></div>
+            </div>
+            
+            <!-- Level 3 (Leaves) -->
+            <div class="tree-level leaf-level" style="margin-top: 2rem;">
+                <div class="node node-leaf"><div class="key">1</div><div class="key">4</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">7</div><div class="key">10</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">17</div><div class="key">19</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">20</div><div class="key">21</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">25</div><div class="key">28</div></div>
+                <div class="arrow">→</div>
+                <div class="node node-leaf"><div class="key">31</div><div class="key">42</div></div>
+            </div>
+        </div>
+
+        <h3>Instructor's Final Takeaways</h3>
+        <ul>
+            <li><strong>Look at the bottom row:</strong> Every single number from the original dataset exists in the leaf nodes. No data is missing.</li>
+            <li><strong>Look at the top rows:</strong> The numbers here (20, 7, 17, 25, 31) are simply duplicates used to guide the search algorithm.</li>
+            <li><strong>Sequential Access:</strong> If you need to print all data in ascending order, you don't need to traverse up and down the tree. You just find the leftmost node `[1, 4]` and follow the <strong>→</strong> pointers all the way to `[31, 42]`.</li>
+        </ul>
+    </div>
+
+</div>
+
+</body>
+</html>
