@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radix Sort | Study Notes Feed</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --secondary: #1e40af;
+            --accent: #ef4444;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #334155;
+            --text-light: #64748b;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.7;
+        }
+
+        /* Reading Progress Bar */
+        .progress-container {
+            position: fixed;
+            top: 0;
+            z-index: 1000;
+            width: 100%;
+            height: 6px;
+            background: #e2e8f0;
+        }
+        .progress-bar {
+            height: 6px;
+            background: var(--primary);
+            width: 0%;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 850px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--border);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--secondary);
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            color: var(--text-light);
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid var(--border);
+            opacity: 0;
+            transform: translateY(20px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card h2 {
+            color: var(--secondary);
+            font-size: 1.8rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h3 {
+            color: var(--primary);
+            margin: 20px 0 10px 0;
+            font-size: 1.3rem;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .highlight-box {
+            background: #eff6ff;
+            border-left: 4px solid var(--primary);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Visualizations */
+        .array-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 15px 0;
+            padding: 15px;
+            background: var(--bg-color);
+            border-radius: 8px;
+            border: 1px dashed var(--text-light);
+        }
+
+        .array-item {
+            background: white;
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            border: 1px solid var(--border);
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .focus-digit {
+            color: var(--accent);
+            text-decoration: underline;
+            font-size: 1.3rem;
+        }
+
+        /* Buckets Grid */
+        .buckets-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 15px;
+            margin-top: 25px;
+        }
+
+        .bucket {
+            border: 2px solid var(--border);
+            border-radius: 8px;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            background: #fafafa;
+        }
+
+        .bucket-id {
+            background: var(--primary);
+            color: white;
+            text-align: center;
+            font-weight: bold;
+            padding: 8px;
+            font-size: 1.1rem;
+        }
+
+        .bucket-contents {
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            align-items: center;
+            min-height: 50px;
+        }
+
+        .bucket-item {
+            background: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-family: monospace;
+            border: 1px solid var(--border);
+            width: 100%;
+            text-align: center;
+        }
+
+        .math-block {
+            background: #1e293b;
+            color: #f8fafc;
+            padding: 20px;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 1.2rem;
+            margin: 15px 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .buckets-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        @media (max-width: 480px) {
+            .buckets-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Scroll Progress Bar -->
+    <div class="progress-container">
+        <div class="progress-bar" id="myBar"></div>
+    </div>
+
+    <div class="feed-container">
+        
+        <header>
+            <h1>📚 Radix Sort</h1>
+            <p>Complete In-Depth Study Notes & Visualizations</p>
+        </header>
+
+        <!-- Section 1 -->
+        <section class="card">
+            <h2>1. Introduction & Theoretical Concepts</h2>
+            <p><strong>Non-Comparison Sort:</strong> Unlike Bubble, Quick, Merge, Selection, or Insertion sorts (which rely on comparing elements directly using <code>></code> or <code><</code>), Radix Sort does <strong>not</strong> compare numbers against each other.</p>
+            
+            <div class="highlight-box">
+                <strong>The Limit of Comparison Sorts:</strong> The best time complexity for comparison-based algorithms is <strong>O(n log n)</strong>. They cannot mathematically perform better than this. Radix sort breaks this barrier by not using comparisons.
+            </div>
+
+            <p><strong>How Radix Sort Works:</strong> It sorts data <strong>digit by digit</strong> based on the <em>place value</em> (ones, tens, hundreds) or position of the digit.</p>
+            
+            <h3>Direction of Sorting:</h3>
+            <p>Sorting happens from the <strong>LSD (Least Significant Digit)</strong> to the <strong>MSD (Most Significant Digit)</strong>.</p>
+            
+            <div class="array-container" style="justify-content: center;">
+                <div class="array-item" style="font-size: 1.5rem;">
+                    <span class="focus-digit" style="color: #10b981;">4</span><span class="focus-digit" style="color: #f59e0b;">2</span><span class="focus-digit" style="color: var(--accent);">1</span>
+                </div>
+            </div>
+            <ul>
+                <li><span style="color: var(--accent); font-weight: bold;">1</span> is the LSD (ones place). Start here.</li>
+                <li><span style="color: #f59e0b; font-weight: bold;">2</span> is the tens place. Move here next.</li>
+                <li><span style="color: #10b981; font-weight: bold;">4</span> is the MSD (hundreds place). End here.</li>
+            </ul>
+        </section>
+
+        <!-- Section 2 -->
+        <section class="card">
+            <h2>2. Algorithm Setup: The 3 Initial Steps</h2>
+            <p>Before the sorting passes begin, you must prepare the data.</p>
+            
+            <h3>Initial Unsorted Array:</h3>
+            <div class="array-container">
+                <div class="array-item">15</div><div class="array-item">1</div><div class="array-item">321</div>
+                <div class="array-item">10</div><div class="array-item">802</div><div class="array-item">2</div>
+                <div class="array-item">123</div><div class="array-item">90</div><div class="array-item">109</div><div class="array-item">11</div>
+            </div>
+
+            <ol style="margin-left: 20px; margin-bottom: 20px;">
+                <li><strong>Find the maximum number:</strong> In this array, the maximum number is <strong>802</strong>.</li>
+                <li><strong>Count the digits:</strong> <code>802</code> has <strong>3 digits</strong>. This means every number must be formatted to have 3 digits, and there will be exactly <strong>3 Passes</strong> to complete the algorithm.</li>
+                <li><strong>Pad with leading zeros:</strong> Make all numbers 3 digits long by adding zeros to the <em>left</em> (MSD side).</li>
+            </ol>
+
+            <h3>Array after padding (Ready for sorting):</h3>
+            <div class="array-container" style="background: #eef2ff; border-color: var(--primary);">
+                <div class="array-item">015</div><div class="array-item">001</div><div class="array-item">321</div>
+                <div class="array-item">010</div><div class="array-item">802</div><div class="array-item">002</div>
+                <div class="array-item">123</div><div class="array-item">090</div><div class="array-item">109</div><div class="array-item">011</div>
+            </div>
+        </section>
+
+        <!-- Section 3 -->
+        <section class="card">
+            <h2>3. The Concept of "Buckets" (Base / Radix)</h2>
+            <p><strong>"Radix" means Base.</strong></p>
+            <p>We are dealing with decimal numbers, so the base is <strong>10</strong>. Therefore, we create <strong>10 buckets</strong> numbered <strong>0 through 9</strong>.</p>
+            <div class="highlight-box" style="border-left-color: #f59e0b; background: #fffbeb;">
+                <em>Side Note:</em> If you were sorting alphabetical strings instead of numbers, the base is 26. You would use 26 buckets labeled from 0 to 25.
+            </div>
+        </section>
+
+        <!-- Pass 1 -->
+        <section class="card">
+            <h2>▶ PASS 1: Sorting by the Least Significant Digit</h2>
+            <p>Look only at the <strong>last digit</strong> (ones place) of every number in the array and place it in the corresponding bucket.</p>
+            
+            <div class="array-container">
+                <div class="array-item">01<span class="focus-digit">5</span></div>
+                <div class="array-item">00<span class="focus-digit">1</span></div>
+                <div class="array-item">32<span class="focus-digit">1</span></div>
+                <div class="array-item">01<span class="focus-digit">0</span></div>
+                <div class="array-item">80<span class="focus-digit">2</span></div>
+                <div class="array-item">00<span class="focus-digit">2</span></div>
+                <div class="array-item">12<span class="focus-digit">3</span></div>
+                <div class="array-item">09<span class="focus-digit">0</span></div>
+                <div class="array-item">10<span class="focus-digit">9</span></div>
+                <div class="array-item">01<span class="focus-digit">1</span></div>
+            </div>
+
+            <h3>Buckets after Pass 1:</h3>
+            <div class="buckets-grid">
+                <div class="bucket"><div class="bucket-id">0</div><div class="bucket-contents"><div class="bucket-item">010</div><div class="bucket-item">090</div></div></div>
+                <div class="bucket"><div class="bucket-id">1</div><div class="bucket-contents"><div class="bucket-item">001</div><div class="bucket-item">321</div><div class="bucket-item">011</div></div></div>
+                <div class="bucket"><div class="bucket-id">2</div><div class="bucket-contents"><div class="bucket-item">802</div><div class="bucket-item">002</div></div></div>
+                <div class="bucket"><div class="bucket-id">3</div><div class="bucket-contents"><div class="bucket-item">123</div></div></div>
+                <div class="bucket"><div class="bucket-id">4</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">5</div><div class="bucket-contents"><div class="bucket-item">015</div></div></div>
+                <div class="bucket"><div class="bucket-id">6</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">7</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">8</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">9</div><div class="bucket-contents"><div class="bucket-item">109</div></div></div>
+            </div>
+
+            <h3>New Array (Pulled from Buckets Top-to-Bottom):</h3>
+            <div class="array-container">
+                <div class="array-item">010</div><div class="array-item">090</div><div class="array-item">001</div><div class="array-item">321</div><div class="array-item">011</div><div class="array-item">802</div><div class="array-item">002</div><div class="array-item">123</div><div class="array-item">015</div><div class="array-item">109</div>
+            </div>
+        </section>
+
+        <!-- Pass 2 -->
+        <section class="card">
+            <h2>▶ PASS 2: Sorting by the Tens Digit</h2>
+            <p>Using the newly formed array, look only at the <strong>middle digit</strong> (tens place) and place them into empty buckets.</p>
+            
+            <div class="array-container">
+                <div class="array-item">0<span class="focus-digit">1</span>0</div>
+                <div class="array-item">0<span class="focus-digit">9</span>0</div>
+                <div class="array-item">0<span class="focus-digit">0</span>1</div>
+                <div class="array-item">3<span class="focus-digit">2</span>1</div>
+                <div class="array-item">0<span class="focus-digit">1</span>1</div>
+                <div class="array-item">8<span class="focus-digit">0</span>2</div>
+                <div class="array-item">0<span class="focus-digit">0</span>2</div>
+                <div class="array-item">1<span class="focus-digit">2</span>3</div>
+                <div class="array-item">0<span class="focus-digit">1</span>5</div>
+                <div class="array-item">1<span class="focus-digit">0</span>9</div>
+            </div>
+
+            <h3>Buckets after Pass 2:</h3>
+            <div class="buckets-grid">
+                <div class="bucket"><div class="bucket-id">0</div><div class="bucket-contents"><div class="bucket-item">001</div><div class="bucket-item">802</div><div class="bucket-item">002</div><div class="bucket-item">109</div></div></div>
+                <div class="bucket"><div class="bucket-id">1</div><div class="bucket-contents"><div class="bucket-item">010</div><div class="bucket-item">011</div><div class="bucket-item">015</div></div></div>
+                <div class="bucket"><div class="bucket-id">2</div><div class="bucket-contents"><div class="bucket-item">321</div><div class="bucket-item">123</div></div></div>
+                <div class="bucket"><div class="bucket-id">3</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">4</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">5</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">6</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">7</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">8</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">9</div><div class="bucket-contents"><div class="bucket-item">090</div></div></div>
+            </div>
+
+            <h3>New Array:</h3>
+            <div class="array-container">
+                <div class="array-item">001</div><div class="array-item">802</div><div class="array-item">002</div><div class="array-item">109</div><div class="array-item">010</div><div class="array-item">011</div><div class="array-item">015</div><div class="array-item">321</div><div class="array-item">123</div><div class="array-item">090</div>
+            </div>
+        </section>
+
+        <!-- Pass 3 -->
+        <section class="card">
+            <h2>▶ PASS 3: Sorting by the Most Significant Digit</h2>
+            <p>Look only at the <strong>first digit</strong> (hundreds place). Because our max number had 3 digits, <em>this is the final pass.</em></p>
+            
+            <div class="array-container">
+                <div class="array-item"><span class="focus-digit">0</span>01</div>
+                <div class="array-item"><span class="focus-digit">8</span>02</div>
+                <div class="array-item"><span class="focus-digit">0</span>02</div>
+                <div class="array-item"><span class="focus-digit">1</span>09</div>
+                <div class="array-item"><span class="focus-digit">0</span>10</div>
+                <div class="array-item"><span class="focus-digit">0</span>11</div>
+                <div class="array-item"><span class="focus-digit">0</span>15</div>
+                <div class="array-item"><span class="focus-digit">3</span>21</div>
+                <div class="array-item"><span class="focus-digit">1</span>23</div>
+                <div class="array-item"><span class="focus-digit">0</span>90</div>
+            </div>
+
+            <h3>Buckets after Pass 3:</h3>
+            <div class="buckets-grid">
+                <div class="bucket"><div class="bucket-id">0</div><div class="bucket-contents"><div class="bucket-item">001</div><div class="bucket-item">002</div><div class="bucket-item">010</div><div class="bucket-item">011</div><div class="bucket-item">015</div><div class="bucket-item">090</div></div></div>
+                <div class="bucket"><div class="bucket-id">1</div><div class="bucket-contents"><div class="bucket-item">109</div><div class="bucket-item">123</div></div></div>
+                <div class="bucket"><div class="bucket-id">2</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">3</div><div class="bucket-contents"><div class="bucket-item">321</div></div></div>
+                <div class="bucket"><div class="bucket-id">4</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">5</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">6</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">7</div><div class="bucket-contents"></div></div>
+                <div class="bucket"><div class="bucket-id">8</div><div class="bucket-contents"><div class="bucket-item">802</div></div></div>
+                <div class="bucket"><div class="bucket-id">9</div><div class="bucket-contents"></div></div>
+            </div>
+        </section>
+
+        <!-- Final Result -->
+        <section class="card" style="border: 2px solid #10b981;">
+            <h2 style="color: #10b981;">🎉 Final Sorted Result</h2>
+            <p>As you pull the numbers out of the buckets for the final time, remove the padded zeros to reveal your sorted list!</p>
+            
+            <div class="array-container" style="background: #ecfdf5; border-color: #10b981;">
+                <div class="array-item" style="color: #047857;">1</div>
+                <div class="array-item" style="color: #047857;">2</div>
+                <div class="array-item" style="color: #047857;">10</div>
+                <div class="array-item" style="color: #047857;">11</div>
+                <div class="array-item" style="color: #047857;">15</div>
+                <div class="array-item" style="color: #047857;">90</div>
+                <div class="array-item" style="color: #047857;">109</div>
+                <div class="array-item" style="color: #047857;">123</div>
+                <div class="array-item" style="color: #047857;">321</div>
+                <div class="array-item" style="color: #047857;">802</div>
+            </div>
+        </section>
+
+        <!-- Section Time Complexity -->
+        <section class="card">
+            <h2>⏱️ Time Complexity Analysis</h2>
+            <p>Radix Sort uses <strong>Count Sort</strong> as a subroutine (the act of putting numbers into buckets and pulling them out). The standard time complexity of Count Sort is <code>O(n + b)</code>. Because Radix sort repeats this process <code>d</code> times, the final formula is:</p>
+            
+            <div class="math-block">
+                Time Complexity = O(d * (n + b))
+            </div>
+
+            <h3>Variable Definitions:</h3>
+            <ul>
+                <li><strong><code>d</code></strong>: The number of digits in the maximum number. This represents the number of times the outer loop runs (the number of passes). <em>In our example, d = 3.</em></li>
+                <li><strong><code>n</code></strong>: The total number of elements in the given array. <em>In our example, n = 10.</em></li>
+                <li><strong><code>b</code></strong>: The base (radix) of the number system. For decimal numbers, <strong>b = 10</strong>.</li>
+            </ul>
+        </section>
+
+    </div>
+
+    <!-- JavaScript for Scroll Progress and Fade-In Animations -->
+    <script>
+        // Scroll Progress Bar
+        window.onscroll = function() {
+            let winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            let height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            let scrolled = (winScroll / height) * 100;
+            document.getElementById("myBar").style.width = scrolled + "%";
+        };
+
+        // Intersection Observer for fade-in cards
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.15
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target); // Stop observing once it's visible
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.card').forEach(card => {
+            observer.observe(card);
+        });
+        
+        // Ensure the top card is visible immediately on load
+        setTimeout(() => {
+            document.querySelectorAll('.card')[0].classList.add('visible');
+        }, 100);
+    </script>
+
+</body>
+</html>
