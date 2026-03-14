@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Heap Data Structure | Study Notes</title>
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --text-color: #1e293b;
+            --card-bg: #ffffff;
+            --primary: #3b82f6;
+            --primary-light: #eff6ff;
+            --success: #22c55e;
+            --danger: #ef4444;
+            --highlight: #f59e0b;
+            --border: #e2e8f0;
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --font-mono: 'Fira Code', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: var(--font-main);
+            line-height: 1.6;
+            display: flex;
+            justify-content: center;
+        }
+
+        /* Vertical Feed Container */
+        .feed-container {
+            max-width: 800px;
+            width: 100%;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 3rem;
+        }
+
+        /* Typography & Blocks */
+        h1 { font-size: 2.5rem; color: #0f172a; border-bottom: 4px solid var(--primary); display: inline-block; padding-bottom: 0.5rem; margin-bottom: 1rem;}
+        h2 { font-size: 1.8rem; margin-bottom: 1rem; color: var(--primary); }
+        h3 { font-size: 1.4rem; margin-bottom: 0.8rem; margin-top: 1.5rem; }
+        p { margin-bottom: 1rem; font-size: 1.1rem; }
+        ul { margin-bottom: 1rem; margin-left: 1.5rem; font-size: 1.1rem; }
+        li { margin-bottom: 0.5rem; }
+        strong { color: #0f172a; }
+
+        .card {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--border);
+        }
+
+        .highlight-box {
+            background-color: var(--primary-light);
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+        }
+
+        code {
+            font-family: var(--font-mono);
+            background: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.95em;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: var(--font-mono);
+            font-size: 1.05rem;
+            line-height: 1.5;
+        }
+
+        /* --- Visualizations Specifics --- */
+        
+        /* Arrays */
+        .array-container {
+            display: flex;
+            flex-wrap: nowrap;
+            gap: 4px;
+            margin: 2rem 0;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        .array-box {
+            min-width: 50px;
+            height: 50px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: white;
+            border: 2px solid var(--text-color);
+            border-radius: 4px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+        .array-idx {
+            position: absolute;
+            bottom: -20px;
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: normal;
+        }
+
+        /* Tree Structure (Flexbox Based) */
+        .tree {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin: 2rem 0;
+            gap: 20px;
+            overflow-x: auto;
+        }
+        .tree-level {
+            display: flex;
+            gap: 40px;
+            justify-content: center;
+        }
+        .node {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: var(--primary);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            font-size: 1.2rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
+            transition: all 0.5s ease;
+            z-index: 2;
+        }
+        
+        /* Node states for animations */
+        .node.comparing { background: var(--highlight); transform: scale(1.1); }
+        .node.swapping { background: var(--danger); transform: scale(1.2); z-index: 10; }
+        .node.sorted { background: var(--success); }
+        .node.empty { background: transparent; border: 2px dashed #cbd5e1; color: transparent; box-shadow: none;}
+
+        .btn {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.8rem 1.5rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 1rem;
+            transition: background 0.2s;
+            display: block;
+            width: 100%;
+        }
+        .btn:hover { background: #2563eb; }
+        .btn:disabled { background: #94a3b8; cursor: not-allowed; }
+
+        .split-col {
+            display: grid;
+            grid-template-columns: 1fr 1px 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+        .divider { background: var(--border); width: 1px; height: 100%; }
+
+        @media (max-width: 768px) {
+            .split-col { grid-template-columns: 1fr; gap: 1rem; }
+            .divider { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="feed-container">
+        
+        <!-- Header -->
+        <header>
+            <h1>Heaps (Max & Min Heap)</h1>
+            <p>Complete, scrollable study notes based on Jenny's Lectures on Data Structures. Learn the theory, array implementation, and step-by-step algorithms for insertion and deletion.</p>
+        </header>
+
+        <!-- Section 1 -->
+        <section class="card">
+            <h2>1. What is a Heap?</h2>
+            <p>A Heap is a special tree-based data structure that satisfies two main conditions:</p>
+            <ul>
+                <li><strong>Shape Property:</strong> It must be an <strong>Almost Complete Binary Tree</strong>. This means all levels of the tree are completely filled, except possibly the last level. The last level must be filled strictly from <strong>left to right</strong>.</li>
+                <li><strong>Heap Property:</strong> The value of parent nodes must follow a specific ordering relative to their children (either Max or Min).</li>
+            </ul>
+        </section>
+
+        <!-- Section 2 -->
+        <section class="card">
+            <h2>2. Array Representation of a Binary Tree</h2>
+            <p>Even though we draw heaps as trees, they are almost always stored in memory as <strong>Arrays</strong>. This saves space (no pointers needed) and makes finding parents/children extremely fast using simple math.</p>
+            
+            <div class="highlight-box">
+                <strong>The Math Formulas:</strong><br>
+                If a node is placed at index <code>i</code> (assuming the root is at <code>i = 1</code>):
+                <ul>
+                    <li><strong>Left Child:</strong> is at index <code>2 * i</code></li>
+                    <li><strong>Right Child:</strong> is at index <code>(2 * i) + 1</code></li>
+                    <li><strong>Parent:</strong> is at index <code>floor(i / 2)</code></li>
+                </ul>
+            </div>
+
+            <div class="tree" style="gap: 10px;">
+                <div class="tree-level"><div class="node">A</div></div>
+                <div class="tree-level" style="gap: 60px;"><div class="node">B</div><div class="node">C</div></div>
+                <div class="tree-level" style="gap: 20px;"><div class="node">D</div><div class="node">E</div><div class="node">F</div><div class="node empty"></div></div>
+            </div>
+
+            <div class="array-container">
+                <div class="array-box" style="background:#f1f5f9; color: transparent;">X<div class="array-idx">0</div></div>
+                <div class="array-box">A<div class="array-idx">1</div></div>
+                <div class="array-box">B<div class="array-idx">2</div></div>
+                <div class="array-box">C<div class="array-idx">3</div></div>
+                <div class="array-box">D<div class="array-idx">4</div></div>
+                <div class="array-box">E<div class="array-idx">5</div></div>
+                <div class="array-box">F<div class="array-idx">6</div></div>
+            </div>
+            <p><em>Notice how traversing the tree level-by-level, left-to-right perfectly populates the array sequentially!</em></p>
+        </section>
+
+        <!-- Section 3 -->
+        <section class="card">
+            <h2>3. Max Heap vs. Min Heap</h2>
+            <p>Depending on how we order the parent vs. child nodes, a heap can be a Max Heap or a Min Heap.</p>
+            
+            <div class="split-col">
+                <div>
+                    <h3 style="color: var(--danger); margin-top: 0;">Max Heap</h3>
+                    <p>Every parent node must be <strong>greater than or equal to</strong> its child nodes.</p>
+                    <p><code>A[Parent[i]] &gt;= A[i]</code></p>
+                    <p><strong>Rule:</strong> The Root node will ALWAYS be the largest element.</p>
+                    
+                    <div class="tree" style="gap: 10px; margin-top: 1rem; transform: scale(0.8);">
+                        <div class="tree-level"><div class="node" style="background: var(--danger)">70</div></div>
+                        <div class="tree-level" style="gap: 40px;"><div class="node" style="background: var(--danger)">50</div><div class="node" style="background: var(--danger)">40</div></div>
+                        <div class="tree-level" style="gap: 10px;"><div class="node" style="background: var(--danger)">45</div><div class="node" style="background: var(--danger)">35</div><div class="node empty"></div><div class="node empty"></div></div>
+                    </div>
+                </div>
+                
+                <div class="divider"></div>
+                
+                <div>
+                    <h3 style="color: var(--success); margin-top: 0;">Min Heap</h3>
+                    <p>Every parent node must be <strong>less than or equal to</strong> its child nodes.</p>
+                    <p><code>A[Parent[i]] &lt;= A[i]</code></p>
+                    <p><strong>Rule:</strong> The Root node will ALWAYS be the smallest element.</p>
+
+                    <div class="tree" style="gap: 10px; margin-top: 1rem; transform: scale(0.8);">
+                        <div class="tree-level"><div class="node" style="background: var(--success)">10</div></div>
+                        <div class="tree-level" style="gap: 40px;"><div class="node" style="background: var(--success)">15</div><div class="node" style="background: var(--success)">19</div></div>
+                        <div class="tree-level" style="gap: 10px;"><div class="node" style="background: var(--success)">20</div><div class="node" style="background: var(--success)">30</div><div class="node empty"></div><div class="node empty"></div></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 4 -->
+        <section class="card">
+            <h2>4. Insertion in a Max Heap</h2>
+            <p><strong>Time Complexity:</strong> <code>O(log n)</code></p>
+            <p><strong>Algorithm:</strong></p>
+            <ol>
+                <li>Increase the array size <code>n = n + 1</code>.</li>
+                <li>Insert the new value at the very end of the tree (to maintain the Complete Binary Tree shape).</li>
+                <li><strong>Heapify Up:</strong> Compare the newly inserted node with its parent. If the child is greater than the parent, swap them. Repeat until the property is restored or you reach the root.</li>
+            </ol>
+
+            <div class="highlight-box">
+                <strong>Pseudocode:</strong>
+<pre>
+insertHeap(A, n, value) {
+  n = n + 1;
+  A[n] = value;
+  i = n;
+  
+  while (i > 1) {
+    parent = floor(i / 2);
+    
+    if (A[parent] < A[i]) { 
+      swap(A[parent], A[i]);
+      i = parent;
+    } else {
+      return; 
+    }
+  }
+}</pre>
+            </div>
+
+            <h3>Visualization: Insert 60</h3>
+            <p id="insertMsg">Click play to watch 60 being inserted at the end, and then "Heapified Up".</p>
+            
+            <div class="tree" id="insertTree">
+                <div class="tree-level"><div class="node" id="i_70">70</div></div>
+                <div class="tree-level" style="gap: 80px;"><div class="node" id="i_50">50</div><div class="node" id="i_40">40</div></div>
+                <div class="tree-level" style="gap: 40px;"><div class="node" id="i_45">45</div><div class="node" id="i_35">35</div><div class="node" id="i_39">39</div><div class="node" id="i_16">16</div></div>
+                <div class="tree-level" style="gap: 10px; margin-left:-180px;"><div class="node" id="i_10">10</div><div class="node" id="i_9">9</div><div class="node empty" id="i_new"></div></div>
+            </div>
+            
+            <button class="btn" id="btnInsert" onclick="playInsertion()">Play Insertion Animation</button>
+        </section>
+
+        <!-- Section 5 -->
+        <section class="card">
+            <h2>5. Deletion in a Max Heap</h2>
+            <p><strong>Crucial Rule:</strong> You can ONLY delete the Root Node (the maximum element). You cannot delete a leaf or an arbitrary internal node directly.</p>
+            <p><strong>Time Complexity:</strong> <code>O(log n)</code></p>
+            <p><strong>Algorithm:</strong></p>
+            <ol>
+                <li>Remove the Root element.</li>
+                <li>Take the <strong>last element</strong> in the tree and move it to the root position.</li>
+                <li>Reduce the array size <code>n = n - 1</code>.</li>
+                <li><strong>Heapify Down:</strong> Compare the new root with its left and right children. Find the largest of the two children. If the parent is smaller than the largest child, swap them. Repeat down the tree.</li>
+            </ol>
+
+            <h3>Visualization: Delete Root (50)</h3>
+            <p id="deleteMsg">Click play to watch the root (50) get deleted, replaced by the last node (10), and then "Heapified Down".</p>
+            
+            <div class="tree" id="deleteTree">
+                <div class="tree-level"><div class="node" id="d_50">50</div></div>
+                <div class="tree-level" style="gap: 80px;"><div class="node" id="d_45">45</div><div class="node" id="d_35">35</div></div>
+                <div class="tree-level" style="gap: 40px;"><div class="node" id="d_33">33</div><div class="node" id="d_16">16</div><div class="node" id="d_25">25</div><div class="node" id="d_34">34</div></div>
+                <div class="tree-level" style="gap: 10px; margin-left:-180px;"><div class="node" id="d_12">12</div><div class="node" id="d_10">10</div></div>
+            </div>
+            
+            <button class="btn" id="btnDelete" onclick="playDeletion()">Play Deletion Animation</button>
+        </section>
+
+        <!-- Section 6 -->
+        <section class="card">
+            <h2>6. Bonus: Introduction to Heap Sort</h2>
+            <p>Think about what happens when you perform deletion repeatedly:</p>
+            <ul>
+                <li>Every time you delete, you extract the <strong>largest</strong> element.</li>
+                <li>The size of your heap shrinks by 1, leaving an empty spot at the very end of your array.</li>
+                <li>If you save the deleted element into that newly freed spot at the end of the array...</li>
+                <li><strong>Magic!</strong> After deleting all elements, your array will be perfectly sorted in <strong>Ascending Order</strong>.</li>
+            </ul>
+            <p>This clever technique is the foundation of the <strong>Heap Sort</strong> algorithm.</p>
+        </section>
+
+    </main>
+
+    <script>
+        // Utilities
+        const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+        // --- Insertion Animation Logic ---
+        async function playInsertion() {
+            const btn = document.getElementById('btnInsert');
+            const msg = document.getElementById('insertMsg');
+            btn.disabled = true;
+            
+            // Nodes
+            const n_new = document.getElementById('i_new');
+            const n_35 = document.getElementById('i_35');
+            const n_50 = document.getElementById('i_50');
+            const n_70 = document.getElementById('i_70');
+
+            // Reset tree state
+            n_new.className = "node empty";
+            n_new.innerText = "";
+            n_35.innerText = "35";
+            n_50.innerText = "50";
+            n_70.innerText = "70";
+            
+            msg.innerHTML = "<strong>Step 1:</strong> Insert 60 at the very end (as the left child of 35).";
+            await sleep(1000);
+            
+            n_new.className = "node comparing";
+            n_new.innerText = "60";
+            await sleep(1500);
+
+            msg.innerHTML = "<strong>Step 2 (Heapify Up):</strong> Compare 60 with its parent (35). 60 > 35, so SWAP.";
+            n_new.classList.add("swapping");
+            n_35.className = "node comparing swapping";
+            await sleep(1500);
+            
+            n_new.innerText = "35";
+            n_35.innerText = "60";
+            n_new.className = "node";
+            n_35.className = "node comparing";
+            await sleep(1500);
+
+            msg.innerHTML = "<strong>Step 3:</strong> Compare 60 with its new parent (50). 60 > 50, so SWAP.";
+            n_50.className = "node comparing swapping";
+            n_35.classList.add("swapping");
+            await sleep(1500);
+
+            n_35.innerText = "50";
+            n_50.innerText = "60";
+            n_35.className = "node";
+            n_50.className = "node comparing";
+            await sleep(1500);
+
+            msg.innerHTML = "<strong>Step 4:</strong> Compare 60 with its new parent (70). 60 < 70. Property satisfied. STOP.";
+            n_70.className = "node comparing";
+            await sleep(2000);
+
+            n_70.className = "node";
+            n_50.className = "node sorted";
+            msg.innerHTML = "<strong>Done!</strong> 60 is placed correctly. Total Time: O(log n).";
+            
+            await sleep(2000);
+            n_50.className = "node"; // cleanup
+            btn.innerText = "Replay Insertion";
+            btn.disabled = false;
+        }
+
+        // --- Deletion Animation Logic ---
+        async function playDeletion() {
+            const btn = document.getElementById('btnDelete');
+            const msg = document.getElementById('deleteMsg');
+            btn.disabled = true;
+
+            // Nodes
+            const d_50 = document.getElementById('d_50');
+            const d_45 = document.getElementById('d_45');
+            const d_33 = document.getElementById('d_33');
+            const d_12 = document.getElementById('d_12');
+            const d_10 = document.getElementById('d_10');
+
+            // Reset
+            d_50.innerText = "50";
+            d_45.innerText = "45";
+            d_33.innerText = "33";
+            d_12.innerText = "12";
+            d_10.innerText = "10";
+            d_10.className = "node";
+            d_50.className = "node";
+
+            msg.innerHTML = "<strong>Step 1:</strong> Remove the root node (50).";
+            d_50.className = "node swapping";
+            await sleep(1500);
+            d_50.className = "node empty";
+            d_50.innerText = "";
+            await sleep(1000);
+
+            msg.innerHTML = "<strong>Step 2:</strong> Move the last element (10) to the root position.";
+            d_10.className = "node swapping";
+            await sleep(1500);
+            d_10.className = "node empty";
+            d_10.innerText = "";
+            d_50.className = "node comparing";
+            d_50.innerText = "10";
+            await sleep(1500);
+
+            msg.innerHTML = "<strong>Step 3 (Heapify Down):</strong> Compare root (10) with children 45 & 35. Largest child is 45. 10 < 45, so SWAP.";
+            d_45.className = "node comparing swapping";
+            d_50.classList.add("swapping");
+            await sleep(1500);
+            
+            d_50.innerText = "45";
+            d_45.innerText = "10";
+            d_50.className = "node";
+            d_45.className = "node comparing";
+            await sleep(1500);
+
+            msg.innerHTML = "<strong>Step 4:</strong> Compare 10 with children 33 & 16. Largest is 33. 10 < 33, so SWAP.";
+            d_33.className = "node comparing swapping";
+            d_45.classList.add("swapping");
+            await sleep(1500);
+
+            d_45.innerText = "33";
+            d_33.innerText = "10";
+            d_45.className = "node";
+            d_33.className = "node comparing";
+            await sleep(1500);
+
+            msg.innerHTML = "<strong>Step 5:</strong> Compare 10 with child 12. 10 < 12, so SWAP.";
+            d_12.className = "node comparing swapping";
+            d_33.classList.add("swapping");
+            await sleep(1500);
+
+            d_33.innerText = "12";
+            d_12.innerText = "10";
+            d_33.className = "node";
+            d_12.className = "node sorted";
+            
+            msg.innerHTML = "<strong>Done!</strong> Heapify down complete. Total Time: O(log n).";
+            
+            await sleep(2000);
+            d_12.className = "node"; // cleanup
+            btn.innerText = "Replay Deletion";
+            btn.disabled = false;
+        }
+    </script>
+</body>
+</html>
