@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Detect Cycle in Undirected Graph (BFS)</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=Fira+Code:wght@500&display=swap');
+
+        :root {
+            --bg-color: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent-blue: #3b82f6;
+            --flag-unvisited: #e2e8f0; /* -1 */
+            --flag-queue: #fbbf24; /* 0 */
+            --flag-visited: #22c55e; /* 1 */
+            --flag-error: #ef4444; /* Cycle */
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e2e8f0;
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-top: 0;
+            color: var(--text-main);
+            font-weight: 800;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 0.5rem;
+            margin-top: 0;
+            color: var(--accent-blue);
+        }
+
+        h3 {
+            font-size: 1.2rem;
+            margin-bottom: 0.5rem;
+        }
+
+        p, ul {
+            font-size: 1.1rem;
+            color: var(--text-main);
+        }
+
+        /* Highlight Boxes */
+        .callout {
+            background-color: #eff6ff;
+            border-left: 4px solid var(--accent-blue);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+        }
+
+        .alert {
+            background-color: #fef2f2;
+            border-left: 4px solid var(--flag-error);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+        }
+
+        /* Visualizer Styles */
+        .visualizer-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 12px;
+            margin-top: 1rem;
+        }
+
+        svg {
+            width: 100%;
+            max-width: 400px;
+            height: auto;
+            overflow: visible;
+        }
+
+        .node-circle {
+            stroke: #1e293b;
+            stroke-width: 2;
+        }
+
+        .node-text {
+            font-family: 'Inter', sans-serif;
+            font-weight: 600;
+            font-size: 14px;
+            fill: #1e293b;
+            text-anchor: middle;
+            dominant-baseline: central;
+        }
+
+        .flag-text {
+            font-family: 'Fira Code', monospace;
+            font-weight: 600;
+            font-size: 12px;
+            fill: #ef4444;
+        }
+
+        .edge {
+            stroke: #94a3b8;
+            stroke-width: 2;
+        }
+
+        .state-dashboard {
+            display: flex;
+            width: 100%;
+            justify-content: space-between;
+            margin-top: 1.5rem;
+            gap: 1rem;
+        }
+
+        .state-box {
+            flex: 1;
+            background: white;
+            padding: 1rem;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .state-box h4 {
+            margin: 0 0 0.5rem 0;
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .queue-array, .visited-array {
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+        }
+
+        .array-item {
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            border-radius: 4px;
+            font-weight: 600;
+            font-family: 'Fira Code', monospace;
+        }
+
+        .array-item.visited { background: var(--flag-visited); color: white; border-color: var(--flag-visited); }
+        .array-item.queued { background: var(--flag-queue); border-color: #d97706; }
+
+        .flag-legend {
+            display: flex;
+            gap: 1rem;
+            justify-content: center;
+            margin-top: 1rem;
+            flex-wrap: wrap;
+        }
+        
+        .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; font-weight: 600;}
+        .legend-color { width: 16px; height: 16px; border-radius: 50%; border: 1px solid #1e293b; }
+
+        code {
+            font-family: 'Fira Code', monospace;
+            background: #f1f5f9;
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-size: 0.95em;
+        }
+
+        pre {
+            background: #1e293b;
+            color: #f8fafc;
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+        }
+
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+
+    <!-- Topic Intro Card -->
+    <div class="card">
+        <h1>Detecting a Cycle in an Undirected Graph (BFS)</h1>
+        <p>In this lecture, the instructor explains how to determine if a cycle exists in an undirected graph. While there are multiple methods to achieve this (DFS, Topological Sort, Disjoint Sets), this specific lesson breaks down the <strong>Breadth-First Search (BFS)</strong> approach.</p>
+        
+        <div class="callout">
+            <strong>Key Data Structure:</strong> Because we are using BFS, which explores the graph level-by-level, we must use a <strong>Queue</strong> (First-In-First-Out).
+        </div>
+    </div>
+
+    <!-- The Flag System Card -->
+    <div class="card">
+        <h2>The Flag System (State Management)</h2>
+        <p>To keep track of where we are in our BFS traversal, we assign a "Flag" (or state) to every node. By observing changes in these flags, we can catch when a cycle occurs.</p>
+        
+        <div class="flag-legend">
+            <div class="legend-item"><div class="legend-color" style="background: var(--flag-unvisited);"></div> -1 : Unvisited (Not yet discovered)</div>
+            <div class="legend-item"><div class="legend-color" style="background: var(--flag-queue);"></div> 0 : In Queue (Discovered, waiting)</div>
+            <div class="legend-item"><div class="legend-color" style="background: var(--flag-visited);"></div> 1 : Visited (Fully processed)</div>
+        </div>
+    </div>
+
+    <!-- Step 0 Card -->
+    <div class="card">
+        <h2>Initial State: Graph Setup</h2>
+        <p>We begin with a graph of 5 nodes. You can visually see a triangle (cycle) formed by nodes <strong>B, D, and E</strong>. At the start, all nodes have a flag of <code>-1</code>, the Queue is empty, and the Visited Set is empty.</p>
+        
+        <div class="visualizer-container">
+            <!-- SVG Initial Graph -->
+            <svg viewBox="0 0 300 200">
+                <!-- Edges -->
+                <line x1="50" y1="100" x2="150" y2="40" class="edge"/>
+                <line x1="50" y1="100" x2="150" y2="160" class="edge"/>
+                <line x1="150" y1="40" x2="250" y2="40" class="edge"/>
+                <line x1="150" y1="40" x2="250" y2="160" class="edge"/>
+                <line x1="250" y1="40" x2="250" y2="160" class="edge"/>
+                
+                <!-- Nodes -->
+                <!-- A --> <circle cx="50" cy="100" r="18" fill="var(--flag-unvisited)" class="node-circle"/><text x="50" y="100" class="node-text">A</text><text x="35" y="80" class="flag-text">-1</text>
+                <!-- B --> <circle cx="150" cy="40" r="18" fill="var(--flag-unvisited)" class="node-circle"/><text x="150" y="40" class="node-text">B</text><text x="135" y="20" class="flag-text">-1</text>
+                <!-- C --> <circle cx="150" cy="160" r="18" fill="var(--flag-unvisited)" class="node-circle"/><text x="150" y="160" class="node-text">C</text><text x="135" y="140" class="flag-text">-1</text>
+                <!-- D --> <circle cx="250" cy="40" r="18" fill="var(--flag-unvisited)" class="node-circle"/><text x="250" y="40" class="node-text">D</text><text x="235" y="20" class="flag-text">-1</text>
+                <!-- E --> <circle cx="250" cy="160" r="18" fill="var(--flag-unvisited)" class="node-circle"/><text x="250" y="160" class="node-text">E</text><text x="235" y="140" class="flag-text">-1</text>
+            </svg>
+
+            <div class="state-dashboard">
+                <div class="state-box">
+                    <h4>Queue</h4>
+                    <div class="queue-array"><em>Empty</em></div>
+                </div>
+                <div class="state-box">
+                    <h4>Visited Set</h4>
+                    <div class="visited-array"><em>Empty</em></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 1 Card -->
+    <div class="card">
+        <h2>Step 1: Starting the Search</h2>
+        <p>We pick an arbitrary starting node. The instructor chooses <strong>Node A</strong>. We place A into the Queue, which updates its flag from <code>-1</code> to <code>0</code>.</p>
+        
+        <div class="visualizer-container">
+            <svg viewBox="0 0 300 200">
+                <line x1="50" y1="100" x2="150" y2="40" class="edge"/> <line x1="50" y1="100" x2="150" y2="160" class="edge"/> <line x1="150" y1="40" x2="250" y2="40" class="edge"/> <line x1="150" y1="40" x2="250" y2="160" class="edge"/> <line x1="250" y1="40" x2="250" y2="160" class="edge"/>
+                
+                <circle cx="50" cy="100" r="18" fill="var(--flag-queue)" class="node-circle"/><text x="50" y="100" class="node-text">A</text><text x="35" y="80" class="flag-text">0</text>
+                <circle cx="150" cy="40" r="18" fill="var(--flag-unvisited)" class="node-circle"/><text x="150" y="40" class="node-text">B</text><text x="135" y="20" class="flag-text">-1</text>
+                <circle cx="150" cy="160" r="18" fill="var(--flag-unvisited)" class="node-circle"/><text x="150" y="160" class="node-text">C</text><text x="135" y="140" class="flag-text">-1</text>
+                <circle cx="250" cy="40" r="18" fill="var(--flag-unvisited)" class="node-circle"/><text x="250" y="40" class="node-text">D</text><text x="235" y="20" class="flag-text">-1</text>
+                <circle cx="250" cy="160" r="18" fill="var(--flag-unvisited)" class="node-circle"/><text x="250" y="160" class="node-text">E</text><text x="235" y="140" class="flag-text">-1</text>
+            </svg>
+
+            <div class="state-dashboard">
+                <div class="state-box">
+                    <h4>Queue</h4>
+                    <div class="queue-array"><div class="array-item queued">A</div></div>
+                </div>
+                <div class="state-box">
+                    <h4>Visited Set</h4>
+                    <div class="visited-array"><em>Empty</em></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 2 Card -->
+    <div class="card">
+        <h2>Step 2: Processing Node A</h2>
+        <ul>
+            <li><strong>Dequeue A:</strong> Remove it from the Queue and add to Visited Set. Flag becomes <code>1</code>.</li>
+            <li><strong>Check Neighbors:</strong> A is connected to B and C. Both have flag <code>-1</code>.</li>
+            <li><strong>Enqueue:</strong> Add B and C to the Queue. Their flags become <code>0</code>.</li>
+        </ul>
+        
+        <div class="visualizer-container">
+            <svg viewBox="0 0 300 200">
+                <line x1="50" y1="100" x2="150" y2="40" class="edge"/> <line x1="50" y1="100" x2="150" y2="160" class="edge"/> <line x1="150" y1="40" x2="250" y2="40" class="edge"/> <line x1="150" y1="40" x2="250" y2="160" class="edge"/> <line x1="250" y1="40" x2="250" y2="160" class="edge"/>
+                
+                <circle cx="50" cy="100" r="18" fill="var(--flag-visited)" class="node-circle"/><text x="50" y="100" class="node-text">A</text><text x="35" y="80" class="flag-text">1</text>
+                <circle cx="150" cy="40" r="18" fill="var(--flag-queue)" class="node-circle"/><text x="150" y="40" class="node-text">B</text><text x="135" y="20" class="flag-text">0</text>
+                <circle cx="150" cy="160" r="18" fill="var(--flag-queue)" class="node-circle"/><text x="150" y="160" class="node-text">C</text><text x="135" y="140" class="flag-text">0</text>
+                <circle cx="250" cy="40" r="18" fill="var(--flag-unvisited)" class="node-circle"/><text x="250" y="40" class="node-text">D</text><text x="235" y="20" class="flag-text">-1</text>
+                <circle cx="250" cy="160" r="18" fill="var(--flag-unvisited)" class="node-circle"/><text x="250" y="160" class="node-text">E</text><text x="235" y="140" class="flag-text">-1</text>
+            </svg>
+
+            <div class="state-dashboard">
+                <div class="state-box">
+                    <h4>Queue</h4>
+                    <div class="queue-array"><div class="array-item queued">B</div><div class="array-item queued">C</div></div>
+                </div>
+                <div class="state-box">
+                    <h4>Visited Set</h4>
+                    <div class="visited-array"><div class="array-item visited">A</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 3 Card -->
+    <div class="card">
+        <h2>Step 3: Processing Node B</h2>
+        <ul>
+            <li><strong>Dequeue B:</strong> Move to Visited Set. Flag becomes <code>1</code>.</li>
+            <li><strong>Check Neighbors:</strong> B connects to A, D, E.
+                <ul>
+                    <li>Ignore A (Flag is already <code>1</code>).</li>
+                    <li>D and E have flag <code>-1</code>.</li>
+                </ul>
+            </li>
+            <li><strong>Enqueue:</strong> Add D and E to the Queue. Their flags become <code>0</code>.</li>
+        </ul>
+        
+        <div class="visualizer-container">
+            <svg viewBox="0 0 300 200">
+                <line x1="50" y1="100" x2="150" y2="40" class="edge"/> <line x1="50" y1="100" x2="150" y2="160" class="edge"/> <line x1="150" y1="40" x2="250" y2="40" class="edge"/> <line x1="150" y1="40" x2="250" y2="160" class="edge"/> <line x1="250" y1="40" x2="250" y2="160" class="edge"/>
+                
+                <circle cx="50" cy="100" r="18" fill="var(--flag-visited)" class="node-circle"/><text x="50" y="100" class="node-text">A</text><text x="35" y="80" class="flag-text">1</text>
+                <circle cx="150" cy="40" r="18" fill="var(--flag-visited)" class="node-circle"/><text x="150" y="40" class="node-text">B</text><text x="135" y="20" class="flag-text">1</text>
+                <circle cx="150" cy="160" r="18" fill="var(--flag-queue)" class="node-circle"/><text x="150" y="160" class="node-text">C</text><text x="135" y="140" class="flag-text">0</text>
+                <circle cx="250" cy="40" r="18" fill="var(--flag-queue)" class="node-circle"/><text x="250" y="40" class="node-text">D</text><text x="235" y="20" class="flag-text">0</text>
+                <circle cx="250" cy="160" r="18" fill="var(--flag-queue)" class="node-circle"/><text x="250" y="160" class="node-text">E</text><text x="235" y="140" class="flag-text">0</text>
+            </svg>
+
+            <div class="state-dashboard">
+                <div class="state-box">
+                    <h4>Queue</h4>
+                    <div class="queue-array"><div class="array-item queued">C</div><div class="array-item queued">D</div><div class="array-item queued">E</div></div>
+                </div>
+                <div class="state-box">
+                    <h4>Visited Set</h4>
+                    <div class="visited-array"><div class="array-item visited">A</div><div class="array-item visited">B</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 4 Card -->
+    <div class="card">
+        <h2>Step 4: Processing Node C</h2>
+        <ul>
+            <li><strong>Dequeue C:</strong> Move to Visited Set. Flag becomes <code>1</code>.</li>
+            <li><strong>Check Neighbors:</strong> C connects only to A.</li>
+            <li>Ignore A (Flag is already <code>1</code>). No new nodes added to queue.</li>
+        </ul>
+        
+        <div class="visualizer-container">
+            <svg viewBox="0 0 300 200">
+                <line x1="50" y1="100" x2="150" y2="40" class="edge"/> <line x1="50" y1="100" x2="150" y2="160" class="edge"/> <line x1="150" y1="40" x2="250" y2="40" class="edge"/> <line x1="150" y1="40" x2="250" y2="160" class="edge"/> <line x1="250" y1="40" x2="250" y2="160" class="edge"/>
+                
+                <circle cx="50" cy="100" r="18" fill="var(--flag-visited)" class="node-circle"/><text x="50" y="100" class="node-text">A</text><text x="35" y="80" class="flag-text">1</text>
+                <circle cx="150" cy="40" r="18" fill="var(--flag-visited)" class="node-circle"/><text x="150" y="40" class="node-text">B</text><text x="135" y="20" class="flag-text">1</text>
+                <circle cx="150" cy="160" r="18" fill="var(--flag-visited)" class="node-circle"/><text x="150" y="160" class="node-text">C</text><text x="135" y="140" class="flag-text">1</text>
+                <circle cx="250" cy="40" r="18" fill="var(--flag-queue)" class="node-circle"/><text x="250" y="40" class="node-text">D</text><text x="235" y="20" class="flag-text">0</text>
+                <circle cx="250" cy="160" r="18" fill="var(--flag-queue)" class="node-circle"/><text x="250" y="160" class="node-text">E</text><text x="235" y="140" class="flag-text">0</text>
+            </svg>
+
+            <div class="state-dashboard">
+                <div class="state-box">
+                    <h4>Queue</h4>
+                    <div class="queue-array"><div class="array-item queued">D</div><div class="array-item queued">E</div></div>
+                </div>
+                <div class="state-box">
+                    <h4>Visited Set</h4>
+                    <div class="visited-array"><div class="array-item visited">A</div><div class="array-item visited">B</div><div class="array-item visited">C</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Step 5 Card -->
+    <div class="card">
+        <h2>Step 5: Processing Node D (Cycle Detected!)</h2>
+        <ul>
+            <li><strong>Dequeue D:</strong> Move to Visited Set. Flag becomes <code>1</code>.</li>
+            <li><strong>Check Neighbors:</strong> D connects to B and E.</li>
+            <li>Ignore B (Flag is already <code>1</code>).</li>
+            <li><strong>Look at E:</strong> Node E currently has a flag of <code>0</code>.</li>
+        </ul>
+        
+        <div class="alert">
+            <strong>The "Aha!" Moment:</strong> What does a flag of <code>0</code> mean? It means E is <em>already in the queue</em>! It was put there previously by Node B. Because we are reaching Node E again from a completely different path (via Node D), <strong>a cycle exists!</strong>
+        </div>
+        
+        <div class="visualizer-container">
+            <svg viewBox="0 0 300 200">
+                <line x1="50" y1="100" x2="150" y2="40" class="edge"/> <line x1="50" y1="100" x2="150" y2="160" class="edge"/> <line x1="150" y1="40" x2="250" y2="40" class="edge"/> <line x1="150" y1="40" x2="250" y2="160" class="edge"/> 
+                <!-- Red edge for cycle detection -->
+                <line x1="250" y1="40" x2="250" y2="160" stroke="#ef4444" stroke-width="4"/>
+                
+                <circle cx="50" cy="100" r="18" fill="var(--flag-visited)" class="node-circle"/><text x="50" y="100" class="node-text">A</text><text x="35" y="80" class="flag-text">1</text>
+                <circle cx="150" cy="40" r="18" fill="var(--flag-visited)" class="node-circle"/><text x="150" y="40" class="node-text">B</text><text x="135" y="20" class="flag-text">1</text>
+                <circle cx="150" cy="160" r="18" fill="var(--flag-visited)" class="node-circle"/><text x="150" y="160" class="node-text">C</text><text x="135" y="140" class="flag-text">1</text>
+                <circle cx="250" cy="40" r="18" fill="var(--flag-visited)" class="node-circle"/><text x="250" y="40" class="node-text">D</text><text x="235" y="20" class="flag-text">1</text>
+                
+                <!-- Highlight E as the collision point -->
+                <circle cx="250" cy="160" r="18" fill="var(--flag-queue)" stroke="#ef4444" stroke-width="4"/><text x="250" y="160" class="node-text">E</text><text x="235" y="140" class="flag-text">0</text>
+            </svg>
+
+            <div class="state-dashboard">
+                <div class="state-box">
+                    <h4>Queue</h4>
+                    <div class="queue-array"><div class="array-item queued" style="border: 2px solid red;">E</div></div>
+                </div>
+                <div class="state-box">
+                    <h4>Visited Set</h4>
+                    <div class="visited-array"><div class="array-item visited">A</div><div class="array-item visited">B</div><div class="array-item visited">C</div><div class="array-item visited">D</div></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Core Logic Card -->
+    <div class="card">
+        <h2>The Core Logic & Pseudocode</h2>
+        <p>To implement this in code, you simply modify your standard BFS algorithm with two conditional checks when evaluating the neighbors (let's call a neighbor <code>v</code>) of the current node.</p>
+
+        <div class="callout" style="border-color: var(--text-main);">
+            <strong>The Golden Rule:</strong> <em>"If any vertex finds its adjacent vertex with flag 0, then it contains a cycle."</em>
+        </div>
+
+<pre><code>// Pseudocode snippet for checking neighbors (v)
+
+if (f[v] == 0) {
+    // If neighbor is already in the queue, we found a second path.
+    return 1; // Cycle Exists!
+} 
+
+if (f[v] == -1) {
+    // If neighbor is undiscovered, add to queue.
+    f[v] = 0; // Update flag to 'In Queue'
+    insert(v); // Push to Queue
+}</code></pre>
+
+        <div class="alert" style="background: #fffbeb; border-color: #f59e0b; color: #b45309;">
+            <strong>Instructor Note:</strong> At timestamp 6:22 in the video, the instructor has a minor verbal slip. She correctly writes <code>if (f[v] == -1)</code> on the board, but accidentally <em>says</em> "if flag of v is equal to 1". Trust the whiteboard: you only insert nodes into the queue if they are undiscovered (<code>-1</code>), never if they are already visited (<code>1</code>).
+        </div>
+    </div>
+
+</div>
+
+</body>
+</html>
