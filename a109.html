@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quadratic Probing in Hashing - Study Notes</title>
+    <!-- Google Fonts for typography -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    <!-- MathJax for rendering math formulas -->
+    <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+    <script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-main: #2d3748;
+            --text-muted: #718096;
+            --primary: #4C51BF;
+            --primary-light: #EBF4FF;
+            --success: #38A169;
+            --success-light: #C6F6D5;
+            --danger: #E53E3E;
+            --danger-light: #FED7D7;
+            --card-bg: #ffffff;
+            --border-color: #E2E8F0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding-bottom: 4rem;
+        }
+
+        /* Progress Bar */
+        #progress-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            height: 5px;
+            background: var(--primary);
+            width: 0%;
+            z-index: 1000;
+            transition: width 0.1s ease-out;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2.5rem;
+        }
+
+        /* Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.1);
+            opacity: 0; /* For scroll animation */
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            color: var(--primary);
+            margin-bottom: 0.5rem;
+            text-align: center;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 2rem;
+            font-size: 1.1rem;
+        }
+
+        h2 {
+            font-size: 1.5rem;
+            border-bottom: 2px solid var(--primary-light);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--primary);
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Setup Grid */
+        .setup-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1.5rem;
+            background: var(--primary-light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        .setup-item strong {
+            display: block;
+            color: var(--primary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .math-box {
+            font-family: 'Fira Code', monospace;
+            background: #f8f9fa;
+            padding: 1rem;
+            border-left: 4px solid var(--primary);
+            border-radius: 4px;
+            margin: 1rem 0;
+            overflow-x: auto;
+        }
+
+        /* Step Layout (Text + Visual) */
+        .step-layout {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 2rem;
+            align-items: start;
+        }
+
+        @media (max-width: 600px) {
+            .step-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        ul {
+            list-style-position: inside;
+            margin-bottom: 1rem;
+        }
+        
+        li {
+            margin-bottom: 0.5rem;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        .badge.success { background: var(--success-light); color: var(--success); }
+        .badge.danger { background: var(--danger-light); color: var(--danger); }
+        .badge.info { background: #E2E8F0; color: #4A5568; }
+
+        /* Hash Table Visuals */
+        .hash-table {
+            display: flex;
+            flex-direction: column;
+            border: 2px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+            background: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .hash-row {
+            display: flex;
+            border-bottom: 1px solid var(--border-color);
+        }
+        .hash-row:last-child {
+            border-bottom: none;
+        }
+
+        .hash-index {
+            background: #EDF2F7;
+            color: var(--text-muted);
+            width: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.85rem;
+            font-weight: 600;
+            border-right: 1px solid var(--border-color);
+        }
+
+        .hash-value {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 35px;
+            font-family: 'Fira Code', monospace;
+            font-weight: bold;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+
+        .hash-value.highlight {
+            background: var(--success-light);
+            color: var(--success);
+            animation: pulse 1s ease;
+        }
+
+        .hash-value.collision {
+            background: var(--danger-light);
+            color: var(--danger);
+        }
+
+        @keyframes pulse {
+            0% { background-color: var(--success-light); transform: scale(1); }
+            50% { background-color: #9AE6B4; transform: scale(1.05); }
+            100% { background-color: var(--success-light); transform: scale(1); }
+        }
+
+        /* Final Results Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+        }
+        
+        th, td {
+            text-align: left;
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+        
+        th {
+            background-color: var(--primary-light);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        .instructor-tip {
+            background: #FEFCBF;
+            border-left: 4px solid #D69E2E;
+            padding: 1rem 1.5rem;
+            border-radius: 4px;
+            margin-top: 1.5rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="progress-bar"></div>
+
+    <main class="feed-container">
+        
+        <!-- HEADER -->
+        <header class="card visible" style="padding: 4rem 2.5rem;">
+            <h1>Quadratic Probing in Hashing</h1>
+            <p class="subtitle">Complete Video Breakdown & In-Depth Study Notes</p>
+            <p style="text-align: center; color: var(--text-muted);">Scroll down to follow the instructor's step-by-step whiteboard calculations, visualizing how collisions are resolved without clustering.</p>
+        </header>
+
+        <!-- SETUP -->
+        <div class="card setup">
+            <h2>1. The Initial Setup</h2>
+            <p>Before calculations begin, the instructor establishes the working data on the whiteboard:</p>
+            
+            <div class="setup-grid">
+                <div class="setup-item">
+                    <strong>Keys to Insert</strong>
+                    <span style="font-family: 'Fira Code', monospace;">3, 2, 9, 6, 11, 13, 7, 12</span>
+                </div>
+                <div class="setup-item">
+                    <strong>Table Size (m)</strong>
+                    <span style="font-family: 'Fira Code', monospace;">m = 10 (Indices 0 to 9)</span>
+                </div>
+                <div class="setup-item">
+                    <strong>Hash Function</strong>
+                    <span style="font-family: 'Fira Code', monospace;">h(k) = 2k + 3</span>
+                </div>
+            </div>
+
+            <h3>🔑 The Core Formula for Quadratic Probing</h3>
+            <div class="math-box">
+                $$ \text{Location} = (u + i^2) \pmod m $$
+            </div>
+            <p><strong>Where:</strong></p>
+            <ul>
+                <li><strong>\(u\)</strong> = Initial hash location calculated by \(h(k)\).</li>
+                <li><strong>\(i\)</strong> = Probe attempt (ranges from \(0\) to \(m-1\)).</li>
+                <li><strong>\(m\)</strong> = Size of the hash table.</li>
+            </ul>
+            <div class="instructor-tip">
+                <strong>Instructor’s Verbal Note:</strong> In Linear Probing, the formula was \((u + i) \pmod m\), meaning if there was a collision, you moved sequentially by 1 step. In Quadratic Probing, you jump forward using squares (\(i^2 = 0, 1, 4, 9, 16...\)) to avoid the "clustering" problem found in linear probing.
+            </div>
+        </div>
+
+        <!-- STEP 1 & 2 -->
+        <div class="card step">
+            <h2>2. Step-by-Step Executions: Easy Insertions</h2>
+            <p>The instructor goes through the first few keys, which encounter no collisions.</p>
+            <br>
+            <div class="step-layout">
+                <div>
+                    <h3>Inserting Key: 3</h3>
+                    <p>Initial calculation (\(i=0\)):</p>
+                    <div class="math-box">
+                        \(u = h(3) = (2 \cdot 3 + 3) \pmod{10}\)<br>
+                        \(u = (6 + 3) \pmod{10} = 9\)
+                    </div>
+                    <p><strong>Action:</strong> Look at index 9. <span class="badge success">Free</span></p>
+                    <p><strong>Result:</strong> Store <strong>3</strong> at index 9. (Probes = 1)</p>
+                    <hr style="margin: 2rem 0; border: none; border-top: 1px solid #eee;">
+                    
+                    <h3>Inserting Key: 2</h3>
+                    <div class="math-box">
+                        \(u = h(2) = (2 \cdot 2 + 3) \pmod{10}\)<br>
+                        \(u = (4 + 3) \pmod{10} = 7\)
+                    </div>
+                    <p><strong>Action:</strong> Look at index 7. <span class="badge success">Free</span></p>
+                    <p><strong>Result:</strong> Store <strong>2</strong> at index 7. (Probes = 1)</p>
+                </div>
+                
+                <!-- Hash Table State 1 -->
+                <div class="hash-table">
+                    <script>
+                        const table1 = [null,null,null,null,null,null,null,2,null,3];
+                        table1.forEach((val, idx) => {
+                            let cl = val ? 'highlight' : '';
+                            document.write(`
+                            <div class="hash-row">
+                                <div class="hash-index">${idx}</div>
+                                <div class="hash-value ${cl}">${val || '-'}</div>
+                            </div>`);
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- STEP 3 & 4 -->
+        <div class="card step">
+            <div class="step-layout">
+                <div>
+                    <h3>Inserting Key: 9</h3>
+                    <div class="math-box">
+                        \(u = h(9) = (2 \cdot 9 + 3) \pmod{10}\)<br>
+                        \(u = (18 + 3) \pmod{10} = 21 \pmod{10} = 1\)
+                    </div>
+                    <p><strong>Action:</strong> Look at index 1. <span class="badge success">Free</span></p>
+                    <p><strong>Result:</strong> Store <strong>9</strong> at index 1. (Probes = 1)</p>
+                    
+                    <hr style="margin: 2rem 0; border: none; border-top: 1px solid #eee;">
+                    
+                    <h3>Inserting Key: 6</h3>
+                    <div class="math-box">
+                        \(u = h(6) = (2 \cdot 6 + 3) \pmod{10}\)<br>
+                        \(u = (12 + 3) \pmod{10} = 15 \pmod{10} = 5\)
+                    </div>
+                    <p><strong>Action:</strong> Look at index 5. <span class="badge success">Free</span></p>
+                    <p><strong>Result:</strong> Store <strong>6</strong> at index 5. (Probes = 1)</p>
+                </div>
+                
+                <!-- Hash Table State 2 -->
+                <div class="hash-table">
+                    <script>
+                        const table2 = [null,9,null,null,null,6,null,2,null,3];
+                        table2.forEach((val, idx) => {
+                            let cl = (val===9 || val===6) ? 'highlight' : (val ? '' : '');
+                            let displayVal = val || '-';
+                            document.write(`
+                            <div class="hash-row">
+                                <div class="hash-index">${idx}</div>
+                                <div class="hash-value ${cl}">${displayVal}</div>
+                            </div>`);
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLLISION 1 -->
+        <div class="card step">
+            <h2>3. The First Collision</h2>
+            <div class="step-layout">
+                <div>
+                    <h3>💥 Inserting Key: 11</h3>
+                    <div class="math-box">
+                        \(u = h(11) = (2 \cdot 11 + 3) \pmod{10} = 25 \pmod{10} = 5\)
+                    </div>
+                    <p><strong>Action:</strong> Look at index 5. <span class="badge danger">Collision! (6 is already there)</span></p>
+                    <p><strong>Applying Quadratic Formula:</strong> \((u + i^2) \pmod{10}\)</p>
+                    <ul>
+                        <li><strong>Probe 1 (\(i=0\)):</strong> \((5 + 0^2) \pmod{10} = 5\) <em>(Occupied)</em></li>
+                        <li><strong>Probe 2 (\(i=1\)):</strong> \((5 + 1^2) \pmod{10} = 6\) <em>(Free!)</em></li>
+                    </ul>
+                    <p><strong>Result:</strong> Store <strong>11</strong> at index 6. (Probes = 2)</p>
+                </div>
+                
+                <div class="hash-table">
+                    <script>
+                        const table3 = [null,9,null,null,null,6,11,2,null,3];
+                        table3.forEach((val, idx) => {
+                            let cl = '';
+                            if(val === 11) cl = 'highlight';
+                            if(idx === 5) cl = 'collision';
+                            let displayVal = val || '-';
+                            document.write(`
+                            <div class="hash-row">
+                                <div class="hash-index">${idx}</div>
+                                <div class="hash-value ${cl}">${displayVal}</div>
+                            </div>`);
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- COLLISION 2 & 3 -->
+        <div class="card step">
+            <h2>4. More Collisions</h2>
+            <div class="step-layout">
+                <div>
+                    <h3>💥 Inserting Key: 13</h3>
+                    <div class="math-box">
+                        \(u = h(13) = (26 + 3) \pmod{10} = 29 \pmod{10} = 9\)
+                    </div>
+                    <p><strong>Action:</strong> Look at index 9. <span class="badge danger">Collision! (3 is there)</span></p>
+                    <ul>
+                        <li><strong>Probe 1 (\(i=0\)):</strong> \((9 + 0) \pmod{10} = 9\) <em>(Occupied)</em></li>
+                        <li><strong>Probe 2 (\(i=1\)):</strong> \((9 + 1^2) \pmod{10} = 10 \pmod{10} = 0\) <em>(Free!)</em></li>
+                    </ul>
+                    <p><strong>Result:</strong> Store <strong>13</strong> at index 0. (Probes = 2)</p>
+                    
+                    <hr style="margin: 2rem 0; border: none; border-top: 1px solid #eee;">
+                    
+                    <h3>💥 Inserting Key: 7</h3>
+                    <div class="math-box">
+                        \(u = h(7) = (14 + 3) \pmod{10} = 17 \pmod{10} = 7\)
+                    </div>
+                    <p><strong>Action:</strong> Look at index 7. <span class="badge danger">Collision! (2 is there)</span></p>
+                    <ul>
+                        <li><strong>Probe 1 (\(i=0\)):</strong> \((7 + 0) \pmod{10} = 7\) <em>(Occupied)</em></li>
+                        <li><strong>Probe 2 (\(i=1\)):</strong> \((7 + 1^2) \pmod{10} = 8\) <em>(Free!)</em></li>
+                    </ul>
+                    <p><strong>Result:</strong> Store <strong>7</strong> at index 8. (Probes = 2)</p>
+                </div>
+                
+                <div class="hash-table">
+                    <script>
+                        const table4 = [13,9,null,null,null,6,11,2,7,3];
+                        table4.forEach((val, idx) => {
+                            let cl = (val === 13 || val === 7) ? 'highlight' : '';
+                            if(idx === 9 || idx === 7) cl += ' collision'; // just to show initial collision spots lightly
+                            let displayVal = val || '-';
+                            document.write(`
+                            <div class="hash-row">
+                                <div class="hash-index">${idx}</div>
+                                <div class="hash-value ${cl}">${displayVal}</div>
+                            </div>`);
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- THE MAJOR COLLISION -->
+        <div class="card step">
+            <h2>5. The Major Collision</h2>
+            <div class="instructor-tip" style="margin-top: 0; margin-bottom: 1.5rem;">
+                <strong>Instructor Note:</strong> This is the most complex insertion in the example. Pay close attention to the math here as we square higher values of \(i\).
+            </div>
+            <div class="step-layout">
+                <div>
+                    <h3>🚨 Inserting Key: 12</h3>
+                    <div class="math-box">
+                        \(u = h(12) = (24 + 3) \pmod{10} = 27 \pmod{10} = 7\)
+                    </div>
+                    <p><strong>Action:</strong> Look at index 7. <span class="badge danger">Collision! (2 is there)</span></p>
+                    <p><strong>Applying Quadratic Formula:</strong></p>
+                    <ul>
+                        <li><strong>Probe 1 (\(i=0\)):</strong> \((7 + 0^2) \pmod{10} = 7\) <span class="badge danger">Occupied by 2</span></li>
+                        <li><strong>Probe 2 (\(i=1\)):</strong> \((7 + 1^2) \pmod{10} = 8\) <span class="badge danger">Occupied by 7</span></li>
+                        <li><strong>Probe 3 (\(i=2\)):</strong> \((7 + 2^2) \pmod{10} = (7+4)\pmod{10} = 11 \pmod{10} = 1\) <span class="badge danger">Occupied by 9</span></li>
+                        <li><strong>Probe 4 (\(i=3\)):</strong> \((7 + 3^2) \pmod{10} = (7+9)\pmod{10} = 16 \pmod{10} = 6\) <span class="badge danger">Occupied by 11</span></li>
+                        <li><strong>Probe 5 (\(i=4\)):</strong> \((7 + 4^2) \pmod{10} = (7+16)\pmod{10} = 23 \pmod{10} = 3\) <span class="badge success">FREE!</span></li>
+                    </ul>
+                    <p><strong>Result:</strong> Store <strong>12</strong> at index 3. (Probes = 5)</p>
+                </div>
+                
+                <div class="hash-table">
+                    <script>
+                        const table5 = [13,9,null,12,null,6,11,2,7,3];
+                        table5.forEach((val, idx) => {
+                            let cl = '';
+                            if(val === 12) cl = 'highlight';
+                            else if([7,8,1,6].includes(idx)) cl = 'collision';
+                            let displayVal = val || '-';
+                            document.write(`
+                            <div class="hash-row">
+                                <div class="hash-index">${idx}</div>
+                                <div class="hash-value ${cl}">${displayVal}</div>
+                            </div>`);
+                        });
+                    </script>
+                </div>
+            </div>
+        </div>
+
+        <!-- SUMMARY -->
+        <div class="card summary">
+            <h2>6. Final Results & Summary</h2>
+            <p>By the end of the video, the instructor has filled both the Hash Table array and the calculation table.</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Key</th>
+                        <th>Initial Location (u)</th>
+                        <th>Total Probes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr><td><strong>3</strong></td><td>9</td><td>1</td></tr>
+                    <tr><td><strong>2</strong></td><td>7</td><td>1</td></tr>
+                    <tr><td><strong>9</strong></td><td>1</td><td>1</td></tr>
+                    <tr><td><strong>6</strong></td><td>5</td><td>1</td></tr>
+                    <tr><td><strong>11</strong></td><td>5</td><td>2</td></tr>
+                    <tr><td><strong>13</strong></td><td>9</td><td>2</td></tr>
+                    <tr><td><strong>7</strong></td><td>7</td><td>2</td></tr>
+                    <tr><td><strong>12</strong></td><td>7</td><td>5</td></tr>
+                </tbody>
+            </table>
+
+            <div class="instructor-tip" style="background: var(--primary-light); border-color: var(--primary);">
+                <strong>Exam Tip from Instructor:</strong> Sometimes exams will ask for the <em>"Total Number of Probes"</em>. To find the total, you simply add up the Probe column:<br> 
+                <span style="font-family: monospace; font-size: 1.1rem;">(1 + 1 + 1 + 1 + 2 + 2 + 2 + 5) = <strong>15 Total Probes</strong></span>.
+            </div>
+
+            <h3 style="margin-top: 2.5rem;">Array Output Order</h3>
+            <p>At the very end, she notes that exam questions often ask for the "order of elements" inside the hash array after all insertions. You determine this by reading the hash table array straight down from index 0 to index 9. Empty spots are represented by dashes (-).</p>
+            
+            <div class="math-box" style="text-align: center; font-size: 1.25rem;">
+                13, 9, -, 12, -, 6, 11, 2, 7, 3
+            </div>
+
+            <h3 style="margin-top: 2.5rem; color: var(--danger);">Key Takeaway: Quadratic vs Linear Probing</h3>
+            <p>She points out the specific insertion of <strong>Key 12</strong>. In <em>Linear Probing</em>, you would have just stepped down the array one by one looking for an open slot, which creates massive groups (clusters) of data.</p>
+            <p>By using <em>Quadratic Probing</em> (\(i^2\)), the jump distance increases exponentially (+1, +4, +9, +16), effectively breaking up the clustering problem and spreading the data out more evenly across the table!</p>
+        </div>
+
+    </main>
+
+    <script>
+        // Progress Bar Update
+        window.addEventListener('scroll', () => {
+            const winScroll = document.body.scrollTop || document.documentElement.scrollTop;
+            const height = document.documentElement.scrollHeight - document.documentElement.clientHeight;
+            const scrolled = (winScroll / height) * 100;
+            document.getElementById("progress-bar").style.width = scrolled + "%";
+        });
+
+        // Intersection Observer for fade-in animations
+        const observerOptions = {
+            root: null,
+            rootMargin: '0px',
+            threshold: 0.15
+        };
+
+        const observer = new IntersectionObserver((entries, observer) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('visible');
+                    observer.unobserve(entry.target); // Only animate once
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.card').forEach(card => {
+            observer.observe(card);
+        });
+    </script>
+</body>
+</html>
