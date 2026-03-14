@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B-Tree Properties: Lecture Notes</title>
+    <style>
+        /* Base Variables and Reset */
+        :root {
+            --bg-color: #f3f4f6;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --card-bg: #ffffff;
+            --primary: #4f46e5;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --highlight: #fef08a;
+            --font-main: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            --font-mono: 'Courier New', Courier, monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            padding: 20px;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Header */
+        .feed-header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--primary), #818cf8);
+            color: white;
+            border-radius: 16px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .feed-header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .feed-header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Cards (Content Sections) */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 16px;
+            padding: 30px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            border-top: 5px solid var(--primary);
+        }
+
+        .card h2 {
+            color: var(--primary);
+            margin-bottom: 15px;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h3 {
+            margin: 20px 0 10px 0;
+            color: var(--text-main);
+            font-size: 1.3rem;
+        }
+
+        .card p {
+            margin-bottom: 15px;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .whiteboard-quote {
+            background-color: #f8fafc;
+            border-left: 4px solid var(--primary);
+            padding: 15px 20px;
+            font-family: var(--font-main);
+            font-weight: 500;
+            margin-bottom: 20px;
+            border-radius: 0 8px 8px 0;
+            color: #334155;
+        }
+
+        ul {
+            margin-left: 20px;
+            margin-bottom: 15px;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        .math-box {
+            background-color: #1e293b;
+            color: #38bdf8;
+            font-family: var(--font-mono);
+            padding: 15px;
+            border-radius: 8px;
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .highlight {
+            background-color: var(--highlight);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: #854d0e;
+            font-weight: bold;
+        }
+
+        /* VISUALIZATIONS (CSS Art) */
+        .visual-container {
+            background-color: #f1f5f9;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            padding: 30px;
+            margin: 20px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .visual-title {
+            font-weight: bold;
+            color: #64748b;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.9rem;
+        }
+
+        /* BST vs B-Tree CSS Drawing */
+        .tree-compare {
+            display: flex;
+            gap: 50px;
+            justify-content: space-around;
+            width: 100%;
+        }
+
+        .tree-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .circle-node {
+            width: 50px;
+            height: 50px;
+            background-color: var(--secondary);
+            color: white;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .btree-node-rect {
+            background-color: var(--primary);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            display: flex;
+            gap: 15px;
+            font-weight: bold;
+            position: relative;
+        }
+
+        .lines-down {
+            display: flex;
+            gap: 40px;
+            margin-top: 10px;
+        }
+
+        .line {
+            width: 2px;
+            height: 30px;
+            background-color: #cbd5e1;
+        }
+
+        /* B-Tree Node Internal Structure Drawing */
+        .node-anatomy {
+            display: flex;
+            border: 2px solid #334155;
+            border-radius: 8px;
+            background: white;
+            overflow: hidden;
+        }
+
+        .anatomy-key {
+            padding: 15px 25px;
+            font-weight: bold;
+            border-right: 2px solid #334155;
+            background-color: #e0e7ff;
+            color: var(--primary);
+        }
+        .anatomy-key:last-child {
+            border-right: none;
+        }
+
+        .pointers-row {
+            display: flex;
+            justify-content: space-between;
+            width: 100%;
+            padding: 0 10px;
+            margin-top: 5px;
+        }
+
+        .pointer-arrow {
+            width: 0; 
+            height: 0; 
+            border-left: 8px solid transparent;
+            border-right: 8px solid transparent;
+            border-top: 15px solid #334155;
+        }
+
+        /* Level Rule Drawing */
+        .level-rule-box {
+            display: flex;
+            align-items: flex-end;
+            gap: 20px;
+            height: 120px;
+            border-bottom: 3px dashed var(--secondary);
+            padding-bottom: 10px;
+            position: relative;
+        }
+
+        .level-node {
+            width: 40px; height: 40px;
+            background: var(--secondary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+        }
+
+        .bad-node {
+            background: var(--danger);
+            margin-bottom: 40px; /* Forces it to be on a different level */
+        }
+
+        /* Table */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+        th {
+            background-color: #f8fafc;
+            color: var(--primary);
+        }
+
+        /* Responsive */
+        @media (max-width: 600px) {
+            .tree-compare {
+                flex-direction: column;
+                gap: 40px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <!-- Header -->
+        <header class="feed-header">
+            <h1>B-Tree Properties</h1>
+            <p>Comprehensive Lecture Breakdown • Scroll to Learn</p>
+        </header>
+
+        <!-- Section 1 -->
+        <article class="card">
+            <h2>🌳 1. What is a B-Tree?</h2>
+            <div class="whiteboard-quote">
+                <strong>Whiteboard Notes:</strong><br>
+                • balanced m-way tree (m = order)<br>
+                • Generalization of BST<br>
+                • node can have more than one key & more than 2 children<br>
+                • maintains sorted data
+            </div>
+            <p>
+                The instructor starts by defining a B-Tree as a <strong>balanced m-way tree</strong>. The variable <strong>'m'</strong> represents the <em>order</em> of the tree. If you are asked to build a B-Tree of order 5, then $m = 5$.
+            </p>
+            <p>
+                It is a generalization of a Binary Search Tree (BST). While a BST is restricted to 1 key per node and a maximum of 2 children, a B-Tree node can store <strong>multiple keys</strong> and branch out to <strong>multiple children</strong>.
+            </p>
+
+            <div class="visual-container">
+                <div class="visual-title">Visualization: BST vs B-Tree</div>
+                <div class="tree-compare">
+                    <!-- BST -->
+                    <div class="tree-wrapper">
+                        <span style="margin-bottom:10px; font-weight:bold; color:var(--text-muted);">Binary Search Tree (BST)</span>
+                        <div class="circle-node">10</div>
+                        <div class="lines-down">
+                            <div class="line" style="transform: rotate(30deg);"></div>
+                            <div class="line" style="transform: rotate(-30deg);"></div>
+                        </div>
+                        <div style="display:flex; gap: 30px; margin-top:5px;">
+                            <div class="circle-node" style="width:35px; height:35px;">5</div>
+                            <div class="circle-node" style="width:35px; height:35px;">15</div>
+                        </div>
+                        <p style="font-size: 0.8rem; margin-top: 10px;">Max 1 key, Max 2 children</p>
+                    </div>
+                    <!-- B-Tree -->
+                    <div class="tree-wrapper">
+                        <span style="margin-bottom:10px; font-weight:bold; color:var(--text-muted);">B-Tree Node</span>
+                        <div class="btree-node-rect">
+                            <span>15</span> | <span>16</span> | <span>17</span>
+                        </div>
+                        <div class="lines-down" style="gap: 15px;">
+                            <div class="line" style="height: 20px;"></div>
+                            <div class="line" style="height: 20px;"></div>
+                            <div class="line" style="height: 20px;"></div>
+                            <div class="line" style="height: 20px;"></div>
+                        </div>
+                        <p style="font-size: 0.8rem; margin-top: 25px;">Multiple keys, Multiple children</p>
+                    </div>
+                </div>
+            </div>
+        </article>
+
+        <!-- Section 2 -->
+        <article class="card">
+            <h2>📏 2. The Golden Level Rule</h2>
+            <div class="whiteboard-quote">
+                <strong>Whiteboard Note:</strong><br>
+                • all leaf node must be at same level
+            </div>
+            <p>
+                The instructor draws an unbalanced binary tree to illustrate a strict rule: In a standard BST, leaves can end at Level 2, Level 3, etc. <strong>In a B-Tree, this is strictly prohibited.</strong>
+            </p>
+            <p>
+                Every single leaf node (the nodes at the very bottom with no children) <strong>must terminate on the exact same horizontal level</strong>. This is what makes the B-Tree a perfectly "balanced" tree.
+            </p>
+
+            <div class="visual-container">
+                <div class="visual-title">Visualization: The Level Rule</div>
+                <div style="display: flex; width: 100%; justify-content: space-around;">
+                    
+                    <div style="text-align: center;">
+                        <span style="color: var(--danger); font-weight: bold;">❌ Invalid B-Tree</span>
+                        <div class="level-rule-box" style="border-bottom: 1px solid #ccc;">
+                            <div class="level-node bad-node">L2</div>
+                            <div class="level-node">L3</div>
+                        </div>
+                        <p style="font-size: 0.8rem;">Leaves end at different levels</p>
+                    </div>
+
+                    <div style="text-align: center;">
+                        <span style="color: var(--secondary); font-weight: bold;">✅ Valid B-Tree</span>
+                        <div class="level-rule-box">
+                            <div class="level-node">L3</div>
+                            <div class="level-node">L3</div>
+                            <div class="level-node">L3</div>
+                        </div>
+                        <p style="font-size: 0.8rem;">All leaves touch the exact same bottom line</p>
+                    </div>
+
+                </div>
+            </div>
+        </article>
+
+        <!-- Section 3 -->
+        <article class="card">
+            <h2>🧩 3. Anatomy of a B-Tree Node</h2>
+            <p>
+                Before doing the math, the instructor draws a large rectangular node to explain how data is stored. 
+            </p>
+            <ul>
+                <li><strong>Keys ($k_1, k_2, ...$):</strong> The actual data values stored inside the node.</li>
+                <li><strong>Pointers/Links:</strong> Branches pointing downwards to child nodes. They sit in the spaces <em>between</em> and on the <em>edges</em> of the keys.</li>
+            </ul>
+            <p>
+                <span class="highlight">Crucial Concept:</span> The number of child pointers coming out of a node is always <strong>exactly one greater</strong> than the number of keys inside that node. (e.g., 4 keys = 5 pointers).
+            </p>
+
+            <div class="visual-container">
+                <div class="visual-title">Visualization: Node Structure</div>
+                <div style="display: flex; flex-direction: column; align-items: center; width: 300px;">
+                    <div class="node-anatomy">
+                        <div class="anatomy-key">k1</div>
+                        <div class="anatomy-key">k2</div>
+                        <div class="anatomy-key">k3</div>
+                    </div>
+                    <div class="pointers-row">
+                        <div class="pointer-arrow"></div>
+                        <div class="pointer-arrow"></div>
+                        <div class="pointer-arrow"></div>
+                        <div class="pointer-arrow"></div>
+                    </div>
+                    <p style="margin-top: 15px; font-size: 0.9rem; color: var(--text-muted);">3 Keys = 4 Child Pointers</p>
+                </div>
+            </div>
+        </article>
+
+        <!-- Section 4 -->
+        <article class="card">
+            <h2>👨‍👩‍👧‍👦 4. Mathematical Properties: Children</h2>
+            <div class="whiteboard-quote">
+                <strong>Whiteboard Notes:</strong><br>
+                B-tree of order m has following properties:<br>
+                • Every node has max <strong>m</strong> children<br>
+                • Min children:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;leaf → 0<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;root → 2<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;internal nodes → ⌈m/2⌉
+            </div>
+            
+            <p>The instructor breaks down the strict mathematical rules for how many children a node can have, based on order $m$. Let's use her example where <strong>$m = 5$</strong>.</p>
+            
+            <ul>
+                <li><strong>Max Children:</strong> At most $m$. If $m=5$, maximum children = 5.</li>
+                <li><strong>Min Children (Leaf):</strong> 0. (Leaves don't have children by definition).</li>
+                <li><strong>Min Children (Root):</strong> 2. (Unless the tree is just one single node).</li>
+                <li><strong>Min Children (Internal):</strong> ⌈$m/2$⌉. Internal nodes are nodes between the root and the leaves.</li>
+            </ul>
+
+            <div class="math-box">
+                Instructor's Math Lesson: Ceiling Function ⌈ ⌉<br><br>
+                m = 5<br>
+                5 / 2 = 2.5<br>
+                ⌈2.5⌉ = 3 (Round UP to next integer)<br>
+                <br>
+                Result: An internal node must have a minimum of 3 children.
+            </div>
+        </article>
+
+        <!-- Section 5 -->
+        <article class="card">
+            <h2>🔑 5. Mathematical Properties: Keys</h2>
+            <div class="whiteboard-quote">
+                <strong>Whiteboard Notes:</strong><br>
+                • Every node has max <strong>(m-1)</strong> keys<br>
+                • Min keys:<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;root node → 1<br>
+                &nbsp;&nbsp;&nbsp;&nbsp;all other nodes → ⌈m/2⌉ - 1
+            </div>
+
+            <p>Because the number of keys is always one less than the number of children, the key rules are directly derived from the children rules.</p>
+
+            <ul>
+                <li><strong>Max Keys:</strong> $m - 1$. If $m=5$, a node can hold a maximum of $5 - 1 = 4$ keys.</li>
+                <li><strong>Min Keys (Root):</strong> 1.</li>
+                <li><strong>Min Keys (All other nodes):</strong> Minimum children minus one. Since min children is ⌈$m/2$⌉, min keys is ⌈$m/2$⌉ - 1.</li>
+            </ul>
+
+            <div class="math-box">
+                Math for m = 5<br><br>
+                Min Children = ⌈5/2⌉ = 3<br>
+                Min Keys = 3 - 1 = 2<br><br>
+                Result: Every node (except root) must hold at least 2 keys.
+            </div>
+        </article>
+
+        <!-- Section 6 -->
+        <article class="card">
+            <h2>⭐ 6. The Golden Rule of Insertion</h2>
+            <p>
+                At the very end of the video, the instructor states a vital rule for building B-trees that isn't written in the main bullet points, but is absolutely critical:
+            </p>
+            <div class="whiteboard-quote" style="border-left-color: #eab308; background-color: #fefce8;">
+                <strong>"The insertion would be always in the leaf node."</strong>
+            </div>
+            <p>
+                When you add a new value to a B-Tree, you <strong>never</strong> insert it directly into the root or an internal node. You traverse down the tree and place the new key into the appropriate leaf node. If that leaf node overflows (exceeds $m-1$ keys), it splits and pushes a value up. (She mentions this process will be covered in the next video).
+            </p>
+        </article>
+
+        <!-- Section 7 -->
+        <article class="card">
+            <h2>📌 7. Exam Cheat Sheet (Summary Table)</h2>
+            <p>Here is your quick reference guide for a B-Tree of Order <strong>$m$</strong>:</p>
+            
+            <table>
+                <thead>
+                    <tr>
+                        <th>Node Type</th>
+                        <th>Min Children</th>
+                        <th>Max Children</th>
+                        <th>Min Keys</th>
+                        <th>Max Keys</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Root</strong></td>
+                        <td>2 (if tree > 1 node)</td>
+                        <td>$m$</td>
+                        <td>1</td>
+                        <td>$m - 1$</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Internal Node</strong></td>
+                        <td>⌈$m/2$⌉</td>
+                        <td>$m$</td>
+                        <td>⌈$m/2$⌉ - 1</td>
+                        <td>$m - 1$</td>
+                    </tr>
+                    <tr>
+                        <td><strong>Leaf Node</strong></td>
+                        <td>0</td>
+                        <td>0</td>
+                        <td>⌈$m/2$⌉ - 1</td>
+                        <td>$m - 1$</td>
+                    </tr>
+                </tbody>
+            </table>
+            <p style="margin-top: 15px; font-size: 0.95rem; color: var(--text-muted);">
+                <em>* Note: All leaf nodes must reside on the exact same level.</em>
+            </p>
+        </article>
+
+    </div>
+
+</body>
+</html>
