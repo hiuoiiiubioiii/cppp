@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shell Sort Algorithm - Study Notes</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&family=Fira+Code&display=swap');
+
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent: #3b82f6;
+            --accent-light: #eff6ff;
+            --compare-bg: #fef08a;
+            --compare-border: #eab308;
+            --swap-bg: #fca5a5;
+            --swap-border: #ef4444;
+            --sorted-bg: #bbf7d0;
+            --sorted-border: #22c55e;
+            --default-border: #cbd5e1;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.7;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Topic Cards */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 2.5rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            border-top: 5px solid var(--accent);
+        }
+
+        .card h2 {
+            font-size: 1.75rem;
+            font-weight: 800;
+            margin-bottom: 1.5rem;
+            color: var(--text-main);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card h3 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin: 1.5rem 0 1rem;
+            color: var(--accent);
+        }
+
+        .card p {
+            margin-bottom: 1rem;
+        }
+
+        .highlight {
+            background: var(--accent-light);
+            padding: 0.2rem 0.4rem;
+            border-radius: 4px;
+            font-weight: 600;
+            color: var(--accent);
+        }
+
+        /* Array Visualizations */
+        .visual-block {
+            background: #f8fafc;
+            border-radius: 12px;
+            padding: 2rem 1rem 3rem 1rem;
+            margin: 1.5rem 0;
+            border: 1px solid #e2e8f0;
+        }
+
+        .visual-title {
+            text-align: center;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            color: var(--text-muted);
+        }
+
+        .array-row {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 1rem;
+            flex-wrap: wrap;
+        }
+
+        .array-box {
+            width: 50px;
+            height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #ffffff;
+            border: 2px solid var(--default-border);
+            border-radius: 8px;
+            font-size: 1.2rem;
+            font-weight: 700;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .index-label {
+            position: absolute;
+            bottom: -25px;
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            font-family: 'Fira Code', monospace;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -30px;
+            font-size: 0.9rem;
+            font-weight: 800;
+            color: var(--accent);
+        }
+
+        /* State Colors */
+        .box-compare {
+            background: var(--compare-bg);
+            border-color: var(--compare-border);
+        }
+        .box-swap {
+            background: var(--swap-bg);
+            border-color: var(--swap-border);
+            transform: scale(1.05);
+        }
+        .box-sorted {
+            background: var(--sorted-bg);
+            border-color: var(--sorted-border);
+        }
+
+        /* Legend */
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 1.5rem;
+            margin-top: 2rem;
+            font-size: 0.9rem;
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .legend-color {
+            width: 16px;
+            height: 16px;
+            border-radius: 4px;
+            border: 1px solid #000;
+        }
+
+        /* Code Block */
+        pre {
+            background: #0f172a;
+            color: #e2e8f0;
+            padding: 1.5rem;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'Fira Code', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+            margin: 1.5rem 0;
+        }
+
+        .comment { color: #64748b; font-style: italic; }
+        .keyword { color: #c678dd; }
+        .variable { color: #e5c07b; }
+        .function { color: #61afef; }
+
+        /* Alert Box */
+        .alert {
+            background: #fffbeb;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            margin: 1rem 0;
+            border-radius: 0 8px 8px 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <header>
+            <h1>Shell Sort Algorithm</h1>
+            <p>Comprehensive Video Breakdown & Visual Study Notes</p>
+        </header>
+
+        <!-- TOPIC 1 -->
+        <article class="card">
+            <h2>1. Why Shell Sort? (The Problem with Insertion Sort)</h2>
+            <p>Before diving into Shell Sort, the instructor explains <em>why</em> it was created. It was designed to fix a major flaw in the <strong>Insertion Sort</strong> algorithm.</p>
+            
+            <div class="alert">
+                <strong>The Flaw:</strong> In Insertion Sort, elements are only compared to their immediate adjacent neighbors. If the absolute smallest number in your array is sitting at the very end (the far right), the algorithm has to shift every single element to the right one-by-one to move that small number to index 0. This takes <span class="highlight">O(N²)</span> time and many operations.
+            </div>
+
+            <p><strong>The Shell Sort Solution:</strong> Instead of comparing adjacent elements (distance of 1), Shell Sort compares elements that are <strong>distant</strong> from each other. This allows small elements on the right to take massive "jumps" to the left, drastically reducing the number of swaps and shifts required.</p>
+        </article>
+
+        <!-- TOPIC 2 -->
+        <article class="card">
+            <h2>2. The Concept of "The Gap"</h2>
+            <p>The distance between the elements being compared is called the <span class="highlight">Gap</span> (or interval). The efficiency of Shell Sort heavily depends on how you choose this gap sequence.</p>
+            <p>The instructor uses the standard, original gap sequence formula:</p>
+            <ul>
+                <li><strong>Initial Gap:</strong> <code>N / 2</code> (where N is the array size. We take the integer/floor value).</li>
+                <li><strong>Next Passes:</strong> <code>Current Gap / 2</code></li>
+                <li><strong>Stopping Condition:</strong> The loop breaks when we finish the pass where <code>Gap = 1</code>.</li>
+            </ul>
+            <p><em>Note: When Gap = 1, Shell Sort behaves exactly like Insertion Sort. But because the array is already "mostly sorted" from the previous passes, this final pass is lightning fast!</em></p>
+        </article>
+
+        <!-- TOPIC 3 -->
+        <article class="card">
+            <h2>3. Dry Run Visualisation: PASS 1</h2>
+            <p>Let's trace the instructor's whiteboard example.</p>
+            <p><strong>N = 9</strong> (Number of elements). Therefore, <strong>Initial Gap = 9 / 2 = 4</strong>.</p>
+
+            <div class="visual-block">
+                <div class="visual-title">Pass 1: Gap = 4 | Comparing Index 0 and 4</div>
+                <div class="array-row">
+                    <div class="array-box box-compare"><span class="pointer">i</span>23<span class="index-label">0</span></div>
+                    <div class="array-box">29<span class="index-label">1</span></div>
+                    <div class="array-box">15<span class="index-label">2</span></div>
+                    <div class="array-box">19<span class="index-label">3</span></div>
+                    <div class="array-box box-compare"><span class="pointer">j</span>31<span class="index-label">4</span></div>
+                    <div class="array-box">7<span class="index-label">5</span></div>
+                    <div class="array-box">9<span class="index-label">6</span></div>
+                    <div class="array-box">5<span class="index-label">7</span></div>
+                    <div class="array-box">2<span class="index-label">8</span></div>
+                </div>
+                <p style="text-align: center; font-size: 0.9rem;">23 < 31. They are in the correct order. <strong>No Swap.</strong> Move i and j forward by 1.</p>
+            </div>
+
+            <div class="visual-block">
+                <div class="visual-title">Comparing Index 1 and 5</div>
+                <div class="array-row">
+                    <div class="array-box">23<span class="index-label">0</span></div>
+                    <div class="array-box box-swap"><span class="pointer">i</span>7<span class="index-label">1</span></div>
+                    <div class="array-box">15<span class="index-label">2</span></div>
+                    <div class="array-box">19<span class="index-label">3</span></div>
+                    <div class="array-box">31<span class="index-label">4</span></div>
+                    <div class="array-box box-swap"><span class="pointer">j</span>29<span class="index-label">5</span></div>
+                    <div class="array-box">9<span class="index-label">6</span></div>
+                    <div class="array-box">5<span class="index-label">7</span></div>
+                    <div class="array-box">2<span class="index-label">8</span></div>
+                </div>
+                <p style="text-align: center; font-size: 0.9rem;">29 > 7. <strong>SWAP!</strong> (Image shows state after swap).</p>
+            </div>
+
+            <p>The loop continues to compare (2,6) -> Swaps 15 & 9. Then (3,7) -> Swaps 19 & 5.</p>
+            
+            <div class="alert">
+                <strong>🚨 The Critical Backward Check!</strong><br>
+                When <code>j</code> reaches the final index (8), it compares Index 4 (31) with Index 8 (2). <br>31 > 2, so they SWAP. <br>But wait! <strong>The algorithm must check backwards by the gap</strong> to see if the newly swapped '2' needs to go even further left!
+            </div>
+
+            <div class="visual-block">
+                <div class="visual-title">The Backward Check (i = j - gap)</div>
+                <div class="array-row">
+                    <div class="array-box box-swap">2<span class="index-label">0</span></div>
+                    <div class="array-box">7<span class="index-label">1</span></div>
+                    <div class="array-box">9<span class="index-label">2</span></div>
+                    <div class="array-box">5<span class="index-label">3</span></div>
+                    <div class="array-box box-swap">23<span class="index-label">4</span></div>
+                    <div class="array-box">29<span class="index-label">5</span></div>
+                    <div class="array-box">15<span class="index-label">6</span></div>
+                    <div class="array-box">19<span class="index-label">7</span></div>
+                    <div class="array-box">31<span class="index-label">8</span></div>
+                </div>
+                <p style="text-align: center; font-size: 0.9rem;">It compares Index 4 (now 2) with Index 0 (23). 23 > 2, so they <strong>SWAP again!</strong> Look how far the '2' jumped!</p>
+            </div>
+
+        </article>
+
+        <!-- TOPIC 4 -->
+        <article class="card">
+            <h2>4. Dry Run Visualisation: PASS 2 & 3</h2>
+            <p>Now we reduce the gap. <strong>New Gap = 4 / 2 = 2.</strong></p>
+            <p>We repeat the entire process, comparing elements that are 2 spaces apart. Elements continue to sort themselves into sub-lists.</p>
+
+            <div class="visual-block">
+                <div class="visual-title">Array After Pass 2 (Gap = 2)</div>
+                <div class="array-row">
+                    <div class="array-box">2<span class="index-label">0</span></div>
+                    <div class="array-box">5<span class="index-label">1</span></div>
+                    <div class="array-box">9<span class="index-label">2</span></div>
+                    <div class="array-box">7<span class="index-label">3</span></div>
+                    <div class="array-box">15<span class="index-label">4</span></div>
+                    <div class="array-box">19<span class="index-label">5</span></div>
+                    <div class="array-box">23<span class="index-label">6</span></div>
+                    <div class="array-box">29<span class="index-label">7</span></div>
+                    <div class="array-box">31<span class="index-label">8</span></div>
+                </div>
+                <p style="text-align: center; font-size: 0.9rem;">Notice the array is almost completely sorted!</p>
+            </div>
+
+            <p>Finally, we reduce the gap again. <strong>New Gap = 2 / 2 = 1.</strong></p>
+            <p>Because the gap is 1, it compares adjacent elements. The only swap that occurs in this entire pass is 9 and 7. This proves why Shell Sort is efficient: the final pass does barely any work.</p>
+
+            <div class="visual-block">
+                <div class="visual-title">Final Sorted Array (After Pass 3: Gap = 1)</div>
+                <div class="array-row">
+                    <div class="array-box box-sorted">2</div>
+                    <div class="array-box box-sorted">5</div>
+                    <div class="array-box box-sorted">7</div>
+                    <div class="array-box box-sorted">9</div>
+                    <div class="array-box box-sorted">15</div>
+                    <div class="array-box box-sorted">19</div>
+                    <div class="array-box box-sorted">23</div>
+                    <div class="array-box box-sorted">29</div>
+                    <div class="array-box box-sorted">31</div>
+                </div>
+            </div>
+
+            <div class="legend">
+                <div class="legend-item"><div class="legend-color" style="background: var(--compare-bg); border-color: var(--compare-border);"></div> Comparing</div>
+                <div class="legend-item"><div class="legend-color" style="background: var(--swap-bg); border-color: var(--swap-border);"></div> Swapped</div>
+                <div class="legend-item"><div class="legend-color" style="background: var(--sorted-bg); border-color: var(--sorted-border);"></div> Sorted</div>
+            </div>
+        </article>
+
+        <!-- TOPIC 5 -->
+        <article class="card">
+            <h2>5. The Code Breakdown</h2>
+            <p>The instructor writes the algorithm using three nested <code>for</code> loops. Here is the logic explained step-by-step.</p>
+
+<pre><code><span class="keyword">void</span> <span class="function">shellSort</span>(<span class="keyword">int</span> a[], <span class="keyword">int</span> n) {
+    
+    <span class="comment">// LOOP 1: Controls the GAP. </span>
+    <span class="comment">// Starts at N/2, halves each pass, stops after gap=1.</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> gap = n / <span class="variable">2</span>; gap >= <span class="variable">1</span>; gap = gap / <span class="variable">2</span>) {
+        
+        <span class="comment">// LOOP 2: Traverses the array from the 'gap' index to the end.</span>
+        <span class="comment">// 'j' acts as the right-side pointer.</span>
+        <span class="keyword">for</span> (<span class="keyword">int</span> j = gap; j < n; j++) {
+            
+            <span class="comment">// LOOP 3: The Backward Check loop.</span>
+            <span class="comment">// 'i' starts a 'gap' distance behind 'j'. </span>
+            <span class="comment">// After a swap, it steps backward by 'gap' to check previous elements.</span>
+            <span class="keyword">for</span> (<span class="keyword">int</span> i = j - gap; i >= <span class="variable">0</span>; i = i - gap) {
+                
+                <span class="comment">// If right element is greater, they are in order. Break loop.</span>
+                <span class="keyword">if</span> (a[i + gap] > a[i]) {
+                    <span class="keyword">break</span>;
+                } 
+                <span class="comment">// If left element is greater, SWAP them.</span>
+                <span class="comment">// The loop continues to ensure the swapped element is fully sorted backward.</span>
+                <span class="keyword">else</span> {
+                    <span class="function">swap</span>(a[i + gap], a[i]);
+                }
+            }
+        }
+    }
+}</code></pre>
+        </article>
+
+        <!-- TOPIC 6 -->
+        <article class="card">
+            <h2>6. Time Complexity</h2>
+            <p>The instructor closes by discussing the time complexity of Shell Sort.</p>
+            <ul>
+                <li><strong>Worst-Case Time Complexity:</strong> <span class="highlight">O(N²)</span> when using the simple <code>N/2</code> gap sequence.</li>
+                <li><strong>Why?</strong> In specific array arrangements, the <code>N/2</code> sequence doesn't mix elements efficiently until the final gap=1 pass, forcing it to do almost as much work as basic Insertion Sort.</li>
+            </ul>
+            <div class="alert">
+                <strong>Optimization:</strong> The efficiency of Shell Sort is entirely dependent on the Gap Sequence. Using more advanced mathematical sequences (like Knuth's sequence: 1, 4, 13, 40... or Hibbard's sequence) can improve the worst-case time complexity to <strong>O(N<sup>3/2</sup>)</strong> or <strong>O(N<sup>4/3</sup>)</strong>!
+            </div>
+        </article>
+
+    </div>
+
+</body>
+</html>
