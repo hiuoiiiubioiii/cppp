@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Master Study Notes: B-Tree Order 5</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&family=JetBrains+Mono:wght@700&display=swap');
+
+        :root {
+            --bg-color: #f8fafc;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --primary: #2563eb;
+            --primary-light: #dbeafe;
+            --success: #16a34a;
+            --warning: #ea580c;
+            --danger: #dc2626;
+            --node-border: #334155;
+            --node-bg: #ffffff;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* Feed Layout Structure */
+        .feed-container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 40px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            color: var(--text-muted);
+        }
+
+        /* Golden Rules Card */
+        .rules-card {
+            background: #fff;
+            border-left: 5px solid var(--primary);
+            padding: 25px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .rules-card h2 {
+            margin-top: 0;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .formula-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .formula-box {
+            background: var(--primary-light);
+            padding: 15px;
+            border-radius: 6px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 1.1rem;
+        }
+
+        .formula-highlight {
+            color: var(--primary);
+            font-size: 1.4rem;
+            font-weight: 800;
+            display: block;
+            margin-top: 5px;
+        }
+
+        /* Feed Post / Phase Card */
+        .phase-card {
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px -3px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+
+        .phase-card h3 {
+            font-size: 1.5rem;
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 10px;
+            margin-top: 0;
+            color: var(--text-main);
+        }
+
+        .explanation {
+            font-size: 1.05rem;
+            margin-bottom: 25px;
+        }
+
+        /* Tree Visualization CSS */
+        .tree-viz {
+            background: #f1f5f9;
+            padding: 30px 20px;
+            border-radius: 8px;
+            overflow-x: auto; /* Allow scrolling for wide trees */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 25px;
+        }
+
+        .tree-level {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            position: relative;
+        }
+
+        /* Connectors */
+        .tree-level:not(:first-child)::before {
+            content: '';
+            position: absolute;
+            top: -15px;
+            width: 100%;
+            height: 2px;
+            background: transparent;
+        }
+
+        .node {
+            display: flex;
+            background: var(--node-bg);
+            border: 2px solid var(--node-border);
+            border-radius: 6px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .key {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            padding: 8px 16px;
+            border-right: 2px solid var(--node-border);
+            color: var(--text-main);
+            min-width: 20px;
+            text-align: center;
+        }
+
+        .key:last-child {
+            border-right: none;
+        }
+
+        /* Status Highlights */
+        .key.insert {
+            background-color: #bbf7d0; /* Light Green */
+            color: var(--success);
+        }
+
+        .key.median {
+            background-color: #fed7aa; /* Light Orange */
+            color: var(--warning);
+            animation: pulse 2s infinite;
+        }
+
+        .key.empty {
+            color: transparent;
+            min-width: 25px;
+        }
+
+        .legend {
+            display: flex;
+            gap: 15px;
+            font-size: 0.9rem;
+            margin-top: -10px;
+            margin-bottom: 20px;
+            justify-content: center;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .legend-color {
+            width: 12px;
+            height: 12px;
+            border-radius: 3px;
+        }
+
+        @keyframes pulse {
+            0% { background-color: #fed7aa; }
+            50% { background-color: #fdba74; }
+            100% { background-color: #fed7aa; }
+        }
+
+        /* Final Checklist */
+        .checklist {
+            background: #1e293b;
+            color: #fff;
+            padding: 30px;
+            border-radius: 12px;
+        }
+        .checklist h3 { color: #38bdf8; border-bottom-color: #334155; }
+        .checklist ul { padding-left: 20px; }
+        .checklist li { margin-bottom: 10px; font-size: 1.1rem; }
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <header>
+        <h1>Creating a B-Tree of Order 5</h1>
+        <div class="subtitle">Complete Visual Study Guide & Insertion Walkthrough (Values 1 to 20)</div>
+    </header>
+
+    <!-- Golden Rules -->
+    <section class="rules-card">
+        <h2>📌 The Instructor's Golden Rules</h2>
+        <p>Before we insert anything, we must calculate the specific constraints of our B-Tree based on its order (<strong>m</strong>).</p>
+        
+        <div class="formula-grid">
+            <div class="formula-box">
+                Order (m)
+                <span class="formula-highlight">m = 5</span>
+            </div>
+            <div class="formula-box">
+                Max Children per Node
+                <span class="formula-highlight">m = 5</span>
+            </div>
+            <div class="formula-box">
+                Max Keys per Node
+                <span class="formula-highlight">m - 1 = 4</span>
+            </div>
+        </div>
+
+        <ul style="margin-top: 20px; font-size: 1.1rem;">
+            <li><strong>Rule 1:</strong> Keys inside a node must <strong>always</strong> be in sorted (ascending) order.</li>
+            <li><strong>Rule 2:</strong> New elements are <strong>ALWAYS</strong> inserted into a leaf node first. You never insert directly into an internal/parent node.</li>
+            <li><strong>Rule 3:</strong> If a node gets 5 keys, it <strong>overflows</strong>. You must find the median, push it up to the parent, and split the remaining keys into two children.</li>
+        </ul>
+    </section>
+
+    <!-- Phase 1 -->
+    <section class="phase-card">
+        <h3>Phase 1: Filling the Initial Root</h3>
+        <div class="explanation">
+            <p><strong>Action:</strong> Insert 1, 2, 3, and 4.</p>
+            <p>Because the maximum number of keys per node is <strong>4</strong>, we simply create an empty root node and place the numbers in ascending order. No splits are needed yet.</p>
+        </div>
+        
+        <div class="legend">
+            <div class="legend-item"><div class="legend-color" style="background: #bbf7d0;"></div> Just Inserted</div>
+        </div>
+
+        <div class="tree-viz">
+            <div class="tree-level">
+                <div class="node">
+                    <div class="key insert">1</div>
+                    <div class="key insert">2</div>
+                    <div class="key insert">3</div>
+                    <div class="key insert">4</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Phase 2 -->
+    <section class="phase-card">
+        <h3>Phase 2: The First Split</h3>
+        <div class="explanation">
+            <p><strong>Action:</strong> Insert 5.</p>
+            <p>We attempt to insert 5, but the node is full! We imagine the array <code>[1, 2, 3, 4, 5]</code>. The median (middle element) is calculated as <code>(4+1)/2 = 2.5</code> (we round up to the 3rd element). The median is <strong>3</strong>.</p>
+            <p><strong>The Split:</strong> <strong>3</strong> moves UP to become the new root. Elements less than 3 <code>[1, 2]</code> become the left child, and elements greater <code>[4, 5]</code> become the right child.</p>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item"><div class="legend-color" style="background: #fed7aa;"></div> Median (Moved Up)</div>
+            <div class="legend-item"><div class="legend-color" style="background: #bbf7d0;"></div> Just Inserted</div>
+        </div>
+
+        <div class="tree-viz">
+            <div class="tree-level">
+                <div class="node">
+                    <div class="key median">3</div>
+                </div>
+            </div>
+            <!-- Visual Downward connector logic implied by spacing -->
+            <div class="tree-level">
+                <div class="node">
+                    <div class="key">1</div>
+                    <div class="key">2</div>
+                </div>
+                <div class="node">
+                    <div class="key">4</div>
+                    <div class="key insert">5</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Phase 3 -->
+    <section class="phase-card">
+        <h3>Phase 3: Filling the Leaf</h3>
+        <div class="explanation">
+            <p><strong>Action:</strong> Insert 6 and 7.</p>
+            <p>We start at the root (3). Because 6 and 7 are greater than 3, we traverse to the right child. The right leaf node <code>[4, 5]</code> has plenty of space (max 4). We insert them in order.</p>
+        </div>
+
+        <div class="tree-viz">
+            <div class="tree-level">
+                <div class="node">
+                    <div class="key">3</div>
+                </div>
+            </div>
+            <div class="tree-level">
+                <div class="node">
+                    <div class="key">1</div>
+                    <div class="key">2</div>
+                </div>
+                <div class="node">
+                    <div class="key">4</div>
+                    <div class="key">5</div>
+                    <div class="key insert">6</div>
+                    <div class="key insert">7</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Phase 4 -->
+    <section class="phase-card">
+        <h3>Phase 4: The Second Split</h3>
+        <div class="explanation">
+            <p><strong>Action:</strong> Insert 8.</p>
+            <p>Starting at root (3), we go to the right leaf. It becomes <code>[4, 5, 6, 7, 8]</code>. Overflow!</p>
+            <p>The median is <strong>6</strong>. <strong>6</strong> moves UP to the parent node. The parent node currently just has <code>[3]</code>, so it happily accepts 6, becoming <code>[3 | 6]</code>. The leaf splits.</p>
+        </div>
+
+        <div class="tree-viz">
+            <div class="tree-level">
+                <div class="node">
+                    <div class="key">3</div>
+                    <div class="key median">6</div>
+                </div>
+            </div>
+            <div class="tree-level">
+                <div class="node">
+                    <div class="key">1</div>
+                    <div class="key">2</div>
+                </div>
+                <div class="node">
+                    <div class="key">4</div>
+                    <div class="key">5</div>
+                </div>
+                <div class="node">
+                    <div class="key">7</div>
+                    <div class="key insert">8</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Phase 5 -->
+    <section class="phase-card">
+        <h3>Phase 5: Third Split</h3>
+        <div class="explanation">
+            <p><strong>Action:</strong> Insert 9, 10, then 11.</p>
+            <p>9 and 10 fit perfectly into the rightmost leaf <code>[7, 8]</code>. But when we insert 11, we get an overflow: <code>[7, 8, 9, 10, 11]</code>.</p>
+            <p>The median is <strong>9</strong>. <strong>9</strong> moves UP to the parent, which becomes <code>[3 | 6 | 9]</code>. The leaf splits into <code>[7, 8]</code> and <code>[10, 11]</code>.</p>
+        </div>
+
+        <div class="tree-viz">
+            <div class="tree-level">
+                <div class="node">
+                    <div class="key">3</div>
+                    <div class="key">6</div>
+                    <div class="key median">9</div>
+                </div>
+            </div>
+            <div class="tree-level">
+                <div class="node"><div class="key">1</div><div class="key">2</div></div>
+                <div class="node"><div class="key">4</div><div class="key">5</div></div>
+                <div class="node"><div class="key">7</div><div class="key">8</div></div>
+                <div class="node"><div class="key">10</div><div class="key insert">11</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Phase 6 -->
+    <section class="phase-card">
+        <h3>Phase 6: Fourth Split (Filling the Root)</h3>
+        <div class="explanation">
+            <p><strong>Action:</strong> Insert 12, 13, then 14.</p>
+            <p>12 and 13 go into the rightmost leaf. Inserting 14 causes overflow: <code>[10, 11, 12, 13, 14]</code>.</p>
+            <p>The median is <strong>12</strong>. <strong>12</strong> moves UP to the parent. The parent root is now completely full: <code>[3 | 6 | 9 | 12]</code>.</p>
+        </div>
+
+        <div class="tree-viz">
+            <div class="tree-level">
+                <div class="node">
+                    <div class="key">3</div>
+                    <div class="key">6</div>
+                    <div class="key">9</div>
+                    <div class="key median">12</div>
+                </div>
+            </div>
+            <div class="tree-level">
+                <div class="node"><div class="key">1</div><div class="key">2</div></div>
+                <div class="node"><div class="key">4</div><div class="key">5</div></div>
+                <div class="node"><div class="key">7</div><div class="key">8</div></div>
+                <div class="node"><div class="key">10</div><div class="key">11</div></div>
+                <div class="node"><div class="key">13</div><div class="key insert">14</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Phase 7 -->
+    <section class="phase-card" style="border-left: 5px solid var(--danger);">
+        <h3>Phase 7: The Double Split (Increasing Tree Height)</h3>
+        <div class="explanation">
+            <p><em>⚠️ Pay close attention here, this is where most mistakes happen!</em></p>
+            <p><strong>Action:</strong> Insert 15, 16, then 17.</p>
+            <p>15 and 16 fill the rightmost leaf. Inserting 17 causes overflow: <code>[13, 14, 15, 16, 17]</code>. The median <strong>15</strong> wants to move up.</p>
+            <p><strong>Wait!</strong> The parent root <code>[3, 6, 9, 12]</code> is already full! We cannot just push 15 in. We must split the root.</p>
+            <p>Imagine the root receiving 15: <code>[3, 6, 9, 12, 15]</code>. The median of this group is <strong>9</strong>. So, <strong>9</strong> moves UP to become a brand new root node. The tree height increases!</p>
+        </div>
+
+        <div class="tree-viz">
+            <div class="tree-level">
+                <div class="node">
+                    <div class="key median">9</div>
+                </div>
+            </div>
+            <div class="tree-level">
+                <div class="node">
+                    <div class="key">3</div>
+                    <div class="key">6</div>
+                </div>
+                <div class="node">
+                    <div class="key">12</div>
+                    <div class="key median">15</div>
+                </div>
+            </div>
+            <div class="tree-level" style="flex-wrap: wrap;">
+                <div class="node"><div class="key">1</div><div class="key">2</div></div>
+                <div class="node"><div class="key">4</div><div class="key">5</div></div>
+                <div class="node"><div class="key">7</div><div class="key">8</div></div>
+                <div class="node"><div class="key">10</div><div class="key">11</div></div>
+                <div class="node"><div class="key">13</div><div class="key">14</div></div>
+                <div class="node"><div class="key">16</div><div class="key insert">17</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Phase 8 -->
+    <section class="phase-card">
+        <h3>Phase 8: Final Insertions</h3>
+        <div class="explanation">
+            <p><strong>Action:</strong> Insert 18, 19, then 20.</p>
+            <p>We trace from root (9), right to (12, 15), right to the leaf. 18 and 19 fit into the leaf. Inserting 20 causes overflow: <code>[16, 17, 18, 19, 20]</code>.</p>
+            <p>The median is <strong>18</strong>. It moves UP to its parent. The parent <code>[12, 15]</code> has space, so it happily becomes <code>[12, 15, 18]</code>.</p>
+        </div>
+
+        <div class="tree-viz" style="background: #e0f2fe;">
+            <div class="tree-level">
+                <div class="node">
+                    <div class="key">9</div>
+                </div>
+            </div>
+            <div class="tree-level">
+                <div class="node">
+                    <div class="key">3</div>
+                    <div class="key">6</div>
+                </div>
+                <div class="node">
+                    <div class="key">12</div>
+                    <div class="key">15</div>
+                    <div class="key median">18</div>
+                </div>
+            </div>
+            <div class="tree-level" style="flex-wrap: wrap;">
+                <div class="node"><div class="key">1</div><div class="key">2</div></div>
+                <div class="node"><div class="key">4</div><div class="key">5</div></div>
+                <div class="node"><div class="key">7</div><div class="key">8</div></div>
+                <div class="node"><div class="key">10</div><div class="key">11</div></div>
+                <div class="node"><div class="key">13</div><div class="key">14</div></div>
+                <div class="node"><div class="key">16</div><div class="key">17</div></div>
+                <div class="node"><div class="key">19</div><div class="key insert">20</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Checklist -->
+    <section class="phase-card checklist">
+        <h3>✅ Quick Summary Checklist for Exams</h3>
+        <ul>
+            <li><strong>Check Max Keys:</strong> Always keep track of <code>m - 1</code> (in this case, 4). Stop and split the moment you hit 5 elements.</li>
+            <li><strong>Insert at Leaf:</strong> Never jam a number into a parent node directly from the input sequence. Trace the path down to the correct leaf first.</li>
+            <li><strong>Find the Median:</strong> When a leaf overflows (reaches 5 items), list them in sorted order. The 3rd item is always the median.</li>
+            <li><strong>Push Up & Split:</strong> The median goes up. The two items smaller stay in the left node. The two items larger go to a new right node.</li>
+            <li><strong>Domino Effect:</strong> If pushing a median up causes the parent to have 5 items, you must repeat the exact same split process on the parent.</li>
+        </ul>
+    </section>
+
+</div>
+
+</body>
+</html>
