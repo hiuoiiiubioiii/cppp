@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kruskal's Algorithm - Study Notes</title>
+    <style>
+        :root {
+            --bg-color: #f3f4f6;
+            --card-bg: #ffffff;
+            --text-main: #1f2937;
+            --text-muted: #4b5563;
+            --primary: #2563eb;
+            --success: #16a34a;
+            --danger: #dc2626;
+            --warning: #f59e0b;
+            --node-bg: #1e293b;
+            --edge-default: #cbd5e1;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 2rem 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 2rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            color: var(--text-main);
+            margin-bottom: 0.5rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Card Styles */
+        .note-card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .note-card h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+            font-size: 1.75rem;
+        }
+
+        .note-card h3 {
+            margin: 1.5rem 0 0.5rem 0;
+            color: var(--text-main);
+        }
+
+        .note-card p, .note-card ul {
+            margin-bottom: 1rem;
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        .note-card ul {
+            padding-left: 2rem;
+        }
+
+        .note-card li {
+            margin-bottom: 0.5rem;
+        }
+
+        /* Callouts */
+        .callout {
+            background-color: #eff6ff;
+            border-left: 4px solid var(--primary);
+            padding: 1rem;
+            border-radius: 0 8px 8px 0;
+            margin: 1.5rem 0;
+        }
+
+        .callout strong {
+            color: var(--primary);
+        }
+
+        .callout.warning {
+            background-color: #fef2f2;
+            border-left-color: var(--danger);
+        }
+        
+        .callout.warning strong {
+            color: var(--danger);
+        }
+
+        /* Visualizations */
+        .visual-container {
+            background-color: #fafafa;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1.5rem 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        svg {
+            width: 100%;
+            max-width: 600px;
+            height: auto;
+        }
+
+        /* SVG Inner Styling */
+        .node { fill: var(--node-bg); }
+        .node-text { fill: white; font-weight: bold; font-family: sans-serif; font-size: 16px; text-anchor: middle; dominant-baseline: central; }
+        .edge { stroke: var(--edge-default); stroke-width: 4; fill: none; }
+        .edge-weight { fill: var(--text-main); font-weight: bold; font-family: sans-serif; font-size: 16px; }
+        .edge-weight-bg { fill: white; rx: 4; ry: 4; }
+        
+        /* Highlight Classes */
+        .edge-removed { stroke: var(--danger); stroke-dasharray: 5,5; stroke-width: 3; }
+        .edge-added { stroke: var(--success); stroke-width: 5; }
+        .edge-rejected { stroke: var(--danger); stroke-dasharray: 6,4; stroke-width: 4; }
+
+        /* Edge List Table */
+        .edge-list {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 1rem;
+            margin: 1.5rem 0;
+        }
+
+        .edge-item {
+            background: var(--bg-color);
+            padding: 0.75rem;
+            border-radius: 8px;
+            text-align: center;
+            font-weight: bold;
+            border: 1px solid #e5e7eb;
+        }
+
+        .edge-item.added { background: #dcfce7; color: var(--success); border-color: var(--success); }
+        .edge-item.rejected { background: #fee2e2; color: var(--danger); border-color: var(--danger); text-decoration: line-through; }
+
+    </style>
+</head>
+<body>
+
+<div class="feed-container">
+    
+    <header>
+        <h1>Kruskal's Algorithm</h1>
+        <p>Finding the Minimum Spanning Tree (MST) | Instructor: Jenny's Lectures</p>
+    </header>
+
+    <!-- Section 1: Introduction -->
+    <article class="note-card">
+        <h2>1. Introduction to the Algorithm</h2>
+        <p>The goal of Kruskal's Algorithm is to find the <strong>Minimum Spanning Tree (MST)</strong> of a given weighted, undirected graph.</p>
+        <p>A Spanning Tree is a subgraph that connects all the vertices together without any cycles. A <em>Minimum</em> Spanning Tree is the one where the sum of all edge weights is as small as possible.</p>
+        <div class="callout">
+            <strong>Context:</strong> There are two main algorithms used to find an MST: Kruskal’s Algorithm and Prim’s Algorithm. This guide focuses entirely on Kruskal's.
+        </div>
+    </article>
+
+    <!-- Section 2: The Initial Graph -->
+    <article class="note-card">
+        <h2>2. The Initial Graph</h2>
+        <p>This is the complex, weighted graph we are starting with. Note that it contains 6 vertices (A, B, C, D, E, F) and several complicating factors.</p>
+        
+        <div class="visual-container">
+            <!-- SVG: Initial Graph -->
+            <svg viewBox="0 0 500 300">
+                <!-- Edges -->
+                <line class="edge" x1="50" y1="150" x2="150" y2="80" /> <!-- F to A (7) -->
+                <line class="edge" x1="50" y1="150" x2="150" y2="220" /> <!-- F to C (8) -->
+                <line class="edge" x1="150" y1="80" x2="150" y2="220" /> <!-- A to C (3) -->
+                <line class="edge" x1="150" y1="220" x2="300" y2="220" /> <!-- C to D (3) -->
+                <line class="edge" x1="150" y1="80" x2="300" y2="80" /> <!-- A to B (5) straight -->
+                <path class="edge" d="M 150 80 Q 225 10 300 80" /> <!-- A to B (10) parallel -->
+                <line class="edge" x1="300" y1="80" x2="150" y2="220" /> <!-- B to C (6) -->
+                <line class="edge" x1="300" y1="80" x2="300" y2="220" /> <!-- B to D (2) -->
+                <line class="edge" x1="300" y1="80" x2="420" y2="150" /> <!-- B to E (4) -->
+                <line class="edge" x1="300" y1="220" x2="420" y2="150" /> <!-- D to E (2) -->
+                <path class="edge" d="M 420 150 C 470 100, 470 200, 420 150" /> <!-- Loop at E (1) -->
+
+                <!-- Weights -->
+                <rect class="edge-weight-bg" x="90" y="100" width="20" height="20"/><text class="edge-weight" x="100" y="112">7</text>
+                <rect class="edge-weight-bg" x="90" y="180" width="20" height="20"/><text class="edge-weight" x="100" y="192">8</text>
+                <rect class="edge-weight-bg" x="140" y="140" width="20" height="20"/><text class="edge-weight" x="150" y="152">3</text>
+                <rect class="edge-weight-bg" x="220" y="210" width="20" height="20"/><text class="edge-weight" x="230" y="222">3</text>
+                <rect class="edge-weight-bg" x="220" y="70" width="20" height="20"/><text class="edge-weight" x="230" y="82">5</text>
+                <rect class="edge-weight-bg" x="220" y="25" width="25" height="20"/><text class="edge-weight" x="232" y="37">10</text>
+                <rect class="edge-weight-bg" x="225" y="140" width="20" height="20"/><text class="edge-weight" x="235" y="152">6</text>
+                <rect class="edge-weight-bg" x="290" y="140" width="20" height="20"/><text class="edge-weight" x="300" y="152">2</text>
+                <rect class="edge-weight-bg" x="360" y="100" width="20" height="20"/><text class="edge-weight" x="370" y="112">4</text>
+                <rect class="edge-weight-bg" x="360" y="180" width="20" height="20"/><text class="edge-weight" x="370" y="192">2</text>
+                <rect class="edge-weight-bg" x="450" y="140" width="20" height="20"/><text class="edge-weight" x="460" y="152">1</text>
+
+                <!-- Nodes -->
+                <circle class="node" cx="50" cy="150" r="16"/><text class="node-text" x="50" y="150">F</text>
+                <circle class="node" cx="150" cy="80" r="16"/><text class="node-text" x="150" y="80">A</text>
+                <circle class="node" cx="150" cy="220" r="16"/><text class="node-text" x="150" y="220">C</text>
+                <circle class="node" cx="300" cy="80" r="16"/><text class="node-text" x="300" y="80">B</text>
+                <circle class="node" cx="300" cy="220" r="16"/><text class="node-text" x="300" y="220">D</text>
+                <circle class="node" cx="420" cy="150" r="16"/><text class="node-text" x="420" y="150">E</text>
+            </svg>
+        </div>
+    </article>
+
+    <!-- Section 3: Simplify the Graph -->
+    <article class="note-card">
+        <h2>3. Step 1: Simplify the Graph</h2>
+        <p>Before applying the algorithm, you must clean up the graph by removing two things:</p>
+        <ul>
+            <li><strong>Parallel Edges:</strong> Two edges connecting the exact same pair of vertices. <em>Rule: Always keep the edge with the minimum weight and delete the larger one.</em> (Removed A-B edge with weight 10).</li>
+            <li><strong>Loops:</strong> An edge that starts and ends on the exact same vertex. <em>Rule: Remove loops entirely.</em> (Removed loop at E with weight 1).</li>
+        </ul>
+
+        <div class="visual-container">
+            <!-- SVG: Simplified Graph -->
+            <svg viewBox="0 0 500 300">
+                <!-- Removed Edges (Visualized as red dashed lines) -->
+                <path class="edge-removed" d="M 150 80 Q 225 10 300 80" /> 
+                <path class="edge-removed" d="M 420 150 C 470 100, 470 200, 420 150" /> 
+
+                <!-- Remaining Edges -->
+                <line class="edge" x1="50" y1="150" x2="150" y2="80" /> 
+                <line class="edge" x1="50" y1="150" x2="150" y2="220" /> 
+                <line class="edge" x1="150" y1="80" x2="150" y2="220" /> 
+                <line class="edge" x1="150" y1="220" x2="300" y2="220" /> 
+                <line class="edge" x1="150" y1="80" x2="300" y2="80" /> 
+                <line class="edge" x1="300" y1="80" x2="150" y2="220" /> 
+                <line class="edge" x1="300" y1="80" x2="300" y2="220" /> 
+                <line class="edge" x1="300" y1="80" x2="420" y2="150" /> 
+                <line class="edge" x1="300" y1="220" x2="420" y2="150" /> 
+
+                <!-- Weights -->
+                <rect class="edge-weight-bg" x="90" y="100" width="20" height="20"/><text class="edge-weight" x="100" y="112">7</text>
+                <rect class="edge-weight-bg" x="90" y="180" width="20" height="20"/><text class="edge-weight" x="100" y="192">8</text>
+                <rect class="edge-weight-bg" x="140" y="140" width="20" height="20"/><text class="edge-weight" x="150" y="152">3</text>
+                <rect class="edge-weight-bg" x="220" y="210" width="20" height="20"/><text class="edge-weight" x="230" y="222">3</text>
+                <rect class="edge-weight-bg" x="220" y="70" width="20" height="20"/><text class="edge-weight" x="230" y="82">5</text>
+                <rect class="edge-weight-bg" x="225" y="140" width="20" height="20"/><text class="edge-weight" x="235" y="152">6</text>
+                <rect class="edge-weight-bg" x="290" y="140" width="20" height="20"/><text class="edge-weight" x="300" y="152">2</text>
+                <rect class="edge-weight-bg" x="360" y="100" width="20" height="20"/><text class="edge-weight" x="370" y="112">4</text>
+                <rect class="edge-weight-bg" x="360" y="180" width="20" height="20"/><text class="edge-weight" x="370" y="192">2</text>
+                
+                <!-- Deleted Weights -->
+                <rect class="edge-weight-bg" x="220" y="25" width="25" height="20"/><text class="edge-weight" fill="#dc2626" x="232" y="37">10</text>
+                <rect class="edge-weight-bg" x="450" y="140" width="20" height="20"/><text class="edge-weight" fill="#dc2626" x="460" y="152">1</text>
+
+                <!-- Nodes -->
+                <circle class="node" cx="50" cy="150" r="16"/><text class="node-text" x="50" y="150">F</text>
+                <circle class="node" cx="150" cy="80" r="16"/><text class="node-text" x="150" y="80">A</text>
+                <circle class="node" cx="150" cy="220" r="16"/><text class="node-text" x="150" y="220">C</text>
+                <circle class="node" cx="300" cy="80" r="16"/><text class="node-text" x="300" y="80">B</text>
+                <circle class="node" cx="300" cy="220" r="16"/><text class="node-text" x="300" y="220">D</text>
+                <circle class="node" cx="420" cy="150" r="16"/><text class="node-text" x="420" y="150">E</text>
+            </svg>
+        </div>
+    </article>
+
+    <!-- Section 4: Create a Sorted Edge List -->
+    <article class="note-card">
+        <h2>4. Step 2: Create a Sorted Edge List</h2>
+        <p>Arrange all remaining edges in <strong>increasing order</strong> based on their edge weight (cost). If two edges have the same weight, the order you write them in does not matter.</p>
+        
+        <div class="edge-list">
+            <div class="edge-item">1. BD = 2</div>
+            <div class="edge-item">2. DE = 2</div>
+            <div class="edge-item">3. AC = 3</div>
+            <div class="edge-item">4. CD = 3</div>
+            <div class="edge-item">5. BE = 4</div>
+            <div class="edge-item">6. AB = 5</div>
+            <div class="edge-item">7. BC = 6</div>
+            <div class="edge-item">8. AF = 7</div>
+            <div class="edge-item">9. FC = 8</div>
+        </div>
+    </article>
+
+    <!-- Section 5: Construct the MST -->
+    <article class="note-card">
+        <h2>5. Step 3: Construct the MST</h2>
+        <p>Go down your sorted list from top to bottom. Choose the edge with the minimum weight and draw it. </p>
+        
+        <div class="callout warning">
+            <strong>Crucial Condition:</strong> You must <strong>NOT</strong> include an edge if drawing it would create a closed loop (a cycle) in your new spanning tree.
+        </div>
+
+        <h3>Evaluating the Edges:</h3>
+        <ul>
+            <li><strong>BD (2):</strong> Added. No cycle.</li>
+            <li><strong>DE (2):</strong> Added. No cycle.</li>
+            <li><strong>AC (3):</strong> Added. No cycle (it's okay if parts of the tree are temporarily disconnected).</li>
+            <li><strong>CD (3):</strong> Added. No cycle.</li>
+        </ul>
+
+        <div class="visual-container">
+            <!-- SVG: Partial MST -->
+            <svg viewBox="0 0 500 300">
+                <!-- Added Edges so far -->
+                <line class="edge-added" x1="150" y1="80" x2="150" y2="220" /> <!-- AC (3) -->
+                <line class="edge-added" x1="150" y1="220" x2="300" y2="220" /> <!-- CD (3) -->
+                <line class="edge-added" x1="300" y1="80" x2="300" y2="220" /> <!-- BD (2) -->
+                <line class="edge-added" x1="300" y1="220" x2="420" y2="150" /> <!-- DE (2) -->
+                
+                <!-- Weights -->
+                <rect class="edge-weight-bg" x="140" y="140" width="20" height="20"/><text class="edge-weight" x="150" y="152">3</text>
+                <rect class="edge-weight-bg" x="220" y="210" width="20" height="20"/><text class="edge-weight" x="230" y="222">3</text>
+                <rect class="edge-weight-bg" x="290" y="140" width="20" height="20"/><text class="edge-weight" x="300" y="152">2</text>
+                <rect class="edge-weight-bg" x="360" y="180" width="20" height="20"/><text class="edge-weight" x="370" y="192">2</text>
+
+                <!-- Nodes -->
+                <circle class="node" cx="150" cy="80" r="16"/><text class="node-text" x="150" y="80">A</text>
+                <circle class="node" cx="150" cy="220" r="16"/><text class="node-text" x="150" y="220">C</text>
+                <circle class="node" cx="300" cy="80" r="16"/><text class="node-text" x="300" y="80">B</text>
+                <circle class="node" cx="300" cy="220" r="16"/><text class="node-text" x="300" y="220">D</text>
+                <circle class="node" cx="420" cy="150" r="16"/><text class="node-text" x="420" y="150">E</text>
+            </svg>
+        </div>
+
+        <h3>Handling Cycles (Rejections):</h3>
+        <ul>
+            <li><strong>BE (4):</strong> <span style="color:var(--danger)">REJECTED.</span> Creates triangle cycle (B → D → E → B).</li>
+            <li><strong>AB (5):</strong> <span style="color:var(--danger)">REJECTED.</span> Creates large cycle (A → C → D → B → A).</li>
+            <li><strong>BC (6):</strong> <span style="color:var(--danger)">REJECTED.</span> Creates cycle (B → D → C → B).</li>
+        </ul>
+
+        <div class="visual-container">
+            <!-- SVG: Cycle Rejections -->
+            <svg viewBox="0 0 500 300">
+                <!-- Rejected Edges (Red Dashed) -->
+                <line class="edge-rejected" x1="300" y1="80" x2="420" y2="150" /> <!-- BE (4) -->
+                <line class="edge-rejected" x1="150" y1="80" x2="300" y2="80" /> <!-- AB (5) -->
+                <line class="edge-rejected" x1="300" y1="80" x2="150" y2="220" /> <!-- BC (6) -->
+
+                <!-- Added Edges -->
+                <line class="edge-added" x1="150" y1="80" x2="150" y2="220" /> 
+                <line class="edge-added" x1="150" y1="220" x2="300" y2="220" /> 
+                <line class="edge-added" x1="300" y1="80" x2="300" y2="220" /> 
+                <line class="edge-added" x1="300" y1="220" x2="420" y2="150" /> 
+                
+                <!-- Nodes -->
+                <circle class="node" cx="150" cy="80" r="16"/><text class="node-text" x="150" y="80">A</text>
+                <circle class="node" cx="150" cy="220" r="16"/><text class="node-text" x="150" y="220">C</text>
+                <circle class="node" cx="300" cy="80" r="16"/><text class="node-text" x="300" y="80">B</text>
+                <circle class="node" cx="300" cy="220" r="16"/><text class="node-text" x="300" y="220">D</text>
+                <circle class="node" cx="420" cy="150" r="16"/><text class="node-text" x="420" y="150">E</text>
+            </svg>
+        </div>
+
+        <h3>Finishing the Tree:</h3>
+        <ul>
+            <li><strong>AF (7):</strong> Added. No cycle formed.</li>
+            <li><strong>FC (8):</strong> <span style="color:var(--danger)">REJECTED.</span> Creates cycle (F → A → C → F).</li>
+        </ul>
+    </article>
+
+    <!-- Section 6: Verifying the Final MST -->
+    <article class="note-card">
+        <h2>6. Verifying the Final MST</h2>
+        <p>The instructor outlines two mathematical properties to check if your MST is correct and complete:</p>
+        
+        <div class="callout">
+            <strong>Property 1: No Cycles</strong><br>
+            Visually verify that the final drawing does not contain any closed loops.
+        </div>
+        
+        <div class="callout">
+            <strong>Property 2: Vertex to Edge Ratio</strong><br>
+            If the original graph has <strong>n</strong> vertices, the MST must have exactly <strong>n</strong> vertices and <strong>n - 1</strong> edges.
+            <br><br>
+            <em>Our Graph:</em><br>
+            Vertices (n) = A, B, C, D, E, F = <strong>6</strong><br>
+            Edges in MST = AF, AC, CD, BD, DE = <strong>5</strong><br>
+            Math Check: 6 - 1 = 5. (Verified!)
+        </div>
+
+        <div class="visual-container">
+            <!-- SVG: Final MST -->
+            <svg viewBox="0 0 500 300">
+                <!-- Final Valid Edges -->
+                <line class="edge-added" x1="50" y1="150" x2="150" y2="80" /> <!-- AF (7) -->
+                <line class="edge-added" x1="150" y1="80" x2="150" y2="220" /> <!-- AC (3) -->
+                <line class="edge-added" x1="150" y1="220" x2="300" y2="220" /> <!-- CD (3) -->
+                <line class="edge-added" x1="300" y1="80" x2="300" y2="220" /> <!-- BD (2) -->
+                <line class="edge-added" x1="300" y1="220" x2="420" y2="150" /> <!-- DE (2) -->
+                
+                <!-- Weights -->
+                <rect class="edge-weight-bg" x="90" y="100" width="20" height="20"/><text class="edge-weight" x="100" y="112">7</text>
+                <rect class="edge-weight-bg" x="140" y="140" width="20" height="20"/><text class="edge-weight" x="150" y="152">3</text>
+                <rect class="edge-weight-bg" x="220" y="210" width="20" height="20"/><text class="edge-weight" x="230" y="222">3</text>
+                <rect class="edge-weight-bg" x="290" y="140" width="20" height="20"/><text class="edge-weight" x="300" y="152">2</text>
+                <rect class="edge-weight-bg" x="360" y="180" width="20" height="20"/><text class="edge-weight" x="370" y="192">2</text>
+
+                <!-- Nodes -->
+                <circle class="node" cx="50" cy="150" r="16"/><text class="node-text" x="50" y="150">F</text>
+                <circle class="node" cx="150" cy="80" r="16"/><text class="node-text" x="150" y="80">A</text>
+                <circle class="node" cx="150" cy="220" r="16"/><text class="node-text" x="150" y="220">C</text>
+                <circle class="node" cx="300" cy="80" r="16"/><text class="node-text" x="300" y="80">B</text>
+                <circle class="node" cx="300" cy="220" r="16"/><text class="node-text" x="300" y="220">D</text>
+                <circle class="node" cx="420" cy="150" r="16"/><text class="node-text" x="420" y="150">E</text>
+            </svg>
+        </div>
+
+        <h3>Total Minimum Cost:</h3>
+        <p>To find the total cost of your Minimum Spanning Tree, simply add the weights of the edges you kept:</p>
+        <p style="font-size: 1.5rem; font-family: monospace; font-weight: bold; background: #f3f4f6; padding: 1rem; border-radius: 8px; text-align: center;">
+            7 + 3 + 3 + 2 + 2 = <span style="color: var(--primary);">17</span>
+        </p>
+    </article>
+
+</div>
+
+</body>
+</html>
