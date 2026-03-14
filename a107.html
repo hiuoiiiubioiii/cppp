@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Radix Sort | Complete Study Notes</title>
+    <style>
+        :root {
+            --primary: #2c3e50;
+            --secondary: #2980b9;
+            --accent: #e74c3c;
+            --background: #f4f7f6;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-light: #7f8c8d;
+            --array-border: #bdc3c7;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--background);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        /* Feed Layout Container */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Header Styling */
+        header {
+            text-align: center;
+            padding: 40px 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        header p {
+            font-size: 1.1rem;
+            opacity: 0.9;
+        }
+
+        /* Card (Post) Styling */
+        .card {
+            background-color: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            opacity: 0;
+            transform: translateY(30px);
+            transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        }
+
+        .card.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .card h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--secondary);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* Visual Array Styling */
+        .array-container {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            overflow-x: auto;
+        }
+
+        .array-label {
+            font-weight: bold;
+            margin-bottom: 10px;
+            color: var(--secondary);
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .array {
+            display: flex;
+            gap: 8px;
+            flex-wrap: nowrap;
+        }
+
+        .array-box {
+            min-width: 50px;
+            text-align: center;
+            padding: 10px;
+            background: white;
+            border: 2px solid var(--array-border);
+            border-radius: 6px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 1.2rem;
+            font-weight: bold;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .highlight {
+            color: var(--accent);
+            text-decoration: underline;
+            font-size: 1.3rem;
+        }
+
+        .fade-text {
+            color: #bdc3c7;
+        }
+
+        /* Callout Boxes */
+        .callout {
+            background: #e8f4f8;
+            border-left: 4px solid var(--secondary);
+            padding: 15px;
+            margin: 15px 0;
+            border-radius: 0 8px 8px 0;
+        }
+
+        .callout-warning {
+            background: #fdf2e9;
+            border-left: 4px solid #e67e22;
+        }
+
+        /* Code Block Styling */
+        pre {
+            background: #1e1e1e;
+            color: #d4d4d4;
+            padding: 20px;
+            border-radius: 8px;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.95rem;
+            line-height: 1.4;
+            margin: 15px 0;
+        }
+
+        code .keyword { color: #569cd6; }
+        code .function { color: #dcdcaa; }
+        code .comment { color: #6a9955; }
+        code .number { color: #b5cea8; }
+
+        ul { margin-left: 20px; margin-bottom: 15px; }
+        li { margin-bottom: 8px; }
+
+        @media (max-width: 600px) {
+            .card { padding: 20px; }
+            .array-box { font-size: 1rem; padding: 8px; min-width: 40px; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <!-- Header -->
+        <header>
+            <h1>Radix Sort Algorithm</h1>
+            <p>Instructor notes, whiteboard visualizations, and code breakdown</p>
+        </header>
+
+        <!-- Section 1 -->
+        <section class="card">
+            <h2>📌 1. Prerequisites & Core Concepts</h2>
+            <p>Before diving into Radix Sort, the instructor heavily emphasizes that you <strong>must</strong> understand <strong>Counting Sort</strong>. Radix Sort does not sort elements on its own; it uses Counting Sort as a subroutine (a helper function) repeatedly.</p>
+            
+            <div class="callout">
+                <strong>How it sorts:</strong> Radix sort processes elements digit-by-digit.
+                <ul>
+                    <li><strong>For Integers:</strong> Sort from <strong>LSB to MSB</strong> (Least Significant Bit to Most Significant Bit). Meaning right-to-left (Ones, Tens, Hundreds).</li>
+                    <li><strong>For Strings/Names:</strong> Sort from <strong>MSB to LSB</strong> (Left-to-right).</li>
+                </ul>
+            </div>
+            <p>Because Counting Sort is a <em>stable</em> sort, identical digits maintain their relative original order, which is what makes Radix Sort work correctly as we move to higher place values.</p>
+        </section>
+
+        <!-- Section 2 -->
+        <section class="card">
+            <h2>🛠️ 2. Array Setup & Padding</h2>
+            <p>Let's look at the example array from the whiteboard. To sort it, we first find the maximum element.</p>
+            
+            <div class="array-container">
+                <div class="array-label">Original Array (n = 10)</div>
+                <div class="array">
+                    <div class="array-box">432</div>
+                    <div class="array-box">8</div>
+                    <div class="array-box">530</div>
+                    <div class="array-box">90</div>
+                    <div class="array-box">88</div>
+                    <div class="array-box">231</div>
+                    <div class="array-box">11</div>
+                    <div class="array-box">45</div>
+                    <div class="array-box">677</div>
+                    <div class="array-box">199</div>
+                </div>
+            </div>
+
+            <ul>
+                <li><strong>Find Max:</strong> The maximum number is <code>677</code>.</li>
+                <li><strong>Determine Passes:</strong> 677 has <strong>3 digits</strong>. Therefore, we will run Counting Sort exactly <strong>3 times</strong>.</li>
+            </ul>
+
+            <div class="callout callout-warning">
+                <strong>Crucial Step:</strong> We must treat all numbers as 3-digit numbers. The instructor adds leading zeros (padding) to the left side of smaller numbers.
+            </div>
+
+            <div class="array-container">
+                <div class="array-label">Padded Array (Ready for Sorting)</div>
+                <div class="array">
+                    <div class="array-box">432</div>
+                    <div class="array-box highlight">008</div>
+                    <div class="array-box">530</div>
+                    <div class="array-box highlight">090</div>
+                    <div class="array-box highlight">088</div>
+                    <div class="array-box">231</div>
+                    <div class="array-box highlight">011</div>
+                    <div class="array-box highlight">045</div>
+                    <div class="array-box">677</div>
+                    <div class="array-box">199</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 3 -->
+        <section class="card">
+            <h2>🔄 3. Pass 1: The Ones Place (LSB)</h2>
+            <p>We apply Counting Sort based <em>only</em> on the digit in the Ones place (the furthest right digit).</p>
+
+            <div class="array-container">
+                <div class="array-label">Targeting the LSB</div>
+                <div class="array">
+                    <div class="array-box"><span class="fade-text">43</span><span class="highlight">2</span></div>
+                    <div class="array-box"><span class="fade-text">00</span><span class="highlight">8</span></div>
+                    <div class="array-box"><span class="fade-text">53</span><span class="highlight">0</span></div>
+                    <div class="array-box"><span class="fade-text">09</span><span class="highlight">0</span></div>
+                    <div class="array-box"><span class="fade-text">08</span><span class="highlight">8</span></div>
+                    <div class="array-box"><span class="fade-text">23</span><span class="highlight">1</span></div>
+                    <div class="array-box"><span class="fade-text">01</span><span class="highlight">1</span></div>
+                    <div class="array-box"><span class="fade-text">04</span><span class="highlight">5</span></div>
+                    <div class="array-box"><span class="fade-text">67</span><span class="highlight">7</span></div>
+                    <div class="array-box"><span class="fade-text">19</span><span class="highlight">9</span></div>
+                </div>
+            </div>
+
+            <p><strong>Counting Sort Sub-steps Performed on Whiteboard:</strong></p>
+            <ol>
+                <li>Create a <code>Count Array</code> of size 10 (Indices 0-9) to count the frequencies of the target digits.</li>
+                <li>Update the Count Array to store <strong>Cumulative Sums</strong> (This determines the actual sorted indices).</li>
+                <li>Build the Output Array by scanning the input array from <strong>Right to Left</strong> (to maintain stability).</li>
+            </ol>
+
+            <div class="array-container">
+                <div class="array-label">Output Array After Pass 1</div>
+                <div class="array">
+                    <div class="array-box">53<span class="highlight">0</span></div>
+                    <div class="array-box">09<span class="highlight">0</span></div>
+                    <div class="array-box">23<span class="highlight">1</span></div>
+                    <div class="array-box">01<span class="highlight">1</span></div>
+                    <div class="array-box">43<span class="highlight">2</span></div>
+                    <div class="array-box">04<span class="highlight">5</span></div>
+                    <div class="array-box">67<span class="highlight">7</span></div>
+                    <div class="array-box">00<span class="highlight">8</span></div>
+                    <div class="array-box">08<span class="highlight">8</span></div>
+                    <div class="array-box">19<span class="highlight">9</span></div>
+                </div>
+            </div>
+            <p><em>Notice how the numbers are now sorted perfectly if you only look at their last digit!</em></p>
+        </section>
+
+        <!-- Section 4 -->
+        <section class="card">
+            <h2>🔄 4. Pass 2: The Tens Place</h2>
+            <p>Now, we take the <strong>Output Array from Pass 1</strong> and apply Counting Sort based on the middle digit (Tens place).</p>
+
+            <div class="array-container">
+                <div class="array-label">Targeting the Tens Place</div>
+                <div class="array">
+                    <div class="array-box"><span class="fade-text">5</span><span class="highlight">3</span><span class="fade-text">0</span></div>
+                    <div class="array-box"><span class="fade-text">0</span><span class="highlight">9</span><span class="fade-text">0</span></div>
+                    <div class="array-box"><span class="fade-text">2</span><span class="highlight">3</span><span class="fade-text">1</span></div>
+                    <div class="array-box"><span class="fade-text">0</span><span class="highlight">1</span><span class="fade-text">1</span></div>
+                    <div class="array-box"><span class="fade-text">4</span><span class="highlight">3</span><span class="fade-text">2</span></div>
+                    <div class="array-box"><span class="fade-text">0</span><span class="highlight">4</span><span class="fade-text">5</span></div>
+                    <div class="array-box"><span class="fade-text">6</span><span class="highlight">7</span><span class="fade-text">7</span></div>
+                    <div class="array-box"><span class="fade-text">0</span><span class="highlight">0</span><span class="fade-text">8</span></div>
+                    <div class="array-box"><span class="fade-text">0</span><span class="highlight">8</span><span class="fade-text">8</span></div>
+                    <div class="array-box"><span class="fade-text">1</span><span class="highlight">9</span><span class="fade-text">9</span></div>
+                </div>
+            </div>
+
+            <p>After creating a new frequency count array for the middle digits, finding cumulative sums, and placing elements right-to-left...</p>
+
+            <div class="array-container">
+                <div class="array-label">Output Array After Pass 2</div>
+                <div class="array">
+                    <div class="array-box">0<span class="highlight">0</span>8</div>
+                    <div class="array-box">0<span class="highlight">1</span>1</div>
+                    <div class="array-box">2<span class="highlight">3</span>1</div>
+                    <div class="array-box">4<span class="highlight">3</span>2</div>
+                    <div class="array-box">5<span class="highlight">3</span>0</div>
+                    <div class="array-box">0<span class="highlight">4</span>5</div>
+                    <div class="array-box">6<span class="highlight">7</span>7</div>
+                    <div class="array-box">0<span class="highlight">8</span>8</div>
+                    <div class="array-box">0<span class="highlight">9</span>0</div>
+                    <div class="array-box">1<span class="highlight">9</span>9</div>
+                </div>
+            </div>
+            <p><em>The array is getting closer. Elements with identical tens digits (like 231, 432, 530) stayed in the correct relative order from Pass 1 because the sort is stable!</em></p>
+        </section>
+
+        <!-- Section 5 -->
+        <section class="card">
+            <h2>✅ 5. Pass 3: The Hundreds Place (MSB)</h2>
+            <p>We take the <strong>Output Array from Pass 2</strong> and apply the final Counting Sort based on the first digit (Hundreds place).</p>
+
+            <div class="array-container">
+                <div class="array-label">Targeting the Hundreds Place</div>
+                <div class="array">
+                    <div class="array-box"><span class="highlight">0</span><span class="fade-text">08</span></div>
+                    <div class="array-box"><span class="highlight">0</span><span class="fade-text">11</span></div>
+                    <div class="array-box"><span class="highlight">2</span><span class="fade-text">31</span></div>
+                    <div class="array-box"><span class="highlight">4</span><span class="fade-text">32</span></div>
+                    <div class="array-box"><span class="highlight">5</span><span class="fade-text">30</span></div>
+                    <div class="array-box"><span class="highlight">0</span><span class="fade-text">45</span></div>
+                    <div class="array-box"><span class="highlight">6</span><span class="fade-text">77</span></div>
+                    <div class="array-box"><span class="highlight">0</span><span class="fade-text">88</span></div>
+                    <div class="array-box"><span class="highlight">0</span><span class="fade-text">90</span></div>
+                    <div class="array-box"><span class="highlight">1</span><span class="fade-text">99</span></div>
+                </div>
+            </div>
+
+            <p>Following the exact same counting sort steps one last time yields our fully sorted array.</p>
+
+            <div class="array-container">
+                <div class="array-label">Final Sorted Array</div>
+                <div class="array">
+                    <div class="array-box"><span class="highlight">0</span>08</div>
+                    <div class="array-box"><span class="highlight">0</span>11</div>
+                    <div class="array-box"><span class="highlight">0</span>45</div>
+                    <div class="array-box"><span class="highlight">0</span>88</div>
+                    <div class="array-box"><span class="highlight">0</span>90</div>
+                    <div class="array-box"><span class="highlight">1</span>99</div>
+                    <div class="array-box"><span class="highlight">2</span>31</div>
+                    <div class="array-box"><span class="highlight">4</span>32</div>
+                    <div class="array-box"><span class="highlight">5</span>30</div>
+                    <div class="array-box"><span class="highlight">6</span>77</div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 6 -->
+        <section class="card">
+            <h2>💻 6. Code Implementation</h2>
+            <p>The instructor translates the whiteboard logic into C/C++ pseudo-code. Pay close attention to how we isolate the target digit using modulo arithmetic.</p>
+
+            <div class="callout">
+                <strong>Key Math Trick:</strong> <code>(A[i] / pos) % 10</code><br>
+                If A[i] = 432 and we want the Tens place, <code>pos</code> is 10.<br>
+                1. <code>432 / 10 = 43</code> (removes the ones place).<br>
+                2. <code>43 % 10 = 3</code> (isolates the last digit, which is the tens place!)
+            </div>
+
+<pre><code><span class="keyword">void</span> <span class="function">RadixSort</span>(<span class="keyword">int</span> A[], <span class="keyword">int</span> n) {
+    <span class="comment">// 1. Get the maximum element to find max digits</span>
+    <span class="keyword">int</span> max = <span class="function">getMax</span>(A, n); 
+
+    <span class="comment">// 2. Loop through each place value (pos = 1, 10, 100...)</span>
+    <span class="comment">// As long as max/pos > 0, we still have digits to process.</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> pos = <span class="number">1</span>; max / pos > <span class="number">0</span>; pos = pos * <span class="number">10</span>) {
+        <span class="comment">// Call counting sort for the current digit place</span>
+        <span class="function">CountSort</span>(A, n, pos);
+    }
+}
+
+<span class="keyword">void</span> <span class="function">CountSort</span>(<span class="keyword">int</span> A[], <span class="keyword">int</span> n, <span class="keyword">int</span> pos) {
+    <span class="keyword">int</span> count[<span class="number">10</span>] = {<span class="number">0</span>};  <span class="comment">// Base 10 means indices 0-9</span>
+    <span class="keyword">int</span> B[n];             <span class="comment">// Output array</span>
+
+    <span class="comment">// Step 1: Count frequency of specific digit</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i < n; i++) {
+        ++count[(A[i] / pos) % <span class="number">10</span>];
+    }
+
+    <span class="comment">// Step 2: Update count array to cumulative sum</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">1</span>; i <= <span class="number">9</span>; i++) {
+        count[i] = count[i] + count[i - <span class="number">1</span>];
+    }
+
+    <span class="comment">// Step 3: Build Output Array (Right to Left for stability)</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = n - <span class="number">1</span>; i >= <span class="number">0</span>; i--) {
+        <span class="keyword">int</span> digit = (A[i] / pos) % <span class="number">10</span>;
+        B[--count[digit]] = A[i]; 
+    }
+
+    <span class="comment">// Step 4: Copy sorted array B back into original array A</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i < n; i++) {
+        A[i] = B[i];
+    }
+}
+</code></pre>
+        </section>
+
+        <!-- Section 7 -->
+        <section class="card">
+            <h2>⏱️ 7. Complexity Analysis</h2>
+            <p>At the end of the video, the instructor breaks down why Radix Sort is efficient but requires extra memory.</p>
+
+            <ul>
+                <li><strong>Time Complexity:</strong> <code>O(d × (n + k))</code>
+                    <p style="margin-left:20px; color:var(--text-light); font-size:0.95rem;">
+                        - <code>n</code> is the number of elements in the array.<br>
+                        - <code>k</code> is the range of digits (for decimal, k = 10).<br>
+                        - <code>n + k</code> is the time it takes for one pass of Counting Sort.<br>
+                        - <code>d</code> is the number of digits in the maximum element (the number of passes).
+                    </p>
+                </li>
+                <br>
+                <li><strong>Space Complexity:</strong> <code>O(n + k)</code>
+                    <p style="margin-left:20px; color:var(--text-light); font-size:0.95rem;">
+                        - We require an extra array `B` of size <code>n</code> to hold the sorted output during each pass.<br>
+                        - We require a `count` array of size <code>k</code> (which is always 10).
+                    </p>
+                </li>
+            </ul>
+        </section>
+
+    </div>
+
+    <!-- JavaScript for scroll animations -->
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const cards = document.querySelectorAll('.card');
+
+            const observerOptions = {
+                root: null,
+                rootMargin: '0px',
+                threshold: 0.15
+            };
+
+            const observer = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        // Optional: stop observing once it's visible to keep it there
+                        // observer.unobserve(entry.target); 
+                    }
+                });
+            }, observerOptions);
+
+            cards.forEach(card => {
+                observer.observe(card);
+            });
+        });
+    </script>
+</body>
+</html>
