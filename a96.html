@@ -1,0 +1,448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Binary Search - Study Notes</title>
+    <style>
+        /* Base Styles & Typography */
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&family=JetBrains+Mono:wght@400;700&display=swap');
+
+        :root {
+            --bg-color: #f3f4f6;
+            --text-main: #1f2937;
+            --text-muted: #6b7280;
+            --card-bg: #ffffff;
+            --primary: #3b82f6;   /* Blue for Left */
+            --danger: #ef4444;    /* Red for Right */
+            --success: #10b981;   /* Green for Mid/Success */
+            --warning: #f59e0b;   /* Yellow highlights */
+            --code-bg: #1e293b;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.7;
+            margin: 0;
+            padding: 20px;
+        }
+
+        /* Feed Layout */
+        .feed-container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding-bottom: 60px;
+        }
+
+        .header {
+            text-align: center;
+            margin: 40px 0;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            letter-spacing: -1px;
+        }
+
+        .header p {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        /* Card Sections */
+        .card {
+            background: var(--card-bg);
+            border-radius: 16px;
+            padding: 40px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
+            border: 1px solid #e5e7eb;
+        }
+
+        .card h2 {
+            margin-top: 0;
+            font-size: 1.8rem;
+            color: var(--text-main);
+            border-bottom: 2px solid var(--bg-color);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .card h3 {
+            font-size: 1.3rem;
+            color: var(--text-main);
+            margin-top: 30px;
+        }
+
+        /* Alert Boxes */
+        .alert {
+            background: #fffbeb;
+            border-left: 5px solid var(--warning);
+            padding: 15px 20px;
+            border-radius: 0 8px 8px 0;
+            margin: 20px 0;
+        }
+        
+        .alert strong {
+            color: #b45309;
+        }
+
+        /* Rule Grid */
+        .rule-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .rule-box {
+            background: var(--bg-color);
+            padding: 15px 20px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .rule-box code {
+            background: #e5e7eb;
+            padding: 3px 6px;
+            border-radius: 4px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            color: #b91c1c;
+        }
+
+        /* Array Visualizations */
+        .array-viz {
+            display: flex;
+            gap: 10px;
+            margin: 30px 0;
+            padding: 10px 0;
+            overflow-x: auto;
+        }
+
+        .cell-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 55px;
+        }
+
+        .idx {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-bottom: 6px;
+            font-weight: 600;
+        }
+
+        .val {
+            width: 55px;
+            height: 55px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 1.2rem;
+            font-weight: 700;
+            border: 2px solid #d1d5db;
+            border-radius: 10px;
+            background: #f9fafb;
+            color: var(--text-main);
+            transition: all 0.3s;
+        }
+
+        .ptr-row {
+            height: 20px;
+            margin-top: 8px;
+            font-size: 0.85rem;
+            font-weight: 800;
+            display: flex;
+            gap: 4px;
+        }
+
+        /* Pointer Colors */
+        .p-l { color: var(--primary); }
+        .p-r { color: var(--danger); }
+        .p-m { color: var(--success); }
+
+        /* Array States */
+        .dimmed .val {
+            opacity: 0.2;
+            background: #f3f4f6;
+            border-color: #e5e7eb;
+        }
+        .dimmed .idx { opacity: 0.3; }
+        
+        .active-mid .val {
+            border-color: var(--success);
+            background: #d1fae5;
+            color: #065f46;
+        }
+
+        /* Code Block */
+        pre {
+            background: var(--code-bg);
+            color: #f8fafc;
+            padding: 20px;
+            border-radius: 12px;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+
+        .keyword { color: #c678dd; }
+        .type { color: #e5c07b; }
+        .func { color: #61afef; }
+        .comment { color: #7f848e; font-style: italic; }
+        .string { color: #98c379; }
+
+        /* Math Section */
+        .math-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            padding: 20px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 1.2rem;
+            margin: 20px 0;
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        .highlight {
+            background: #fef08a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+    </style>
+</head>
+<body>
+
+<main class="feed-container">
+
+    <div class="header">
+        <h1>Binary Search Algorithm</h1>
+        <p>Complete Whiteboard Breakdown & Study Notes</p>
+    </div>
+
+    <!-- Section 1: The Core Concept -->
+    <div class="card">
+        <h2>1. The Core Concept</h2>
+        <p>Binary Search is a <strong>Divide and Conquer</strong> algorithm. Instead of checking elements one by one from start to finish (Linear Search), it continuously cuts the search space in half. Because of this, it takes significantly less time to find data in large arrays.</p>
+        
+        <div class="alert">
+            <strong>🚨 THE GOLDEN RULE (Prerequisite):</strong><br>
+            The array <strong>MUST BE SORTED</strong>. If the data is not sorted, you cannot apply Binary Search. You must sort the array first.
+        </div>
+
+        <h3>The Initial Setup (n = 10)</h3>
+        <p>Here is the sorted array the instructor drew on the whiteboard. We will use this for our walkthroughs.</p>
+        
+        <div class="array-viz">
+            <!-- 0 to 9 -->
+            <div class="cell-wrapper"><div class="idx">0</div><div class="val">5</div></div>
+            <div class="cell-wrapper"><div class="idx">1</div><div class="val">9</div></div>
+            <div class="cell-wrapper"><div class="idx">2</div><div class="val">17</div></div>
+            <div class="cell-wrapper"><div class="idx">3</div><div class="val">23</div></div>
+            <div class="cell-wrapper"><div class="idx">4</div><div class="val">25</div></div>
+            <div class="cell-wrapper"><div class="idx">5</div><div class="val">45</div></div>
+            <div class="cell-wrapper"><div class="idx">6</div><div class="val">59</div></div>
+            <div class="cell-wrapper"><div class="idx">7</div><div class="val">63</div></div>
+            <div class="cell-wrapper"><div class="idx">8</div><div class="val">71</div></div>
+            <div class="cell-wrapper"><div class="idx">9</div><div class="val">89</div></div>
+        </div>
+    </div>
+
+    <!-- Section 2: Variables and Cases -->
+    <div class="card">
+        <h2>2. Variables & The 3 Rules</h2>
+        <p>To navigate the array, we use three pointers (variables):</p>
+        <ul>
+            <li><span class="highlight p-l">l (left)</span>: Points to the start index of our current search space.</li>
+            <li><span class="highlight p-r">r (right)</span>: Points to the end index of our current search space.</li>
+            <li><span class="highlight p-m">mid</span>: The middle index. Calculated as: <strong>Floor of <code>(l + r) / 2</code></strong></li>
+        </ul>
+
+        <h3>The 3 Checking Cases</h3>
+        <p>Once we calculate the `mid` index, we compare our target <code>data</code> to <code>a[mid]</code>. Only one of three things can happen:</p>
+        
+        <div class="rule-grid">
+            <div class="rule-box">
+                <strong>Case 1: <code>data == a[mid]</code></strong><br>
+                Target found! Stop searching and return the <code>mid</code> index.
+            </div>
+            <div class="rule-box">
+                <strong>Case 2: <code>data < a[mid]</code></strong><br>
+                Target is smaller. It must be on the left side. We ignore the right side by moving <br><code>r = mid - 1</code>.
+            </div>
+            <div class="rule-box">
+                <strong>Case 3: <code>data > a[mid]</code></strong><br>
+                Target is larger. It must be on the right side. We ignore the left side by moving <br><code>l = mid + 1</code>.
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 3: Walkthrough 1 (Success) -->
+    <div class="card">
+        <h2>3. Walkthrough 1: Successful Search</h2>
+        <p><strong>Goal:</strong> Search for <code>data = 59</code></p>
+
+        <h3>Iteration 1</h3>
+        <ul>
+            <li><code>l = 0</code>, <code>r = 9</code></li>
+            <li><code>mid = (0 + 9) / 2 = 4.5</code> ➡️ Floor is <strong>4</strong></li>
+            <li>Check: <code>a[4]</code> is 25. Is 59 > 25? <strong>Yes (Case 3)</strong>.</li>
+            <li>Action: Ignore the left side. Move <code>l = mid + 1</code> ➡️ <code>l = 5</code>.</li>
+        </ul>
+        <div class="array-viz">
+            <div class="cell-wrapper"><div class="idx">0</div><div class="val">5</div><div class="ptr-row"><span class="p-l">L</span></div></div>
+            <div class="cell-wrapper"><div class="idx">1</div><div class="val">9</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper"><div class="idx">2</div><div class="val">17</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper"><div class="idx">3</div><div class="val">23</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper active-mid"><div class="idx">4</div><div class="val">25</div><div class="ptr-row"><span class="p-m">M</span></div></div>
+            <div class="cell-wrapper"><div class="idx">5</div><div class="val">45</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper"><div class="idx">6</div><div class="val">59</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper"><div class="idx">7</div><div class="val">63</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper"><div class="idx">8</div><div class="val">71</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper"><div class="idx">9</div><div class="val">89</div><div class="ptr-row"><span class="p-r">R</span></div></div>
+        </div>
+
+        <h3>Iteration 2</h3>
+        <ul>
+            <li><code>l = 5</code>, <code>r = 9</code></li>
+            <li><code>mid = (5 + 9) / 2 = 14 / 2 = 7</code></li>
+            <li>Check: <code>a[7]</code> is 63. Is 59 < 63? <strong>Yes (Case 2)</strong>.</li>
+            <li>Action: Ignore the right side. Move <code>r = mid - 1</code> ➡️ <code>r = 6</code>.</li>
+        </ul>
+        <div class="array-viz">
+            <div class="cell-wrapper dimmed"><div class="idx">0</div><div class="val">5</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper dimmed"><div class="idx">1</div><div class="val">9</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper dimmed"><div class="idx">2</div><div class="val">17</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper dimmed"><div class="idx">3</div><div class="val">23</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper dimmed"><div class="idx">4</div><div class="val">25</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper"><div class="idx">5</div><div class="val">45</div><div class="ptr-row"><span class="p-l">L</span></div></div>
+            <div class="cell-wrapper"><div class="idx">6</div><div class="val">59</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper active-mid"><div class="idx">7</div><div class="val">63</div><div class="ptr-row"><span class="p-m">M</span></div></div>
+            <div class="cell-wrapper"><div class="idx">8</div><div class="val">71</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper"><div class="idx">9</div><div class="val">89</div><div class="ptr-row"><span class="p-r">R</span></div></div>
+        </div>
+
+        <h3>Iteration 3</h3>
+        <ul>
+            <li><code>l = 5</code>, <code>r = 6</code></li>
+            <li><code>mid = (5 + 6) / 2 = 5.5</code> ➡️ Floor is <strong>5</strong></li>
+            <li>Check: <code>a[5]</code> is 45. Is 59 > 45? <strong>Yes (Case 3)</strong>.</li>
+            <li>Action: Move <code>l = mid + 1</code> ➡️ <code>l = 6</code>.</li>
+        </ul>
+        <div class="array-viz">
+            <div class="cell-wrapper dimmed"><div class="idx">0-4</div><div class="val">...</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper active-mid"><div class="idx">5</div><div class="val">45</div><div class="ptr-row"><span class="p-l">L</span><span class="p-m">M</span></div></div>
+            <div class="cell-wrapper"><div class="idx">6</div><div class="val">59</div><div class="ptr-row"><span class="p-r">R</span></div></div>
+            <div class="cell-wrapper dimmed"><div class="idx">7</div><div class="val">63</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper dimmed"><div class="idx">8-9</div><div class="val">...</div><div class="ptr-row"></div></div>
+        </div>
+
+        <h3>Iteration 4</h3>
+        <ul>
+            <li><code>l = 6</code>, <code>r = 6</code> (Pointers are on the exact same spot)</li>
+            <li><code>mid = (6 + 6) / 2 = 6</code></li>
+            <li>Check: <code>a[6]</code> is 59. Is 59 == 59? <strong>YES! (Case 1)</strong>.</li>
+            <li>Action: Stop the algorithm. <strong>Return index 6</strong>.</li>
+        </ul>
+        <div class="array-viz">
+            <div class="cell-wrapper dimmed"><div class="idx">0-4</div><div class="val">...</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper dimmed"><div class="idx">5</div><div class="val">45</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper active-mid"><div class="idx">6</div><div class="val">59</div><div class="ptr-row"><span class="p-l">L</span><span class="p-m">M</span><span class="p-r">R</span></div></div>
+            <div class="cell-wrapper dimmed"><div class="idx">7</div><div class="val">63</div><div class="ptr-row"></div></div>
+            <div class="cell-wrapper dimmed"><div class="idx">8-9</div><div class="val">...</div><div class="ptr-row"></div></div>
+        </div>
+    </div>
+
+    <!-- Section 4: Walkthrough 2 (Failure) -->
+    <div class="card">
+        <h2>4. Walkthrough 2: Unsuccessful Search</h2>
+        <p><em>What happens if the data is not in the array? When does the algorithm know to stop?</em></p>
+        <p><strong>Goal:</strong> Search for <code>data = 60</code></p>
+        
+        <p>Let's fast forward through the steps we already know:</p>
+        <ul>
+            <li><strong>Step 1:</strong> <code>mid = 4</code> (val 25). 60 > 25. Move <code>l = 5</code>.</li>
+            <li><strong>Step 2:</strong> <code>mid = 7</code> (val 63). 60 < 63. Move <code>r = 6</code>.</li>
+            <li><strong>Step 3:</strong> <code>mid = 5</code> (val 45). 60 > 45. Move <code>l = 6</code>.</li>
+            <li><strong>Step 4:</strong> <code>mid = 6</code> (val 59). 60 > 59. Move <code>l = mid + 1</code> ➡️ <strong><code>l = 7</code></strong>.</li>
+        </ul>
+
+        <div class="alert">
+            <strong>🚨 The Stopping Condition:</strong><br>
+            At this point, <code>l = 7</code> and <code>r = 6</code>. Notice that <strong>L is now greater than R</strong>. The left and right pointers have crossed each other. This is the official stopping condition. If <code>l > r</code>, it mathematically proves the data is <strong>not present</strong> in the array. Return <code>-1</code>.
+        </div>
+    </div>
+
+    <!-- Section 5: The Code -->
+    <div class="card">
+        <h2>5. The Algorithm Code</h2>
+        <p>Here is the C-style pseudocode written on the whiteboard, translating the logic above into instructions:</p>
+        
+<pre><code><span class="type">int</span> <span class="func">BinarySearch</span>(<span class="type">int</span> a[], <span class="type">int</span> n, <span class="type">int</span> data) {
+    <span class="type">int</span> l = <span class="keyword">0</span>;              <span class="comment">// Start pointer</span>
+    <span class="type">int</span> r = n - <span class="keyword">1</span>;          <span class="comment">// End pointer</span>
+    
+    <span class="comment">// Keep looping as long as left hasn't crossed right</span>
+    <span class="keyword">while</span> (l <= r) {        
+        <span class="type">int</span> mid = (l + r) / <span class="keyword">2</span>;    <span class="comment">// Find the middle (takes integer floor automatically in C)</span>
+        
+        <span class="keyword">if</span> (data == a[mid]) {
+            <span class="keyword">return</span> mid;           <span class="comment">// Case 1: Found it! Return the index.</span>
+        }
+        <span class="keyword">else if</span> (data < a[mid]) {
+            r = mid - <span class="keyword">1</span>;          <span class="comment">// Case 2: Data is smaller, search left half.</span>
+        }
+        <span class="keyword">else</span> {
+            l = mid + <span class="keyword">1</span>;          <span class="comment">// Case 3: Data is larger, search right half.</span>
+        }
+    }
+    
+    <span class="comment">// If the while loop finishes and breaks (l > r), the data wasn't found</span>
+    <span class="keyword">return</span> <span class="keyword">-1</span>; 
+}</code></pre>
+    </div>
+
+    <!-- Section 6: Time Complexity -->
+    <div class="card">
+        <h2>6. Time Complexity Analysis</h2>
+        <p>Why is Binary Search so much better than Linear Search? Let's analyze the math behind the <code>while</code> loop.</p>
+
+        <h3>Best Case: <span class="highlight">O(1)</span></h3>
+        <p>This happens if the element you are looking for happens to be at the exact middle of the array on your very first guess. The loop runs exactly once.</p>
+
+        <h3>Worst/Average Case: <span class="highlight">O(log n)</span></h3>
+        <p>Think about how the array size shrinks. In the worst case, you keep dividing the array by 2 until only 1 element is left.</p>
+        <ul>
+            <li>If `n = 100`, the search space sizes go: 100 ➡️ 50 ➡️ 25 ➡️ 12 ➡️ 6 ➡️ 3 ➡️ 1.</li>
+            <li>It only takes a maximum of <strong>7 steps</strong> to search an array of 100 elements. (A linear search could take 100 steps!)</li>
+        </ul>
+
+        <h3>The Math Derivation (From the Board)</h3>
+        <p>Let <strong>k</strong> be the number of steps (divisions by 2) it takes to reach 1 element.</p>
+        
+        <div class="math-box">
+            n / 2<sup>k</sup> = 1
+            <br><br>
+            n = 2<sup>k</sup>
+            <br><br>
+            log<sub>2</sub>(n) = log<sub>2</sub>(2<sup>k</sup>)
+            <br><br>
+            <strong>k = log<sub>2</sub>(n)</strong>
+        </div>
+        
+        <p>Therefore, the algorithm takes exactly <strong>log<sub>2</sub>(n)</strong> steps. For an array of 100 elements, log<sub>2</sub>(100) is approximately 6.64. We round up to <strong>7 steps maximum</strong>. This logarithmic behavior makes binary search incredibly powerful for massive datasets.</p>
+    </div>
+
+</main>
+
+</body>
+</html>
