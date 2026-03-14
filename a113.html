@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mastering DSA with Java - Study Notes</title>
+    <style>
+        /* Base Styles & Typography */
+        :root {
+            --primary-bg: #f4f6f8;
+            --card-bg: #ffffff;
+            --text-main: #333333;
+            --text-muted: #666666;
+            --accent-blue: #0056b3;
+            --accent-yellow: #ffc107;
+            --accent-green: #28a745;
+            --border-color: #e1e4e8;
+        }
+
+        body {
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        /* Feed Container */
+        .feed-container {
+            max-width: 700px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 30px;
+        }
+
+        /* Header */
+        header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        header h1 {
+            color: var(--accent-blue);
+            font-size: 2.5rem;
+            margin-bottom: 5px;
+        }
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+        }
+
+        /* Note Cards (Feed Items) */
+        .card {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            padding: 30px;
+            border-top: 5px solid var(--accent-blue);
+            transition: transform 0.2s ease-in-out;
+        }
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 2px solid var(--primary-bg);
+            padding-bottom: 10px;
+        }
+        .card-header h2 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: #222;
+        }
+        .icon {
+            font-size: 1.8rem;
+        }
+
+        /* Visualizations & UI Elements */
+        .visual-box {
+            background: #f8f9fa;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+
+        .company-logos {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        .logo-badge {
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: white;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+        .google { background: linear-gradient(90deg, #4285F4, #EA4335, #FBBC05, #34A853); }
+        .amazon { background: #232F3E; color: #FF9900; }
+        .microsoft { background: #00A4EF; }
+
+        .timeline {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: #e9ecef;
+            padding: 15px;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .browser-mockup {
+            border: 2px solid #ddd;
+            border-radius: 8px 8px 0 0;
+            overflow: hidden;
+        }
+        .browser-header {
+            background: #e1e4e8;
+            padding: 10px;
+            display: flex;
+            gap: 6px;
+        }
+        .dot { width: 12px; height: 12px; border-radius: 50%; }
+        .red { background: #ff5f56; }
+        .yellow { background: #ffbd2e; }
+        .green { background: #27c93f; }
+        .browser-body {
+            padding: 20px;
+            background: white;
+        }
+
+        .discount-banner {
+            background-color: var(--accent-yellow);
+            color: #000;
+            text-align: center;
+            padding: 10px;
+            font-weight: bold;
+            border-radius: 6px;
+            margin-bottom: 15px;
+        }
+
+        /* Lists and Tags */
+        ul.custom-list {
+            list-style: none;
+            padding: 0;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        @media (max-width: 500px) {
+            ul.custom-list { grid-template-columns: 1fr; }
+        }
+        ul.custom-list li::before {
+            content: "✅";
+            margin-right: 8px;
+        }
+
+        .tags-container {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 15px;
+        }
+        .tag {
+            background: #e6f2ff;
+            color: var(--accent-blue);
+            padding: 5px 12px;
+            border-radius: 15px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .highlight {
+            background: rgba(255, 193, 7, 0.3);
+            padding: 0 4px;
+            border-radius: 3px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div class="feed-container">
+        
+        <header>
+            <h1>Mastering DSA with Java</h1>
+            <p>Comprehensive Video Breakdown & Study Notes</p>
+        </header>
+
+        <!-- Topic 1 -->
+        <section class="card">
+            <div class="card-header">
+                <span class="icon">🏗️</span>
+                <h2>The Foundation: DSA & Interviews</h2>
+            </div>
+            <p><strong>What the Instructor Says:</strong> Data Structures and Algorithms (DSA) are the absolute foundation of problem-solving in the tech industry. It is impossible to ignore.</p>
+            <p><strong>Visual Context:</strong> The video shows a candidate in a formal job interview. This reinforces that in tech interviews, <em>most questions revolve entirely around DSA</em>.</p>
+            <div class="visual-box">
+                <strong>Key Takeaway:</strong> Without strong DSA skills, passing technical interviews at top-tier tech companies is highly unlikely.
+            </div>
+        </section>
+
+        <!-- Topic 2 -->
+        <section class="card">
+            <div class="card-header">
+                <span class="icon">☕</span>
+                <h2>Why Java is a Game Changer</h2>
+            </div>
+            <p>Mastering DSA specifically with Java provides a massive advantage. Java is one of the most in-demand languages in the industry, chosen for its <strong>performance and versatility</strong>.</p>
+            
+            <p><strong>Companies that heavily utilize Java:</strong></p>
+            <div class="company-logos">
+                <span class="logo-badge google">Google</span>
+                <span class="logo-badge amazon">Amazon</span>
+                <span class="logo-badge microsoft">Microsoft</span>
+            </div>
+            <p>Learning DSA in this specific language opens doors to amazing job opportunities at these top-tier corporations.</p>
+        </section>
+
+        <!-- Topic 3 -->
+        <section class="card">
+            <div class="card-header">
+                <span class="icon">⏱️</span>
+                <h2>The Timeline to Mastery</h2>
+            </div>
+            <p>The instructor emphasizes that learning DSA doesn't have to take years. With the right guidance and a structured course, you can go from beginner to advanced quickly.</p>
+            
+            <!-- Timeline Visualization -->
+            <div class="timeline">
+                <span>Start: Zero Knowledge</span>
+                <span>➡️ Structured Guidance ➡️</span>
+                <span class="highlight">Goal: 6 Months to Mastery</span>
+            </div>
+        </section>
+
+        <!-- Topic 4 -->
+        <section class="card">
+            <div class="card-header">
+                <span class="icon">💻</span>
+                <h2>Course Announcement & Details</h2>
+            </div>
+            <p>The instructor officially launches her course hosted on <code>jennyslectures.com</code>.</p>
+            
+            <!-- Browser Mockup Visualization -->
+            <div class="browser-mockup">
+                <div class="browser-header">
+                    <div class="dot red"></div>
+                    <div class="dot yellow"></div>
+                    <div class="dot green"></div>
+                </div>
+                <div class="browser-body">
+                    <div class="discount-banner">
+                        🎟️ Early Bird Discount: Extra 10% OFF for the first 500 students! (Code: BEST500)
+                    </div>
+                    <h3 style="margin-top: 0; color: #0056b3;">Mastering Data Structures and Algorithms with JAVA</h3>
+                    <p><strong>Level:</strong> Extreme Beginner to Advanced</p>
+                    <p><strong>Start Date:</strong> 19th Sept, 2024</p>
+                    <p><strong>Time:</strong> 9:00 PM - 10:30 PM</p>
+                    <p><strong>Classes:</strong> Friday, Saturday, Sunday (200+ Hours)</p>
+                    <p><strong>Doubt Resolution:</strong> Exta LIVE Session once a week (Wednesdays)</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- Topic 5 -->
+        <section class="card">
+            <div class="card-header">
+                <span class="icon">📚</span>
+                <h2>The Curriculum: 2 Courses in 1</h2>
+            </div>
+            <p>The biggest selling point of the course is its dual nature. You are getting two courses for the price of one.</p>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                <div style="flex: 1; background: #e6f2ff; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold;">Phase 1: Complete Java</div>
+                <div style="flex: 1; background: #e8f5e9; padding: 15px; border-radius: 8px; text-align: center; font-weight: bold;">Phase 2: Advanced DSA</div>
+            </div>
+
+            <p><strong>What was shown on the screen (Course Features):</strong></p>
+            <ul class="custom-list">
+                <li>No Pre-requisite Required</li>
+                <li>Complete Java (Latest LTS JDK21)</li>
+                <li>Complete Data Structures & Algos</li>
+                <li>Detailed notes & PDFs of programs</li>
+                <li>Mode: LIVE + Recorded</li>
+                <li>Learn AI tools for enhanced coding</li>
+                <li>Real-world Case Studies & Projects</li>
+                <li>200+ Placement Questions & Quizzes</li>
+            </ul>
+
+            <p style="margin-top: 20px;"><strong>Specific Technical Topics Covered:</strong></p>
+            <div class="tags-container">
+                <span class="tag">Java Basics</span>
+                <span class="tag">OOP in Java</span>
+                <span class="tag">File I/O</span>
+                <span class="tag">Collections Framework</span>
+                <span class="tag">Multithreading</span>
+                <span class="tag">Lambda Expressions</span>
+                <span class="tag">Trees</span>
+                <span class="tag">Heaps</span>
+                <span class="tag">Hashing</span>
+            </div>
+        </section>
+
+        <!-- Topic 6 -->
+        <section class="card" style="border-top: 5px solid var(--accent-green);">
+            <div class="card-header">
+                <span class="icon">✅</span>
+                <h2>Guarantees & Action Items</h2>
+            </div>
+            <p>The video concludes with guarantees to protect the student and clear next steps.</p>
+            
+            <div class="visual-box">
+                <p>🛡️ <strong>100% Refund Policy:</strong> No questions asked if requested within the first week.</p>
+                <p>💬 <strong>Community Support:</strong> Includes access to a dedicated WhatsApp/Telegram group.</p>
+            </div>
+
+            <h3>To-Do List for Students:</h3>
+            <ul style="line-height: 1.8;">
+                <li>Check the video description for the official link.</li>
+                <li>Apply the promo code <strong>BEST500</strong> to get the extra 10% off (only for the first 500).</li>
+                <li>Be ready for the first class on <strong>September 19th</strong>.</li>
+            </ul>
+        </section>
+
+    </div>
+
+</body>
+</html>
